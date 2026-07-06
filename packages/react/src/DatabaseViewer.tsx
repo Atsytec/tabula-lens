@@ -1,10 +1,5 @@
-import React, { useState } from 'react'
-import {
-  useQuery,
-  useQueryClient,
-  QueryClient,
-  QueryClientProvider,
-} from '@tanstack/react-query'
+import React, { useState } from 'react';
+import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   useReactTable,
   getCoreRowModel,
@@ -15,12 +10,13 @@ import {
   ColumnDef,
   SortingState,
   PaginationState,
-} from '@tanstack/react-table'
+} from '@tanstack/react-table';
 
 // Inline styles for simplicity in bundling
 const styles = {
   container: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     color: '#333',
     maxWidth: '100%',
     margin: 0,
@@ -138,25 +134,25 @@ const styles = {
     color: '#666',
     fontSize: '0.875rem',
   },
-}
+};
 
 // Types matching the backend response
 interface QueryResult {
-  data: Record<string, unknown>[]
-  columns: string[]
+  data: Record<string, unknown>[];
+  columns: string[];
   pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 interface DatabaseViewerProps {
-  endpoint: string
-  authToken?: string
-  initialTable?: string
-  pageSize?: number
+  endpoint: string;
+  authToken?: string;
+  initialTable?: string;
+  pageSize?: number;
 }
 
 // Create a default query client
@@ -167,7 +163,7 @@ const defaultQueryClient = new QueryClient({
       retry: 1,
     },
   },
-})
+});
 
 export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
   endpoint,
@@ -175,12 +171,12 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
   initialTable = 'users',
   pageSize = 10,
 }) => {
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize,
-  })
-  const [filter, setFilter] = useState('')
+  });
+  const [filter, setFilter] = useState('');
 
   // Build query parameters
   const queryParams = new URLSearchParams({
@@ -188,12 +184,12 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
     page: String(pagination.pageIndex + 1),
     limit: String(pagination.pageSize),
     ...(sorting.length > 0 && {
-      sort: sorting.map(s => `${s.id}:${s.desc ? 'desc' : 'asc'}`).join(','),
+      sort: sorting.map((s) => `${s.id}:${s.desc ? 'desc' : 'asc'}`).join(','),
     }),
     ...(filter && { filter }),
-  })
+  });
 
-  const url = `${endpoint}?${queryParams.toString()}`
+  const url = `${endpoint}?${queryParams.toString()}`;
 
   // Fetch data with TanStack Query
   const { data, isLoading, error, refetch } = useQuery({
@@ -201,32 +197,29 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
     queryFn: async () => {
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
-      }
+      };
 
       if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`
+        headers['Authorization'] = `Bearer ${authToken}`;
       }
 
-      const response = await fetch(url, { headers })
+      const response = await fetch(url, { headers });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return response.json() as Promise<QueryResult>
+      return response.json() as Promise<QueryResult>;
     },
-  })
+  });
 
   // Define columns dynamically based on the data
-  const columns = React.useMemo<ColumnDef<Record<string, unknown>>[]>(
-    () => {
-      if (!data?.columns) return []
-      return data.columns.map((columnName: string) => ({
-        accessorKey: columnName,
-        header: columnName,
-        cell: (info: any) => String(info.getValue() ?? ''),
-      }))
-    },
-    [data?.columns]
-  )
+  const columns = React.useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
+    if (!data?.columns) return [];
+    return data.columns.map((columnName: string) => ({
+      accessorKey: columnName,
+      header: columnName,
+      cell: (info: { getValue: () => unknown }) => String(info.getValue() ?? ''),
+    }));
+  }, [data?.columns]);
 
   // Create table instance
   const table = useReactTable({
@@ -244,7 +237,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
     onPaginationChange: setPagination,
     pageCount: data?.pagination.totalPages ?? 0,
     manualPagination: true,
-  })
+  });
 
   if (isLoading) {
     return (
@@ -253,7 +246,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
         <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
         <p>Loading data...</p>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -264,7 +257,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
           Retry
         </button>
       </div>
-    )
+    );
   }
 
   return (
@@ -297,10 +290,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
                   >
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                     {header.column.getIsSorted() === 'asc' ? ' ↑' : null}
                     {header.column.getIsSorted() === 'desc' ? ' ↓' : null}
                   </th>
@@ -317,10 +307,10 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
               </tr>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <tr 
+                <tr
                   key={row.id}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} style={styles.td}>
@@ -351,8 +341,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
           {'<'}
         </button>
         <span style={styles.paginationInfo}>
-          Page {table.getState().pagination.pageIndex + 1} of{' '}
-          {table.getPageCount()}
+          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
         </span>
         <button
           onClick={() => table.nextPage()}
@@ -371,7 +360,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
         <select
           value={table.getState().pagination.pageSize}
           onChange={(e) => {
-            table.setPageSize(Number(e.target.value))
+            table.setPageSize(Number(e.target.value));
           }}
           style={styles.pageSize}
         >
@@ -384,23 +373,18 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
       </div>
 
       {/* Info */}
-      {data && (
-        <div style={styles.info}>
-          Total records: {data.pagination.total}
-        </div>
-      )}
+      {data && <div style={styles.info}>Total records: {data.pagination.total}</div>}
     </div>
-  )
-}
+  );
+};
 
 // Export a provider-wrapped version for easier usage
-export const DatabaseViewerWithProvider: React.FC<DatabaseViewerProps & { queryClient?: QueryClient }> = ({
-  queryClient = defaultQueryClient,
-  ...props
-}) => {
+export const DatabaseViewerWithProvider: React.FC<
+  DatabaseViewerProps & { queryClient?: QueryClient }
+> = ({ queryClient = defaultQueryClient, ...props }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <DatabaseViewer {...props} />
     </QueryClientProvider>
-  )
-}
+  );
+};
