@@ -22,7 +22,6 @@ This monorepo contains the following packages:
 
 - **@tabula-lens/react**: React component for displaying database data
 - **@tabula-lens/node**: Node.js backend SDK for database queries with framework adapters
-- **@tabula-lens/docs**: Documentation site (Astro + Starlight)
 
 ## 🚀 Quick Start
 
@@ -51,7 +50,244 @@ npm install @tabula-lens/react
 import { DatabaseViewer } from '@tabula-lens/react';
 
 function App() {
-  return <DatabaseViewer endpoint="/api/tabula-lens" authToken={userToken} />;
+  return <DatabaseViewer path="/api/tabula-lens" />;
+}
+```
+
+## 📖 React Component Documentation
+
+### DatabaseViewer Component
+
+The `DatabaseViewer` component provides a full-featured table interface for viewing database data with built-in pagination, sorting, and filtering.
+
+#### Basic Usage
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return <DatabaseViewer path="/api/tabula-lens" />;
+}
+```
+
+#### With Authentication
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  const getAuthHeaders = async () => {
+    const token = localStorage.getItem('authToken');
+    return { Authorization: `Bearer ${token}` };
+  };
+
+  return <DatabaseViewer path="/api/tabula-lens" getAuthHeaders={getAuthHeaders} />;
+}
+```
+
+#### With Table Selector
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return <DatabaseViewer path="/api/tabula-lens" tableSelector="dropdown" initialTable="users" />;
+}
+```
+
+#### Custom Styling
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      className="custom-db-viewer"
+      style={{ maxWidth: '1200px', margin: '0 auto' }}
+      classNames={{
+        table: 'custom-table',
+        header: 'custom-header',
+        cell: 'custom-cell',
+      }}
+      styles={{
+        table: { borderCollapse: 'separate', borderSpacing: '0' },
+        th: { backgroundColor: '#1a1a1a', color: 'white' },
+      }}
+    />
+  );
+}
+```
+
+#### Custom Components
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+const CustomLoading = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+  </div>
+);
+
+const CustomError = ({ error, retry }) => (
+  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+    <p className="text-red-800">Error: {error.message}</p>
+    <button onClick={retry} className="mt-2 px-4 py-2 bg-red-600 text-white rounded">
+      Retry
+    </button>
+  </div>
+);
+
+function App() {
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      loadingComponent={CustomLoading}
+      errorComponent={CustomError}
+    />
+  );
+}
+```
+
+#### Advanced Configuration
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      initialTable="users"
+      // Table selection
+      tableSelector="sidebar"
+      tableSelectorLabel="Choose Table"
+      // Filtering
+      showFilter={true}
+      filterPlaceholder="Search records..."
+      filterPosition="top"
+      filterDebounceMs={500}
+      // Pagination
+      showPagination={true}
+      pageSize={25}
+      pageSizeOptions={[10, 25, 50, 100]}
+      showPageSizeSelector={true}
+      paginationPosition="both"
+      // Sorting
+      enableSorting={true}
+      sortableColumns={['name', 'email', 'created_at']}
+      defaultSort={{ column: 'created_at', direction: 'desc' }}
+      multiSort={true}
+      // Query options
+      queryOptions={{
+        staleTime: 30000,
+        retry: 3,
+        refetchOnWindowFocus: false,
+      }}
+      refetchInterval={60000} // Auto-refresh every minute
+    />
+  );
+}
+```
+
+### Props Reference
+
+#### Core Props
+
+| Prop           | Type     | Default    | Description                       |
+| -------------- | -------- | ---------- | --------------------------------- |
+| `path`         | `string` | _required_ | API endpoint path for the backend |
+| `initialTable` | `string` | `'users'`  | Default table to load on mount    |
+
+#### Table Selection
+
+| Prop                     | Type                                | Default          | Description                     |
+| ------------------------ | ----------------------------------- | ---------------- | ------------------------------- |
+| `tableSelector`          | `'dropdown' \| 'sidebar' \| 'none'` | `'none'`         | Table selector UI mode          |
+| `tableSelectorLabel`     | `string`                            | `'Select Table'` | Label for table selector        |
+| `tableSelectorComponent` | `React.FC`                          | `undefined`      | Custom table selector component |
+
+#### Authentication
+
+| Prop             | Type                                    | Default     | Description                           |
+| ---------------- | --------------------------------------- | ----------- | ------------------------------------- |
+| `getAuthHeaders` | `() => Promise<Record<string, string>>` | `undefined` | Async function to get auth headers    |
+| `headers`        | `Record<string, string>`                | `undefined` | Static headers to include in requests |
+
+#### Filtering
+
+| Prop                | Type                          | Default               | Description                         |
+| ------------------- | ----------------------------- | --------------------- | ----------------------------------- |
+| `showFilter`        | `boolean`                     | `true`                | Show/hide filter input              |
+| `filterPlaceholder` | `string`                      | `'Filter records...'` | Placeholder text for filter input   |
+| `filterPosition`    | `'top' \| 'bottom' \| 'both'` | `'top'`               | Position of filter input            |
+| `filterDebounceMs`  | `number`                      | `300`                 | Debounce time for filter input (ms) |
+| `filterComponent`   | `React.FC`                    | `undefined`           | Custom filter component             |
+
+#### Pagination
+
+| Prop                   | Type                          | Default                 | Description                     |
+| ---------------------- | ----------------------------- | ----------------------- | ------------------------------- |
+| `showPagination`       | `boolean`                     | `true`                  | Show/hide pagination controls   |
+| `pageSize`             | `number`                      | `10`                    | Default page size               |
+| `pageSizeOptions`      | `number[]`                    | `[10, 20, 30, 50, 100]` | Available page size options     |
+| `showPageSizeSelector` | `boolean`                     | `true`                  | Show/hide page size selector    |
+| `paginationPosition`   | `'top' \| 'bottom' \| 'both'` | `'bottom'`              | Position of pagination controls |
+| `paginationComponent`  | `React.FC`                    | `undefined`             | Custom pagination component     |
+
+#### Sorting
+
+| Prop              | Type                                               | Default     | Description                         |
+| ----------------- | -------------------------------------------------- | ----------- | ----------------------------------- |
+| `enableSorting`   | `boolean`                                          | `true`      | Enable/disable column sorting       |
+| `sortableColumns` | `string[]`                                         | `undefined` | Specific columns that can be sorted |
+| `defaultSort`     | `{ column: string; direction: 'asc' \| 'desc' }`   | `undefined` | Default sort on mount               |
+| `multiSort`       | `boolean`                                          | `false`     | Enable multi-column sorting         |
+| `sortIcon`        | `React.FC<{ direction: 'asc' \| 'desc' \| null }>` | `undefined` | Custom sort icon component          |
+
+#### UI Customization
+
+| Prop         | Type                  | Default     | Description                         |
+| ------------ | --------------------- | ----------- | ----------------------------------- |
+| `className`  | `string`              | `undefined` | CSS class for container             |
+| `classNames` | `ClassNames`          | `{}`        | CSS classes for specific elements   |
+| `style`      | `React.CSSProperties` | `undefined` | Inline styles for container         |
+| `styles`     | `Styles`              | `{}`        | Inline styles for specific elements |
+
+#### Custom Components
+
+| Prop               | Type                                            | Default     | Description                  |
+| ------------------ | ----------------------------------------------- | ----------- | ---------------------------- |
+| `loadingComponent` | `React.FC`                                      | `undefined` | Custom loading component     |
+| `errorComponent`   | `React.FC<{ error: Error; retry: () => void }>` | `undefined` | Custom error component       |
+| `emptyComponent`   | `React.FC`                                      | `undefined` | Custom empty state component |
+| `onError`          | `(error: Error) => void`                        | `undefined` | Error callback handler       |
+
+#### Query Options
+
+| Prop              | Type     | Default     | Description                |
+| ----------------- | -------- | ----------- | -------------------------- |
+| `queryOptions`    | `object` | `{}`        | TanStack Query options     |
+| `refetchInterval` | `number` | `undefined` | Auto-refetch interval (ms) |
+
+### DatabaseViewerWithProvider
+
+For applications that already have a QueryClientProvider, use `DatabaseViewerWithProvider` to avoid nested providers:
+
+```jsx
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { DatabaseViewerWithProvider } from '@tabula-lens/react';
+
+const queryClient = new QueryClient();
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <DatabaseViewerWithProvider path="/api/tabula-lens" />
+    </QueryClientProvider>
+  );
 }
 ```
 
@@ -328,7 +564,7 @@ Currently no license. All rights reserved.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
+Contributions will be allowed soon.
 
 ## 📧 Contact
 
