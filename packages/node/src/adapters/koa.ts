@@ -1,7 +1,7 @@
 import type { Context } from 'koa';
 import { TabulaLens, RequestContext } from '../TabulaLens';
 
-export function koaAdapter(tabulaLens: TabulaLens) {
+export function koaAdapter(tabulaLens: TabulaLens): (ctx: Context) => Promise<void> {
   return async (ctx: Context) => {
     const requestContext: RequestContext = {
       method: ctx.method,

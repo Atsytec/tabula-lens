@@ -1,7 +1,9 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { TabulaLens, RequestContext } from '../TabulaLens';
 
-export function fastifyAdapter(tabulaLens: TabulaLens) {
+export function fastifyAdapter(
+  tabulaLens: TabulaLens
+): (request: FastifyRequest, reply: FastifyReply) => Promise<void> {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     const requestContext: RequestContext = {
       method: request.method,

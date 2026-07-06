@@ -76,7 +76,7 @@ function App() {
             <h2>Database Viewer: {selectedTable}</h2>
             <DatabaseViewerWithProvider
               key={selectedTable}
-              endpoint="http://localhost:3001/api/tabula-lens/query"
+              path="http://localhost:3001/api/tabula-lens"
               initialTable={selectedTable}
               pageSize={10}
             />

@@ -1,7 +1,9 @@
 import type { Request, Response, Next } from 'restify';
 import { TabulaLens, RequestContext } from '../TabulaLens';
 
-export function restifyAdapter(tabulaLens: TabulaLens) {
+export function restifyAdapter(
+  tabulaLens: TabulaLens
+): (req: Request, res: Response, next: Next) => Promise<void> {
   return async (req: Request, res: Response, next: Next) => {
     const requestContext: RequestContext = {
       method: req.method,

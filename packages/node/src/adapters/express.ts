@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import type { RequestHandler } from 'express';
 import { TabulaLens, RequestContext } from '../TabulaLens';
 
-export function expressAdapter(tabulaLens: TabulaLens) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+export function expressAdapter(tabulaLens: TabulaLens): RequestHandler {
+  return async (req, res, next) => {
     try {
       const requestContext: RequestContext = {
         method: req.method,

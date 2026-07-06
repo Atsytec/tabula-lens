@@ -1,7 +1,7 @@
-import express from 'express';
+import express, { RequestHandler } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { TabulaLens, expressAdapter } from '../../../../packages/node/dist/index.js';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -10,7 +10,12 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Initialize TabulaLens with your database connection
@@ -20,7 +25,7 @@ const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://user:password@loc
 const tabulaLens = new TabulaLens(DATABASE_URL);
 
 // Use TabulaLens Express adapter for REST API
-app.use('/api/tabula-lens', expressAdapter(tabulaLens));
+app.use(expressAdapter(tabulaLens) as unknown as RequestHandler);
 
 // Health check
 app.get('/health', (req, res) => {

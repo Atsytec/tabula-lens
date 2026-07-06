@@ -1,7 +1,9 @@
 import type { Request, ResponseToolkit } from '@hapi/hapi';
 import { TabulaLens, RequestContext } from '../TabulaLens';
 
-export function hapiAdapter(tabulaLens: TabulaLens) {
+export function hapiAdapter(
+  tabulaLens: TabulaLens
+): (request: Request, h: ResponseToolkit) => Promise<ReturnType<ResponseToolkit['response']>> {
   return async (request: Request, h: ResponseToolkit) => {
     const requestContext: RequestContext = {
       method: request.method,
