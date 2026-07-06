@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { TabulaLens } from '../../../../packages/node/dist/index.js';
+import { TabulaLens, expressAdapter } from '../../../../packages/node/dist/index.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -19,49 +19,8 @@ const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://user:password@loc
 
 const tabulaLens = new TabulaLens(DATABASE_URL);
 
-// API endpoint for the frontend
-app.get('/api/data', async (req, res) => {
-  try {
-    const { table, page, limit, sort, filter, columns } = req.query;
-
-    const result = await tabulaLens.query({
-      table: table as string,
-      page: page ? Number(page) : undefined,
-      limit: limit ? Number(limit) : undefined,
-      sort: sort as string,
-      filter: filter as string,
-      columns: columns ? (columns as string).split(',') : undefined,
-    });
-
-    res.json(result);
-  } catch (error) {
-    console.error('Error querying database:', error);
-    res.status(500).json({ error: 'Failed to query database' });
-  }
-});
-
-// Get available tables
-app.get('/api/tables', async (req, res) => {
-  try {
-    const tables = await tabulaLens.getTables();
-    res.json({ tables });
-  } catch (error) {
-    console.error('Error getting tables:', error);
-    res.status(500).json({ error: 'Failed to get tables' });
-  }
-});
-
-// Get columns for a table
-app.get('/api/columns/:table', async (req, res) => {
-  try {
-    const { table } = req.params;
-    const columns = await tabulaLens.getColumns(table);
-    res.json({ columns });
-  } catch (error) {
-    console.error('Error getting columns:', error);
-    res.status(500).json({ error: 'Failed to get columns' });
-  }
-});
+// Use TabulaLens Express adapter for REST API
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -70,6 +29,7 @@ app.get('/health', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Example backend server running on http://localhost:${PORT}`);
+  console.log('TabulaLens API available at /api/tabula-lens');
   console.log('Make sure to set DATABASE_URL environment variable');
 });
 

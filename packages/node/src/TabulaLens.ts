@@ -1,5 +1,17 @@
 import knex from 'knex';
 
+export class TabulaLensError extends Error {
+  constructor(
+    public statusCode: number,
+    public code: string,
+    message: string,
+    public details?: unknown
+  ) {
+    super(message);
+    this.name = 'TabulaLensError';
+  }
+}
+
 export interface QueryOptions {
   table?: string;
   page?: number;
@@ -29,6 +41,19 @@ export interface QueryResult {
     total: number;
     totalPages: number;
   };
+}
+
+export interface RequestContext {
+  method: string;
+  path: string;
+  query: Record<string, string>;
+  body?: unknown;
+}
+
+export interface ResponseContext {
+  status: number;
+  headers: Record<string, string>;
+  body: unknown;
 }
 
 export class TabulaLens {
@@ -135,6 +160,14 @@ export class TabulaLens {
     return columns;
   }
 
+  async getTableMetadata(table: string): Promise<{
+    name: string;
+    columns: { name: string; type: string }[];
+  }> {
+    const columns = await this.getColumns(table);
+    return { name: table, columns };
+  }
+
   private parseSort(sortString: string): SortOption[] {
     return sortString.split(',').map((sort) => {
       const [column, direction] = sort.split(':');
@@ -147,5 +180,70 @@ export class TabulaLens {
 
   async close(): Promise<void> {
     await this.db.destroy();
+  }
+
+  async handle(request: RequestContext): Promise<ResponseContext> {
+    try {
+      const { method, path, query } = request;
+
+      if (method === 'GET' && path === '/tables') {
+        const tables = await this.getTables();
+        return {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: tables,
+        };
+      }
+
+      if (method === 'GET' && path.match(/^\/tables\/[^/]+$/)) {
+        const table = path.split('/')[2];
+        const metadata = await this.getTableMetadata(table);
+        return {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: metadata,
+        };
+      }
+
+      if (method === 'GET' && path === '/query') {
+        const options: QueryOptions = {
+          table: query.table,
+          page: query.page ? parseInt(query.page, 10) : undefined,
+          limit: query.limit ? parseInt(query.limit, 10) : undefined,
+          sort: query.sort,
+          filter: query.filter,
+          columns: query.columns ? query.columns.split(',') : undefined,
+        };
+        const result = await this.query(options);
+        return {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: result,
+        };
+      }
+
+      throw new TabulaLensError(404, 'NOT_FOUND', 'Route not found');
+    } catch (error) {
+      if (error instanceof TabulaLensError) {
+        return {
+          status: error.statusCode,
+          headers: { 'Content-Type': 'application/json' },
+          body: {
+            error: error.code,
+            message: error.message,
+            details: error.details,
+          },
+        };
+      }
+
+      return {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+        body: {
+          error: 'INTERNAL_SERVER_ERROR',
+          message: 'An unexpected error occurred',
+        },
+      };
+    }
   }
 }

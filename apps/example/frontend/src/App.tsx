@@ -9,12 +9,12 @@ function App() {
 
   useEffect(() => {
     // Fetch available tables
-    fetch('http://localhost:3001/api/tables')
+    fetch('http://localhost:3001/api/tabula-lens/tables')
       .then((res) => res.json())
       .then((data) => {
-        setTables(data.tables || []);
-        if (data.tables && data.tables.length > 0) {
-          setSelectedTable(data.tables[0]);
+        setTables(data || []);
+        if (data && data.length > 0) {
+          setSelectedTable(data[0]);
         }
         setLoading(false);
       })
@@ -76,7 +76,7 @@ function App() {
             <h2>Database Viewer: {selectedTable}</h2>
             <DatabaseViewerWithProvider
               key={selectedTable}
-              endpoint="http://localhost:3001/api/data"
+              endpoint="http://localhost:3001/api/tabula-lens/query"
               initialTable={selectedTable}
               pageSize={10}
             />
