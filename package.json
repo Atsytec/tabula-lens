@@ -15,16 +15,20 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
+    "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
     "eslint": "^8.0.0",
     "eslint-plugin-react": "^7.33.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.8",
     "prettier": "^3.7.4",
+    "tsx": "^4.23.0",
     "turbo": "^2.10.3",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "vite": "^5.0.0"
   },
   "packageManager": "pnpm@9.0.0",
   "lint-staged": {
@@ -38,5 +42,14 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   }
 }
