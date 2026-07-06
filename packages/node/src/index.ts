@@ -14,5 +14,15 @@ export {
   hapiAdapter,
   restifyAdapter,
   nativeAdapter,
+  createNextRouteHandler,
+  createTanStackStartHandler,
+  createRemixHandler,
+  createSvelteKitHandler,
 } from './adapters';
-export type { NativeAdapterOptions } from './adapters';
+export type {
+  NativeAdapterOptions,
+  NextAdapterOptions,
+  TanStackStartAdapterOptions,
+  RemixAdapterOptions,
+  SvelteKitAdapterOptions,
+} from './adapters';
