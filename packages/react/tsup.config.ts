@@ -8,4 +8,12 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   external: ['react', 'react-dom', '@tanstack/react-query', '@tanstack/react-table'],
+  loader: {
+    '.css': 'copy',
+  },
+  banner: {
+    js: `
+      import './DatabaseViewer.module.css';
+    `,
+  },
 })

@@ -1,1 +1,1 @@
-export { DatabaseViewer } from './DatabaseViewer'
+export { DatabaseViewer, DatabaseViewerWithProvider } from './DatabaseViewer'
