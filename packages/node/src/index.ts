@@ -18,6 +18,9 @@ export {
   createTanStackStartHandler,
   createRemixHandler,
   createSvelteKitHandler,
+  createHonoMiddleware,
+  createElysiaHandler,
+  createFreshHandler,
 } from './adapters';
 export type {
   NativeAdapterOptions,
@@ -25,4 +28,7 @@ export type {
   TanStackStartAdapterOptions,
   RemixAdapterOptions,
   SvelteKitAdapterOptions,
+  HonoAdapterOptions,
+  ElysiaAdapterOptions,
+  FreshAdapterOptions,
 } from './adapters';
