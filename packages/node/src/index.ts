@@ -7,4 +7,12 @@ export type {
   SortOption,
   FilterOption,
 } from './TabulaLens';
-export { expressAdapter } from './adapters/express';
+export {
+  expressAdapter,
+  fastifyAdapter,
+  koaAdapter,
+  hapiAdapter,
+  restifyAdapter,
+  nativeAdapter,
+} from './adapters';
+export type { NativeAdapterOptions } from './adapters';
