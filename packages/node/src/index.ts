@@ -9,6 +9,7 @@ export type {
 } from './TabulaLens';
 export {
   expressAdapter,
+  express4Adapter,
   fastifyAdapter,
   koaAdapter,
   hapiAdapter,

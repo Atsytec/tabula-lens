@@ -1,4 +1,5 @@
 export { expressAdapter } from './express';
+export { express4Adapter } from './express4';
 export { fastifyAdapter } from './fastify';
 export { koaAdapter } from './koa';
 export { hapiAdapter } from './hapi';
