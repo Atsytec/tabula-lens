@@ -10,7 +10,7 @@ export function restifyAdapter(
       path: (req.getPath() as string) || (req.url as string) || '/',
       query: req.query as Record<string, string>,
       body: req.body,
-    } as RequestContext;
+    };
 
     const responseContext = await tabulaLens.handle(requestContext);
 

@@ -14,7 +14,7 @@ export function hapiAdapter(
 
     const responseContext = await tabulaLens.handle(requestContext);
 
-    let response = h.response(responseContext.body as never).code(responseContext.status);
+    let response = h.response(responseContext.body as unknown).code(responseContext.status);
 
     Object.entries(responseContext.headers).forEach(([key, value]) => {
       response = response.header(key, value);

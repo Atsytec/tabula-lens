@@ -1,3 +1,4 @@
+import type { Context } from 'hono';
 import { TabulaLens, RequestContext } from '../TabulaLens';
 
 export interface HonoAdapterOptions {
@@ -5,17 +6,7 @@ export interface HonoAdapterOptions {
 }
 
 export function createHonoMiddleware(tabulaLens: TabulaLens, options?: HonoAdapterOptions) {
-  return async (c: {
-    req: {
-      method: string;
-      path: string;
-      query: () => Record<string, string>;
-      json: () => Promise<unknown>;
-    };
-    status: (code: number) => unknown;
-    header: (name: string, value: string) => unknown;
-    json: (data: unknown) => unknown;
-  }) => {
+  return async (c: Context) => {
     const body = options?.parseBody ? await c.req.json().catch(() => undefined) : undefined;
 
     const requestContext: RequestContext = {
@@ -27,7 +18,8 @@ export function createHonoMiddleware(tabulaLens: TabulaLens, options?: HonoAdapt
 
     const responseContext = await tabulaLens.handle(requestContext);
 
-    c.status(responseContext.status);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    c.status(responseContext.status as any);
 
     Object.entries(responseContext.headers).forEach(([key, value]) => {
       c.header(key, value);

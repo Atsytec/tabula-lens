@@ -1,6 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'http';
 import { TabulaLens, RequestContext } from '../TabulaLens';
-import { URL } from 'url';
 
 export interface NativeAdapterOptions {
   parseBody?: (req: IncomingMessage) => Promise<unknown>;
@@ -9,7 +8,8 @@ export interface NativeAdapterOptions {
 export function nativeAdapter(tabulaLens: TabulaLens, options?: NativeAdapterOptions) {
   return async (req: IncomingMessage, res: ServerResponse) => {
     try {
-      const url = new URL(req.url || '', `http://${req.headers.host}`);
+      const host = req.headers.host || 'localhost';
+      const url = new URL(req.url || '/', `http://${host}`);
 
       const body = options?.parseBody ? await options.parseBody(req) : undefined;
 
