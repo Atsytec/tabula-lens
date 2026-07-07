@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -40,7 +41,11 @@ describe('DatabaseViewer', () => {
   });
 
   const renderWithProvider = (component: React.ReactElement) => {
-    return render(<QueryClientProvider client={queryClient}>{component}</QueryClientProvider>);
+    return render(
+      <QueryClientProvider client={queryClient}>
+        {React.cloneElement(component, { enableLogging: false } as Record<string, unknown>)}
+      </QueryClientProvider>
+    );
   };
 
   describe('rendering', () => {
@@ -329,7 +334,7 @@ describe('DatabaseViewerWithProvider', () => {
       json: async () => mockQueryResult,
     });
 
-    render(<DatabaseViewerWithProvider path="http://localhost:3000/api" />);
+    render(<DatabaseViewerWithProvider path="http://localhost:3000/api" enableLogging={false} />);
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Filter records...')).toBeInTheDocument();
@@ -345,7 +350,11 @@ describe('DatabaseViewerWithProvider', () => {
 
     const customClient = new QueryClient();
     render(
-      <DatabaseViewerWithProvider path="http://localhost:3000/api" queryClient={customClient} />
+      <DatabaseViewerWithProvider
+        path="http://localhost:3000/api"
+        queryClient={customClient}
+        enableLogging={false}
+      />
     );
 
     await waitFor(() => {

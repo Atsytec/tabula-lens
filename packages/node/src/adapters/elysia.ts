@@ -1,4 +1,5 @@
 import { TabulaLens, RequestContext } from '../TabulaLens';
+import { generateId } from '../logger';
 
 export interface ElysiaAdapterOptions {
   parseBody?: boolean;
@@ -12,20 +13,46 @@ export function createElysiaHandler(tabulaLens: TabulaLens, options?: ElysiaAdap
     body?: unknown;
     set: { headers: Record<string, string>; status?: number };
   }) => {
-    const requestBody = options?.parseBody ? ctx.body : undefined;
+    const adapterRequestId = generateId();
+    const logger = tabulaLens.getLogger();
 
-    const requestContext: RequestContext = {
+    logger.debug('Elysia adapter received request', {
+      adapterRequestId,
       method: ctx.request.method,
       path: ctx.path,
-      query: ctx.query,
-      body: requestBody,
-    };
+    });
 
-    const responseContext = await tabulaLens.handle(requestContext);
+    try {
+      const requestBody = options?.parseBody ? ctx.body : undefined;
 
-    ctx.set.status = responseContext.status;
-    ctx.set.headers = responseContext.headers;
+      const requestContext: RequestContext = {
+        method: ctx.request.method,
+        path: ctx.path,
+        query: ctx.query,
+        body: requestBody,
+      };
 
-    return responseContext.body;
+      const responseContext = await tabulaLens.handle(requestContext);
+
+      logger.debug('Elysia adapter sending response', {
+        adapterRequestId,
+        status: responseContext.status,
+        contentType: responseContext.headers['Content-Type'],
+      });
+
+      ctx.set.status = responseContext.status;
+      ctx.set.headers = responseContext.headers;
+
+      return responseContext.body;
+    } catch (error) {
+      logger.error('Elysia adapter error', {
+        adapterRequestId,
+        method: ctx.request.method,
+        path: ctx.path,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
   };
 }

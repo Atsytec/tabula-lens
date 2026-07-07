@@ -6,6 +6,7 @@ export type {
   ResponseContext,
   SortOption,
   FilterOption,
+  TabulaLensOptions,
 } from './TabulaLens';
 export {
   expressAdapter,
@@ -33,3 +34,5 @@ export type {
   ElysiaAdapterOptions,
   FreshAdapterOptions,
 } from './adapters';
+export { createLogger, generateId, maskSensitiveData } from './logger';
+export type { Logger, LogContext, LogLevel, LoggerOptions } from './logger';

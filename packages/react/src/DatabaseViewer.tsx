@@ -11,6 +11,7 @@ import {
   SortingState,
   PaginationState,
 } from '@tanstack/react-table';
+import { Logger, createLogger, LogLevel, generateId } from './logger';
 
 // Utility functions for style merging
 const mergeClassName = (base: string, custom?: string) => {
@@ -296,6 +297,14 @@ interface DatabaseViewerProps {
     refetchOnMount?: boolean;
   };
   refetchInterval?: number;
+
+  // Logging options
+  logger?: Logger;
+  enableLogging?: boolean;
+  logLevel?: LogLevel;
+  logFetchErrors?: boolean;
+  logQueryErrors?: boolean;
+  logPerformanceMetrics?: boolean;
 }
 
 // Create a default query client
@@ -342,7 +351,27 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
   onError,
   queryOptions = {},
   refetchInterval,
+  logger: propLogger,
+  enableLogging = process.env.NODE_ENV === 'development',
+  logLevel,
+  logFetchErrors = true,
+  logQueryErrors = true,
+  logPerformanceMetrics = true,
 }) => {
+  const componentId = generateId();
+  const logger = propLogger || createLogger({ level: logLevel || 'silent' });
+
+  useEffect(() => {
+    if (enableLogging && logger) {
+      logger.info('DatabaseViewer mounted', { componentId, path, initialTable });
+    }
+    return () => {
+      if (enableLogging && logger) {
+        logger.info('DatabaseViewer unmounted', { componentId });
+      }
+    };
+  }, [componentId, path, initialTable, enableLogging, logger]);
+
   const [selectedTable, setSelectedTable] = useState(initialTable);
   const [sorting, setSorting] = useState<SortingState>(
     defaultSort ? [{ id: defaultSort.column, desc: defaultSort.direction === 'desc' }] : []
@@ -379,6 +408,20 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['databaseData', url],
     queryFn: async () => {
+      const fetchId = generateId();
+      const startTime = Date.now();
+
+      if (enableLogging && logger) {
+        logger.debug('Fetching data started', {
+          componentId,
+          fetchId,
+          url,
+          table: selectedTable,
+          page: pagination.pageIndex + 1,
+          limit: pagination.pageSize,
+        });
+      }
+
       const requestHeaders: HeadersInit = {
         'Content-Type': 'application/json',
         ...headers,
@@ -390,14 +433,86 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
         Object.assign(requestHeaders, authHeaders);
       }
 
-      const response = await fetch(url, {
-        headers: requestHeaders,
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      try {
+        const response = await fetch(url, {
+          headers: requestHeaders,
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          const errorDetails = {
+            status: response.status,
+            statusText: response.statusText,
+            url: response.url,
+            headers: Object.fromEntries(response.headers.entries()),
+          };
+
+          if (logFetchErrors && enableLogging && logger) {
+            logger.error('HTTP request failed', {
+              componentId,
+              fetchId,
+              ...errorDetails,
+            });
+          }
+
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType?.includes('application/json')) {
+          const text = await response.text();
+          if (logFetchErrors && enableLogging && logger) {
+            logger.error('Unexpected content type', {
+              componentId,
+              fetchId,
+              url,
+              expected: 'application/json',
+              received: contentType,
+              responseStart: text.substring(0, 100),
+            });
+          }
+          throw new Error(`Expected JSON, received ${contentType}`);
+        }
+
+        const data = await response.json();
+        const duration = Date.now() - startTime;
+
+        if (enableLogging && logger) {
+          logger.debug('Fetch completed successfully', {
+            componentId,
+            fetchId,
+            recordCount: data.data?.length || 0,
+            duration,
+          });
+
+          if (logPerformanceMetrics && duration > 2000) {
+            logger.warn('Slow network response', {
+              componentId,
+              fetchId,
+              url,
+              duration,
+              threshold: 2000,
+              recordCount: data.data?.length || 0,
+            });
+          }
+        }
+
+        return data as Promise<QueryResult>;
+      } catch (fetchError) {
+        const duration = Date.now() - startTime;
+        if (logFetchErrors && enableLogging && logger) {
+          logger.error('Data fetch failed', {
+            componentId,
+            fetchId,
+            error: fetchError instanceof Error ? fetchError.message : String(fetchError),
+            stack: fetchError instanceof Error ? fetchError.stack : undefined,
+            url,
+            table: selectedTable,
+            duration,
+          });
+        }
+        throw fetchError;
       }
-      return response.json() as Promise<QueryResult>;
     },
     ...queryOptions,
     refetchInterval,
@@ -407,6 +522,17 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
   const { data: tablesData } = useQuery({
     queryKey: ['tables', path],
     queryFn: async () => {
+      const fetchId = generateId();
+      const startTime = Date.now();
+
+      if (enableLogging && logger) {
+        logger.debug('Fetching tables list started', {
+          componentId,
+          fetchId,
+          url: `${path}/tables`,
+        });
+      }
+
       const requestHeaders: HeadersInit = {
         'Content-Type': 'application/json',
         ...headers,
@@ -417,24 +543,75 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
         Object.assign(requestHeaders, authHeaders);
       }
 
-      const response = await fetch(`${path}/tables`, {
-        headers: requestHeaders,
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      try {
+        const response = await fetch(`${path}/tables`, {
+          headers: requestHeaders,
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          if (logFetchErrors && enableLogging && logger) {
+            logger.error('Tables list fetch failed', {
+              componentId,
+              fetchId,
+              status: response.status,
+              statusText: response.statusText,
+              url: `${path}/tables`,
+            });
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const duration = Date.now() - startTime;
+
+        if (enableLogging && logger) {
+          logger.debug('Tables list fetch completed', {
+            componentId,
+            fetchId,
+            tableCount: data.length || 0,
+            duration,
+          });
+        }
+
+        return data as Promise<string[]>;
+      } catch (fetchError) {
+        const duration = Date.now() - startTime;
+        if (logFetchErrors && enableLogging && logger) {
+          logger.error('Tables list fetch failed', {
+            componentId,
+            fetchId,
+            error: fetchError instanceof Error ? fetchError.message : String(fetchError),
+            stack: fetchError instanceof Error ? fetchError.stack : undefined,
+            url: `${path}/tables`,
+            duration,
+          });
+        }
+        throw fetchError;
       }
-      return response.json() as Promise<string[]>;
     },
     enabled: tableSelector !== 'none',
   });
 
   // Handle errors
   useEffect(() => {
-    if (error && onError) {
-      onError(error as Error);
+    if (error) {
+      if (logQueryErrors && enableLogging && logger) {
+        logger.error('Query error state', {
+          componentId,
+          error: error.message,
+          stack: error.stack,
+          url,
+          table: selectedTable,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      if (onError) {
+        onError(error as Error);
+      }
     }
-  }, [error, onError]);
+  }, [error, onError, componentId, url, selectedTable, logQueryErrors, enableLogging, logger]);
 
   // Define columns dynamically based on the data
   const columns = React.useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
@@ -525,6 +702,13 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
           <select
             value={selectedTable}
             onChange={(e) => {
+              if (enableLogging && logger) {
+                logger.debug('Table selection changed', {
+                  componentId,
+                  previousTable: selectedTable,
+                  newTable: e.target.value,
+                });
+              }
               setSelectedTable(e.target.value);
               setPagination({ pageIndex: 0, pageSize });
             }}
