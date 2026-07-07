@@ -1,5 +1,11 @@
 # @tabula-lens/react
 
+## 0.1.2
+
+### Patch Changes
+
+- Add comprehensive README files for npm packages with complete documentation, API reference, and usage examples.
+
 ## 0.1.1
 
 ### Patch Changes
