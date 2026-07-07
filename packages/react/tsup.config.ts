@@ -1,19 +1,11 @@
-import { defineConfig } from 'tsup'
+import { defineConfig } from 'tsup';
 
 export default defineConfig({
   entry: ['src/index.ts'],
-  format: ['cjs', 'esm'],
+  format: ['esm'],
   dts: true,
   splitting: false,
   sourcemap: true,
   clean: true,
   external: ['react', 'react-dom', '@tanstack/react-query', '@tanstack/react-table'],
-  loader: {
-    '.css': 'copy',
-  },
-  banner: {
-    js: `
-      import './DatabaseViewer.module.css';
-    `,
-  },
-})
+});

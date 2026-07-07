@@ -2,15 +2,15 @@
   "name": "@tabula-lens/node",
   "version": "0.1.2",
   "private": false,
+  "type": "module",
   "description": "Node.js backend SDK for Tabula Lens",
-  "main": "./dist/index.js",
+  "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.mjs"
     }
   },
   "scripts": {
