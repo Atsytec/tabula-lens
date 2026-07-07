@@ -10,7 +10,12 @@ function App() {
   useEffect(() => {
     // Fetch available tables
     fetch('http://localhost:3001/api/tabula-lens/tables')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
         setTables(data || []);
         if (data && data.length > 0) {

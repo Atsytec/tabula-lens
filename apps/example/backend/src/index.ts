@@ -25,7 +25,7 @@ const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://user:password@loc
 const tabulaLens = new TabulaLens(DATABASE_URL);
 
 // Use TabulaLens Express adapter for REST API
-app.use(expressAdapter(tabulaLens) as unknown as RequestHandler);
+app.use('/api/tabula-lens', expressAdapter(tabulaLens) as unknown as RequestHandler);
 
 // Health check
 app.get('/health', (req, res) => {
