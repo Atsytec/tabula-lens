@@ -74,6 +74,8 @@ export interface ClassNames {
   loading?: string;
   /** Error state class name */
   error?: string;
+  /** Retry button class name */
+  retry?: string;
   /** Info text class name */
   info?: string;
 }
