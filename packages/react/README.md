@@ -18,6 +18,8 @@ A powerful React component for viewing database data with built-in pagination, s
 - **Responsive**: Mobile-friendly design with responsive table layouts
 - **Performance**: Powered by TanStack Query for efficient data fetching and caching
 - **Zero Config**: Minimal setup required for basic usage
+- **Modular Architecture**: Component-based design with reusable sub-components, custom hooks, and utility functions
+- **Optimized**: React.memo implementation for performance optimization
 
 ## 📦 Installation
 
@@ -73,6 +75,49 @@ function App() {
   return <DatabaseViewer path="/api/tabula-lens" tableSelector="dropdown" initialTable="users" />;
 }
 ```
+
+## 🏗️ Architecture
+
+The `@tabula-lens/react` package follows a modular architecture with clear separation of concerns:
+
+### Component Structure
+
+```
+src/
+├── DatabaseViewer.tsx              # Main orchestrator component
+├── components/
+│   └── DatabaseViewer/
+│       ├── index.ts                # Public API exports
+│       ├── DatabaseViewer.tsx      # Main component implementation
+│       ├── DatabaseViewer.types.ts # Type definitions
+│       ├── hooks/                  # Custom React hooks
+│       │   ├── useLogger.ts       # Logging functionality
+│       │   ├── useTableState.ts   # Table state management
+│       │   ├── useQueryParams.ts  # Query parameter building
+│       │   └── useDatabaseData.ts # Data fetching logic
+│       ├── components/             # Reusable sub-components
+│       │   ├── LoadingState.tsx   # Loading state display
+│       │   ├── ErrorState.tsx     # Error state display
+│       │   ├── EmptyState.tsx     # Empty state display
+│       │   ├── TableSelector.tsx  # Table selection UI
+│       │   ├── FilterInput.tsx    # Filter input component
+│       │   ├── Pagination.tsx    # Pagination controls
+│       │   └── DataTable.tsx      # Data table rendering
+│       ├── utils/                 # Utility functions
+│       │   ├── fetchHelpers.ts    # Fetch-related utilities
+│       │   ├── validationHelpers.ts # Validation utilities
+│       │   └── styleHelpers.ts    # Style merging utilities
+│       └── styles/                # Default styles
+│           └── defaultStyles.ts  # Default style definitions
+```
+
+### Key Design Principles
+
+1. **Single Responsibility**: Each module has a clear, focused purpose
+2. **Reusability**: Sub-components and hooks can be used independently
+3. **Performance**: All components use React.memo to prevent unnecessary re-renders
+4. **Type Safety**: Comprehensive TypeScript types throughout
+5. **Testability**: Modular design enables easier unit testing
 
 ## 📖 API Reference
 
@@ -162,6 +207,17 @@ The main component for displaying database data with a full-featured table inter
 | Prop      | Type                     | Default     | Description                          |
 | --------- | ------------------------ | ----------- | ------------------------------------ |
 | `onError` | `(error: Error) => void` | `undefined` | Callback function for error handling |
+
+#### Logging Props
+
+| Prop                    | Type                                     | Default                                  | Description             |
+| ----------------------- | ---------------------------------------- | ---------------------------------------- | ----------------------- |
+| `logger`                | `Logger`                                 | `undefined`                              | Custom logger instance  |
+| `enableLogging`         | `boolean`                                | `process.env.NODE_ENV === 'development'` | Enable/disable logging  |
+| `logLevel`              | `'debug' \| 'info' \| 'warn' \| 'error'` | `'info'`                                 | Logging level           |
+| `logFetchErrors`        | `boolean`                                | `true`                                   | Log fetch errors        |
+| `logQueryErrors`        | `boolean`                                | `true`                                   | Log query errors        |
+| `logPerformanceMetrics` | `boolean`                                | `true`                                   | Log performance metrics |
 
 ## 🎨 Customization Examples
 
@@ -258,6 +314,119 @@ function App() {
       }}
       refetchInterval={60000} // Auto-refresh every minute
     />
+  );
+}
+```
+
+## 🔧 Advanced Usage
+
+### Using Custom Hooks
+
+The package exports custom hooks that can be used independently for advanced use cases:
+
+```jsx
+import { useDatabaseData, useTableState, useQueryParams } from '@tabula-lens/react';
+
+function CustomDatabaseViewer({ path }) {
+  const tableState = useTableState({
+    initialTable: 'users',
+    pageSize: 20,
+  });
+
+  const queryParams = useQueryParams({
+    selectedTable: tableState.selectedTable,
+    pagination: tableState.pagination,
+    sorting: tableState.sorting,
+    filter: tableState.debouncedFilter,
+  });
+
+  const { data, tables, isLoading, error, refetch } = useDatabaseData({
+    path,
+    selectedTable: tableState.selectedTable,
+    queryParams,
+  });
+
+  // Custom implementation using the hooks
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return <div>{/* Your custom UI implementation */}</div>;
+}
+```
+
+### Using Utility Functions
+
+Utility functions are available for data validation and fetch operations:
+
+```jsx
+import {
+  isQueryResult,
+  validatePagination,
+  sanitizeColumnData,
+  createAuthenticatedHeaders,
+  validateResponse,
+} from '@tabula-lens/react';
+
+// Type guard for query results
+if (isQueryResult(data)) {
+  console.log('Valid query result:', data);
+}
+
+// Validate pagination parameters
+const pagination = validatePagination({ page: 1, limit: 10 });
+
+// Sanitize column data for safe rendering
+const safeData = sanitizeColumnData(rawData);
+
+// Create authenticated headers
+const headers = await createAuthenticatedHeaders({
+  staticHeaders: { 'Content-Type': 'application/json' },
+  getAuthHeaders: async () => ({
+    Authorization: `Bearer ${token}`,
+  }),
+});
+
+// Validate API response
+const isValid = await validateResponse(response);
+```
+
+### Using Sub-Components
+
+Individual sub-components can be used for custom implementations:
+
+```jsx
+import {
+  LoadingState,
+  ErrorState,
+  EmptyState,
+  TableSelector,
+  FilterInput,
+  Pagination,
+  DataTable,
+} from '@tabula-lens/react';
+
+function CustomViewer() {
+  return (
+    <div>
+      <LoadingState isLoading={isLoading} />
+      <ErrorState error={error} onRetry={retry} />
+      <EmptyState isEmpty={isEmpty} />
+      <TableSelector
+        mode="dropdown"
+        tables={['users', 'posts', 'comments']}
+        selectedTable={selectedTable}
+        onSelectTable={setSelectedTable}
+      />
+      <FilterInput value={filter} onChange={setFilter} placeholder="Search..." />
+      <DataTable data={data} columns={columns} sorting={sorting} onSort={setSorting} />
+      <Pagination
+        pageIndex={pageIndex}
+        pageCount={pageCount}
+        pageSize={pageSize}
+        onPageChange={setPageIndex}
+        onPageSizeChange={setPageSize}
+      />
+    </div>
   );
 }
 ```
@@ -415,6 +584,66 @@ function App() {
   );
 }
 ```
+
+## 🔄 Migration Guide
+
+### From Previous Versions
+
+If you're upgrading from a previous version of `@tabula-lens/react`, the API remains fully backward compatible. All existing props and functionality work exactly as before.
+
+### New Features in v0.2.0
+
+Version 0.2.0 introduced a major refactoring to improve code organization and performance:
+
+**What Changed:**
+
+- Internal component structure is now modular with sub-components
+- Custom hooks are now available for advanced use cases
+- Utility functions are exported for reuse
+- All components now use React.memo for performance optimization
+- Better TypeScript type definitions
+
+**What Didn't Change:**
+
+- All public APIs remain the same
+- All props work exactly as before
+- No breaking changes to existing implementations
+- Drop-in replacement for previous versions
+
+### Using New Features
+
+While the main component API remains unchanged, you can now take advantage of the new modular structure:
+
+**Before (still works):**
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+<DatabaseViewer path="/api/database" />;
+```
+
+**After (with new modular options):**
+
+```jsx
+// Use custom hooks for advanced scenarios
+import { useDatabaseData, useTableState } from '@tabula-lens/react';
+
+// Use utility functions
+import { sanitizeColumnData, validateResponse } from '@tabula-lens/react';
+
+// Use individual sub-components
+import { DataTable, Pagination, FilterInput } from '@tabula-lens/react';
+```
+
+### Performance Improvements
+
+The refactoring includes automatic performance optimizations:
+
+- All sub-components are memoized with React.memo
+- Render functions are optimized to prevent unnecessary re-renders
+- Style calculations use useMemo for efficiency
+- Pagination calculations are memoized
+
+No code changes are needed to benefit from these improvements.
 
 ## 🎯 Type Definitions
 
