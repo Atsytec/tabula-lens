@@ -17,6 +17,10 @@ export type {
 // Style utilities
 export { mergeClassName, mergeStyle } from './utils/styleHelpers';
 
+// Fetch and validation utilities
+export * from './utils/fetchHelpers';
+export * from './utils/validationHelpers';
+
 // Style definitions
 export { defaultStyles } from './styles/defaultStyles';
 export type { StyleOverrides, Theme } from './styles/styleTypes';

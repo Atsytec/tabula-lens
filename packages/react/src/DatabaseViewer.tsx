@@ -11,6 +11,7 @@ import { useLogger } from './components/DatabaseViewer/hooks/useLogger';
 import { useTableState } from './components/DatabaseViewer/hooks/useTableState';
 import { useQueryParams } from './components/DatabaseViewer/hooks/useQueryParams';
 import { useDatabaseData } from './components/DatabaseViewer/hooks/useDatabaseData';
+import { sanitizeColumnData } from './components/DatabaseViewer/utils/validationHelpers';
 import {
   LoadingState,
   ErrorState,
@@ -136,7 +137,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
     return queryResult.columns.map((columnName: string) => ({
       accessorKey: columnName,
       header: columnName,
-      cell: (info: { getValue: () => unknown }) => String(info.getValue() ?? ''),
+      cell: (info: { getValue: () => unknown }) => sanitizeColumnData(info.getValue()),
       ...(enableSorting &&
         (!sortableColumns || sortableColumns.includes(columnName)) && {
           enableSorting: true,
