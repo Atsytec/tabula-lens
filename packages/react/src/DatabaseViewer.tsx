@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { useEffect, useMemo } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,16 +8,17 @@ import {
   getFilteredRowModel,
   flexRender,
   ColumnDef,
-  SortingState,
-  PaginationState,
 } from '@tanstack/react-table';
-import { createLogger, generateId } from './logger';
 import type {
   DatabaseViewerProps,
   QueryResult,
 } from './components/DatabaseViewer/DatabaseViewer.types';
 import { mergeClassName, mergeStyle } from './components/DatabaseViewer/utils/styleHelpers';
 import { defaultStyles } from './components/DatabaseViewer/styles/defaultStyles';
+import { useLogger } from './components/DatabaseViewer/hooks/useLogger';
+import { useTableState } from './components/DatabaseViewer/hooks/useTableState';
+import { useQueryParams } from './components/DatabaseViewer/hooks/useQueryParams';
+import { useDatabaseData } from './components/DatabaseViewer/hooks/useDatabaseData';
 
 // Create a default query client
 const defaultQueryClient = new QueryClient({
@@ -70,267 +71,66 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
   logQueryErrors = true,
   logPerformanceMetrics = true,
 }) => {
-  const componentId = generateId();
-  const logger = propLogger || createLogger({ level: logLevel || 'silent' });
-
-  useEffect(() => {
-    if (enableLogging && logger) {
-      logger.info('DatabaseViewer mounted', { componentId, path, initialTable });
-    }
-    return () => {
-      if (enableLogging && logger) {
-        logger.info('DatabaseViewer unmounted', { componentId });
-      }
-    };
-  }, [componentId, path, initialTable, enableLogging, logger]);
-
-  const [selectedTable, setSelectedTable] = useState<string | undefined>(initialTable);
-  const [sorting, setSorting] = useState<SortingState>(
-    defaultSort ? [{ id: defaultSort.column, desc: defaultSort.direction === 'desc' }] : []
-  );
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize,
+  // Initialize logger with lifecycle logging
+  const { logger, componentId } = useLogger({
+    logger: propLogger,
+    enableLogging,
+    logLevel,
   });
-  const [filter, setFilter] = useState('');
-  const [debouncedFilter, setDebouncedFilter] = useState('');
 
-  // Debounce filter
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedFilter(filter);
-    }, filterDebounceMs);
-    return () => clearTimeout(handler);
-  }, [filter, filterDebounceMs]);
+  // Initialize table state
+  const tableState = useTableState({
+    initialTable,
+    pageSize,
+    defaultSort,
+    filterDebounceMs,
+  });
 
   // Build query parameters
-  const queryParams = new URLSearchParams();
-  if (selectedTable) {
-    queryParams.set('table', selectedTable);
-  }
-  queryParams.set('page', String(pagination.pageIndex + 1));
-  queryParams.set('limit', String(pagination.pageSize));
-  if (sorting.length > 0) {
-    queryParams.set('sort', sorting.map((s) => `${s.id}:${s.desc ? 'desc' : 'asc'}`).join(','));
-  }
-  if (debouncedFilter) {
-    queryParams.set('filter', debouncedFilter);
-  }
-
-  const url = `${path}/query?${queryParams.toString()}`;
-
-  // Fetch data with TanStack Query
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['databaseData', url],
-    enabled: !!selectedTable,
-    queryFn: async () => {
-      const fetchId = generateId();
-      const startTime = Date.now();
-
-      if (enableLogging && logger) {
-        logger.debug('Fetching data started', {
-          componentId,
-          fetchId,
-          url,
-          table: selectedTable || 'none',
-          page: pagination.pageIndex + 1,
-          limit: pagination.pageSize,
-        });
-      }
-
-      const requestHeaders: HeadersInit = {
-        'Content-Type': 'application/json',
-        ...headers,
-      };
-
-      // Add custom auth headers
-      if (getAuthHeaders) {
-        const authHeaders = await getAuthHeaders();
-        Object.assign(requestHeaders, authHeaders);
-      }
-
-      try {
-        const response = await fetch(url, {
-          headers: requestHeaders,
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          const errorDetails = {
-            status: response.status,
-            statusText: response.statusText,
-            url: response.url,
-            headers: Object.fromEntries(response.headers.entries()),
-          };
-
-          if (logFetchErrors && enableLogging && logger) {
-            logger.error('HTTP request failed', {
-              componentId,
-              fetchId,
-              ...errorDetails,
-            });
-          }
-
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType?.includes('application/json')) {
-          const text = await response.text();
-          if (logFetchErrors && enableLogging && logger) {
-            logger.error('Unexpected content type', {
-              componentId,
-              fetchId,
-              url,
-              expected: 'application/json',
-              received: contentType,
-              responseStart: text.substring(0, 100),
-            });
-          }
-          throw new Error(`Expected JSON, received ${contentType}`);
-        }
-
-        const data = await response.json();
-        const duration = Date.now() - startTime;
-
-        if (enableLogging && logger) {
-          logger.debug('Fetch completed successfully', {
-            componentId,
-            fetchId,
-            recordCount: data.data?.length || 0,
-            duration,
-          });
-
-          if (logPerformanceMetrics && duration > 2000) {
-            logger.warn('Slow network response', {
-              componentId,
-              fetchId,
-              url,
-              duration,
-              threshold: 2000,
-              recordCount: data.data?.length || 0,
-            });
-          }
-        }
-
-        return data as Promise<QueryResult>;
-      } catch (fetchError) {
-        const duration = Date.now() - startTime;
-        if (logFetchErrors && enableLogging && logger) {
-          logger.error('Data fetch failed', {
-            componentId,
-            fetchId,
-            error: fetchError instanceof Error ? fetchError.message : String(fetchError),
-            stack: fetchError instanceof Error ? fetchError.stack : undefined,
-            url,
-            table: selectedTable || 'none',
-            duration,
-          });
-        }
-        throw fetchError;
-      }
-    },
-    ...queryOptions,
-    refetchInterval,
+  const queryParams = useQueryParams({
+    selectedTable: tableState.selectedTable,
+    pagination: tableState.pagination,
+    sorting: tableState.sorting,
+    filter: tableState.debouncedFilter,
   });
 
-  // Fetch tables list
-  const { data: tablesData } = useQuery({
-    queryKey: ['tables', path],
-    queryFn: async () => {
-      const fetchId = generateId();
-      const startTime = Date.now();
-
-      if (enableLogging && logger) {
-        logger.debug('Fetching tables list started', {
-          componentId,
-          fetchId,
-          url: `${path}/tables`,
-        });
-      }
-
-      const requestHeaders: HeadersInit = {
-        'Content-Type': 'application/json',
-        ...headers,
-      };
-
-      if (getAuthHeaders) {
-        const authHeaders = await getAuthHeaders();
-        Object.assign(requestHeaders, authHeaders);
-      }
-
-      try {
-        const response = await fetch(`${path}/tables`, {
-          headers: requestHeaders,
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          if (logFetchErrors && enableLogging && logger) {
-            logger.error('Tables list fetch failed', {
-              componentId,
-              fetchId,
-              status: response.status,
-              statusText: response.statusText,
-              url: `${path}/tables`,
-            });
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const duration = Date.now() - startTime;
-
-        if (enableLogging && logger) {
-          logger.debug('Tables list fetch completed', {
-            componentId,
-            fetchId,
-            tableCount: data.length || 0,
-            duration,
-          });
-        }
-
-        return data as Promise<string[]>;
-      } catch (fetchError) {
-        const duration = Date.now() - startTime;
-        if (logFetchErrors && enableLogging && logger) {
-          logger.error('Tables list fetch failed', {
-            componentId,
-            fetchId,
-            error: fetchError instanceof Error ? fetchError.message : String(fetchError),
-            stack: fetchError instanceof Error ? fetchError.stack : undefined,
-            url: `${path}/tables`,
-            duration,
-          });
-        }
-        throw fetchError;
-      }
-    },
-    enabled: tableSelector !== 'none',
+  // Fetch data and tables
+  const { data, tables, isLoading, error, refetch } = useDatabaseData({
+    path,
+    selectedTable: tableState.selectedTable,
+    queryParams,
+    getAuthHeaders,
+    headers,
+    logger,
+    componentId,
+    logFetchErrors,
+    logPerformanceMetrics,
+    queryOptions,
+    refetchInterval,
+    tableSelectorMode: tableSelector,
   });
 
   // Handle errors
   useEffect(() => {
     if (error) {
-      if (logQueryErrors && enableLogging && logger) {
+      if (logQueryErrors && logger) {
         logger.error('Query error state', {
           componentId,
           error: error.message,
           stack: error.stack,
-          url,
-          table: selectedTable || 'none',
+          table: tableState.selectedTable || 'none',
           timestamp: new Date().toISOString(),
         });
       }
 
       if (onError) {
-        onError(error as Error);
+        onError(error);
       }
     }
-  }, [error, onError, componentId, url, selectedTable, logQueryErrors, enableLogging, logger]);
+  }, [error, onError, componentId, tableState.selectedTable, logQueryErrors, logger]);
 
   // Define columns dynamically based on the data
-  const columns = React.useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
+  const columns = useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
     const queryResult = data as QueryResult | undefined;
     if (!queryResult?.columns) return [];
     return queryResult.columns.map((columnName: string) => ({
@@ -353,11 +153,18 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     state: {
-      sorting,
-      pagination,
+      sorting: tableState.sorting,
+      pagination: tableState.pagination,
     },
-    onSortingChange: setSorting,
-    onPaginationChange: setPagination,
+    onSortingChange: (updater) => {
+      const newSorting = typeof updater === 'function' ? updater(tableState.sorting) : updater;
+      tableState.setSorting(newSorting);
+    },
+    onPaginationChange: (updater) => {
+      const newPagination =
+        typeof updater === 'function' ? updater(tableState.pagination) : updater;
+      tableState.setPagination(newPagination);
+    },
     pageCount: (data as QueryResult | undefined)?.pagination?.totalPages ?? 0,
     manualPagination: true,
     enableMultiSort: multiSort,
@@ -401,13 +208,13 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
 
   // Render table selector
   const renderTableSelector = () => {
-    if (tableSelector === 'none' || !tablesData) return null;
+    if (tableSelector === 'none' || !tables || !Array.isArray(tables)) return null;
 
     if (tableSelectorComponent) {
       return React.createElement(tableSelectorComponent, {
-        tables: tablesData as string[],
-        selectedTable,
-        onSelectTable: setSelectedTable,
+        tables: tables as string[],
+        selectedTable: tableState.selectedTable,
+        onSelectTable: tableState.setSelectedTable,
       });
     }
 
@@ -419,21 +226,21 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
         >
           <label style={{ marginRight: '0.5rem', fontWeight: 500 }}>{tableSelectorLabel}:</label>
           <select
-            value={selectedTable || ''}
+            value={tableState.selectedTable || ''}
             onChange={(e) => {
-              if (enableLogging && logger) {
+              if (logger) {
                 logger.debug('Table selection changed', {
                   componentId,
-                  previousTable: selectedTable || 'none',
+                  previousTable: tableState.selectedTable || 'none',
                   newTable: e.target.value,
                 });
               }
-              setSelectedTable(e.target.value);
-              setPagination({ pageIndex: 0, pageSize });
+              tableState.setSelectedTable(e.target.value);
+              tableState.setPagination({ pageIndex: 0, pageSize });
             }}
             style={mergeStyle(defaultStyles.filterInput, styles.filterInput)}
           >
-            {(tablesData as string[]).map((table) => (
+            {(tables as string[]).map((table) => (
               <option key={table} value={table}>
                 {table}
               </option>
@@ -457,17 +264,17 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
           className={classNames.tableSelectorSidebar}
         >
           <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>{tableSelectorLabel}</div>
-          {(tablesData as string[]).map((table) => (
+          {(tables as string[]).map((table) => (
             <button
               key={table}
               onClick={() => {
-                setSelectedTable(table);
-                setPagination({ pageIndex: 0, pageSize });
+                tableState.setSelectedTable(table);
+                tableState.setPagination({ pageIndex: 0, pageSize });
               }}
               style={{
                 padding: '0.5rem',
                 textAlign: 'left',
-                backgroundColor: selectedTable === table ? '#e9ecef' : 'white',
+                backgroundColor: tableState.selectedTable === table ? '#e9ecef' : 'white',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
                 cursor: 'pointer',
@@ -489,8 +296,8 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
 
     if (filterComponent) {
       return React.createElement(filterComponent, {
-        value: filter,
-        onChange: setFilter,
+        value: tableState.filter,
+        onChange: tableState.setFilter,
       });
     }
 
@@ -499,8 +306,8 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
         <input
           type="text"
           placeholder={filterPlaceholder}
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+          value={tableState.filter}
+          onChange={(e) => tableState.setFilter(e.target.value)}
           style={mergeStyle(defaultStyles.filterInput, styles.filterInput)}
           className={classNames.filterInput}
         />
