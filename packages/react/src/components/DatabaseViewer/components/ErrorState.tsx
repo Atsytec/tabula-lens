@@ -13,28 +13,23 @@ export interface ErrorStateProps {
   styles?: Styles;
 }
 
-export const ErrorState: React.FC<ErrorStateProps> = ({
-  error,
-  onRetry,
-  customComponent,
-  className,
-  classNames = {},
-  style,
-  styles = {},
-}) => {
-  if (customComponent) {
-    return React.createElement(customComponent, { error, retry: onRetry });
-  }
+export const ErrorState: React.FC<ErrorStateProps> = React.memo(
+  ({ error, onRetry, customComponent, className, classNames = {}, style, styles = {} }) => {
+    if (customComponent) {
+      return React.createElement(customComponent, { error, retry: onRetry });
+    }
 
-  return (
-    <div
-      style={mergeStyle(defaultStyles.error, styles.error, style)}
-      className={className || classNames.error}
-    >
-      <p>Error loading data: {error.message}</p>
-      <button onClick={onRetry} style={mergeStyle(defaultStyles.retry, styles.retry)}>
-        Retry
-      </button>
-    </div>
-  );
-};
+    return (
+      <div
+        style={mergeStyle(defaultStyles.error, styles.error, style)}
+        className={className || classNames.error}
+      >
+        <p>Error loading data: {error.message}</p>
+        <button onClick={onRetry} style={mergeStyle(defaultStyles.retry, styles.retry)}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+);
+ErrorState.displayName = 'ErrorState';

@@ -11,25 +11,22 @@ export interface LoadingStateProps {
   styles?: Styles;
 }
 
-export const LoadingState: React.FC<LoadingStateProps> = ({
-  customComponent,
-  className,
-  classNames = {},
-  style,
-  styles = {},
-}) => {
-  if (customComponent) {
-    return React.createElement(customComponent);
-  }
+export const LoadingState: React.FC<LoadingStateProps> = React.memo(
+  ({ customComponent, className, classNames = {}, style, styles = {} }) => {
+    if (customComponent) {
+      return React.createElement(customComponent);
+    }
 
-  return (
-    <div
-      style={mergeStyle(defaultStyles.loading, styles.loading, style)}
-      className={className || classNames.loading}
-    >
-      <div style={mergeStyle(defaultStyles.spinner, styles.spinner)} />
-      <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-      <p>Loading data...</p>
-    </div>
-  );
-};
+    return (
+      <div
+        style={mergeStyle(defaultStyles.loading, styles.loading, style)}
+        className={className || classNames.loading}
+      >
+        <div style={mergeStyle(defaultStyles.spinner, styles.spinner)} />
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+        <p>Loading data...</p>
+      </div>
+    );
+  }
+);
+LoadingState.displayName = 'LoadingState';

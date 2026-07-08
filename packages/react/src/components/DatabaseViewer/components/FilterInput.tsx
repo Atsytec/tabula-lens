@@ -17,36 +17,39 @@ export interface FilterInputProps {
   styles?: Styles;
 }
 
-export const FilterInput: React.FC<FilterInputProps> = ({
-  value,
-  onChange,
-  placeholder = 'Filter records...',
-  customComponent,
-  className,
-  classNames = {},
-  style,
-  styles = {},
-}) => {
-  if (customComponent) {
-    return React.createElement(customComponent, {
-      value,
-      onChange,
-    });
-  }
+export const FilterInput: React.FC<FilterInputProps> = React.memo(
+  ({
+    value,
+    onChange,
+    placeholder = 'Filter records...',
+    customComponent,
+    className,
+    classNames = {},
+    style,
+    styles = {},
+  }) => {
+    if (customComponent) {
+      return React.createElement(customComponent, {
+        value,
+        onChange,
+      });
+    }
 
-  return (
-    <div
-      style={mergeStyle(defaultStyles.filter, styles.filter, style)}
-      className={className || classNames.filter}
-    >
-      <input
-        type="text"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={mergeStyle(defaultStyles.filterInput, styles.filterInput)}
-        className={classNames.filterInput}
-      />
-    </div>
-  );
-};
+    return (
+      <div
+        style={mergeStyle(defaultStyles.filter, styles.filter, style)}
+        className={className || classNames.filter}
+      >
+        <input
+          type="text"
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          style={mergeStyle(defaultStyles.filterInput, styles.filterInput)}
+          className={classNames.filterInput}
+        />
+      </div>
+    );
+  }
+);
+FilterInput.displayName = 'FilterInput';
