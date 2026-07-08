@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Popover } from '@base-ui/react/popover';
+import { Checkbox } from '@base-ui/react/checkbox';
 
 export interface FilterColumnSelectorProps {
   availableColumns: string[];
@@ -19,35 +21,14 @@ export const FilterColumnSelector: React.FC<FilterColumnSelectorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tempSelected, setTempSelected] = useState<string[]>(selectedColumns);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync tempSelected with selectedColumns when it changes (e.g., table switch)
   useEffect(() => {
     setTempSelected(selectedColumns);
   }, [selectedColumns]);
 
-  // Handle Escape key to close dropdown
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        setIsOpen(false);
-        setTempSelected(selectedColumns);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isOpen, selectedColumns]);
-
-  const handleToggleColumn = (column: string) => {
-    setTempSelected((prev) =>
-      prev.includes(column) ? prev.filter((c) => c !== column) : [...prev, column]
-    );
+  const handleToggleColumn = (column: string, checked: boolean) => {
+    setTempSelected((prev) => (checked ? [...prev, column] : prev.filter((c) => c !== column)));
   };
 
   const handleSelectAll = () => {
@@ -88,86 +69,89 @@ export const FilterColumnSelector: React.FC<FilterColumnSelectorProps> = ({
 
   return (
     <div className={`filter-column-selector ${className}`}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="filter-column-selector-button"
-        aria-expanded={isOpen}
-        aria-haspopup="true"
-      >
-        <span>
-          Filter Columns: {selectedColumns.length > 0 ? selectedColumns.join(', ') : 'All'}
-        </span>
-        <span className={`arrow ${isOpen ? 'open' : ''}`}>▼</span>
-      </button>
+      <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
+        <Popover.Trigger className="filter-column-selector-button">
+          <span>
+            Filter Columns: {selectedColumns.length > 0 ? selectedColumns.join(', ') : 'All'}
+          </span>
+          <span className={`arrow ${isOpen ? 'open' : ''}`}>▼</span>
+        </Popover.Trigger>
 
-      {isOpen && (
-        <div
-          ref={dropdownRef}
-          className="filter-column-selector-dropdown"
-          role="listbox"
-          aria-modal="true"
-          aria-label="Filter columns"
-        >
-          <div className="filter-column-selector-header">
-            <button
-              type="button"
-              onClick={handleSelectAll}
-              className="filter-column-selector-action"
-              disabled={tempSelected.length === availableColumns.length}
-            >
-              Select All
-            </button>
-            <button
-              type="button"
-              onClick={handleDeselectAll}
-              className="filter-column-selector-action"
-              disabled={tempSelected.length === 0}
-            >
-              Deselect All
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="filter-column-selector-action"
-              disabled={isResetDisabled()}
-            >
-              Reset to Default
-            </button>
-          </div>
+        <Popover.Portal>
+          <Popover.Positioner sideOffset={8}>
+            <Popover.Popup className="filter-column-selector-dropdown">
+              <div className="filter-column-selector-header">
+                <button
+                  type="button"
+                  onClick={handleSelectAll}
+                  className="filter-column-selector-action"
+                  disabled={tempSelected.length === availableColumns.length}
+                >
+                  Select All
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeselectAll}
+                  className="filter-column-selector-action"
+                  disabled={tempSelected.length === 0}
+                >
+                  Deselect All
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="filter-column-selector-action"
+                  disabled={isResetDisabled()}
+                >
+                  Reset to Default
+                </button>
+              </div>
 
-          <div className="filter-column-selector-list" role="group" aria-label="Available columns">
-            {availableColumns.map((column) => (
-              <label key={column} className="filter-column-selector-item">
-                <input
-                  type="checkbox"
-                  checked={tempSelected.includes(column)}
-                  onChange={() => handleToggleColumn(column)}
-                  className="filter-column-selector-checkbox"
-                />
-                <span className={`column-name ${isDefault(column) ? 'default' : ''}`}>
-                  {column}
-                  {isDefault(column) && <span className="default-badge">default</span>}
-                </span>
-              </label>
-            ))}
-          </div>
+              <div
+                className="filter-column-selector-list"
+                role="group"
+                aria-label="Available columns"
+              >
+                {availableColumns.map((column) => (
+                  <label key={column} className="filter-column-selector-item">
+                    <Checkbox.Root
+                      checked={tempSelected.includes(column)}
+                      onCheckedChange={(checked) => handleToggleColumn(column, checked === true)}
+                      className="filter-column-selector-checkbox"
+                    >
+                      <Checkbox.Indicator className="filter-column-selector-checkbox-indicator">
+                        ✓
+                      </Checkbox.Indicator>
+                    </Checkbox.Root>
+                    <span className={`column-name ${isDefault(column) ? 'default' : ''}`}>
+                      {column}
+                      {isDefault(column) && <span className="default-badge">default</span>}
+                    </span>
+                  </label>
+                ))}
+              </div>
 
-          <div className="filter-column-selector-footer">
-            <button type="button" onClick={handleCancel} className="filter-column-selector-cancel">
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleApply}
-              className="filter-column-selector-apply"
-              disabled={tempSelected.length === 0}
-            >
-              Apply ({tempSelected.length})
-            </button>
-          </div>
-        </div>
-      )}
+              <div className="filter-column-selector-footer">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="filter-column-selector-cancel"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApply}
+                  className="filter-column-selector-apply"
+                  disabled={tempSelected.length === 0}
+                >
+                  Apply ({tempSelected.length})
+                </button>
+              </div>
+            </Popover.Popup>
+          </Popover.Positioner>
+        </Popover.Portal>
+      </Popover.Root>
     </div>
   );
 };

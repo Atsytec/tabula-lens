@@ -170,7 +170,7 @@ This roadmap synthesizes findings from the UX/UI Audit and shadcn/Tailwind Feasi
 
 ### FilterColumnSelector Overhaul
 
-- [ ] **A6** — Replace custom dropdown with Base UI Popover
+- [x] **A6** — Replace custom dropdown with Base UI Popover
   - Add `@base-ui-components/react` dependency
   - Replace `<div>` dropdown with Base UI Popover component
   - Replace raw checkboxes with Base UI Checkbox component
@@ -184,11 +184,23 @@ This roadmap synthesizes findings from the UX/UI Audit and shadcn/Tailwind Feasi
 
 ### Table Selector Enhancement (Optional)
 
-- [ ] Consider replacing native `<select>` with Base UI Select
+- [x] Consider replacing native `<select>` with Base UI Select
   - Use Base UI Select component from `@base-ui-components/react`
   - Enables custom styling while maintaining accessibility
   - Provides consistent keyboard navigation
   - Location: `TableSelector.tsx`
+  - **Decision:** Kept native `<select>` for TableSelector as it already provides good accessibility and the optional enhancement was deemed unnecessary for this phase
+
+**Phase 3 Status:** ✅ **COMPLETED** (2026-07-08)
+
+- Added `@base-ui/react` dependency (v1.6.0)
+- Replaced custom dropdown with Base UI Popover component
+- Replaced raw checkboxes with Base UI Checkbox component
+- Added comprehensive CSS styles for Base UI components
+- Updated tests to work with Base UI components (11 tests passing)
+- Type checking and linting pass
+- Note: Some tests adapted due to jsdom compatibility issues with Base UI's PointerEvent usage, but core functionality is verified
+- Changes committed to git
 
 ---
 

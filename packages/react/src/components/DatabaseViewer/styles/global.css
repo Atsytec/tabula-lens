@@ -34,3 +34,176 @@
 .tlens-pagination-button:disabled:hover {
   background-color: var(--tlens-primary, #3498db);
 }
+
+/* FilterColumnSelector styles */
+.filter-column-selector-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background-color: var(--tlens-bg-header, #f8f9fa);
+  border: 1px solid var(--tlens-border, #ddd);
+  border-radius: var(--tlens-radius, 4px);
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--tlens-text, #333);
+  transition: background-color 0.2s;
+}
+
+.filter-column-selector-button:hover {
+  background-color: var(--tlens-bg-hover, #e9ecef);
+}
+
+.filter-column-selector-button .arrow {
+  margin-left: 0.5rem;
+  transition: transform 0.2s;
+}
+
+.filter-column-selector-button .arrow.open {
+  transform: rotate(180deg);
+}
+
+.filter-column-selector-dropdown {
+  background-color: white;
+  border: 1px solid var(--tlens-border, #ddd);
+  border-radius: var(--tlens-radius, 4px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  min-width: 300px;
+  max-width: 400px;
+  z-index: 1000;
+}
+
+.filter-column-selector-header {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--tlens-border, #ddd);
+}
+
+.filter-column-selector-action {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  background-color: var(--tlens-bg-header, #f8f9fa);
+  border: 1px solid var(--tlens-border, #ddd);
+  border-radius: var(--tlens-radius, 4px);
+  cursor: pointer;
+  color: var(--tlens-text, #333);
+}
+
+.filter-column-selector-action:hover:not(:disabled) {
+  background-color: var(--tlens-bg-hover, #e9ecef);
+}
+
+.filter-column-selector-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.filter-column-selector-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.filter-column-selector-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  cursor: pointer;
+}
+
+.filter-column-selector-checkbox {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--tlens-border, #ddd);
+  border-radius: 2px;
+  background-color: white;
+  cursor: pointer;
+}
+
+.filter-column-selector-checkbox[data-checked] {
+  background-color: var(--tlens-primary, #3498db);
+  border-color: var(--tlens-primary, #3498db);
+}
+
+.filter-column-selector-checkbox-indicator {
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.filter-column-selector-checkbox:focus-visible {
+  outline: 2px solid var(--tlens-primary, #3498db);
+  outline-offset: 2px;
+}
+
+.column-name {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--tlens-text, #333);
+}
+
+.column-name.default {
+  font-weight: 500;
+}
+
+.default-badge {
+  font-size: 0.625rem;
+  background-color: var(--tlens-bg-header, #f8f9fa);
+  color: var(--tlens-text, #666);
+  padding: 0.125rem 0.25rem;
+  border-radius: 2px;
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+}
+
+.filter-column-selector-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--tlens-border, #ddd);
+}
+
+.filter-column-selector-cancel {
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border: 1px solid var(--tlens-border, #ddd);
+  border-radius: var(--tlens-radius, 4px);
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--tlens-text, #333);
+}
+
+.filter-column-selector-cancel:hover {
+  background-color: var(--tlens-bg-hover, #e9ecef);
+}
+
+.filter-column-selector-apply {
+  padding: 0.5rem 1rem;
+  background-color: var(--tlens-primary, #3498db);
+  border: 1px solid var(--tlens-primary, #3498db);
+  border-radius: var(--tlens-radius, 4px);
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: white;
+}
+
+.filter-column-selector-apply:hover:not(:disabled) {
+  background-color: #2980b9;
+  border-color: #2980b9;
+}
+
+.filter-column-selector-apply:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

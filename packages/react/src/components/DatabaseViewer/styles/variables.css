@@ -9,6 +9,7 @@
   --tlens-primary-hover: #2980b9;
 
   /* Text colors */
+  --tlens-text: #333;
   --tlens-text-primary: #333;
   --tlens-text-secondary: #666;
 
@@ -51,6 +52,7 @@
     --tlens-primary-hover: #3498db;
 
     /* Text colors */
+    --tlens-text: #e0e0e0;
     --tlens-text-primary: #e0e0e0;
     --tlens-text-secondary: #b0b0b0;
 
