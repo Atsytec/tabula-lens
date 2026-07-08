@@ -1,6 +1,6 @@
 {
   "name": "@tabula-lens/react",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": false,
   "type": "module",
   "description": "React component for viewing database data",
