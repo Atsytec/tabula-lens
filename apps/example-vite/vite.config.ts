@@ -5,5 +5,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    proxy: {
+      '/api/tabula-lens': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+    },
   },
 });

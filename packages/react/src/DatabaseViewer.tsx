@@ -233,7 +233,7 @@ interface DatabaseViewerProps {
   tableSelectorLabel?: string;
   tableSelectorComponent?: React.FC<{
     tables: string[];
-    selectedTable: string;
+    selectedTable: string | undefined;
     onSelectTable: (table: string) => void;
   }>;
 
@@ -319,8 +319,8 @@ const defaultQueryClient = new QueryClient({
 
 export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
   path,
-  initialTable = 'users',
-  tableSelector = 'none',
+  initialTable,
+  tableSelector = 'dropdown',
   tableSelectorLabel = 'Select Table',
   tableSelectorComponent,
   getAuthHeaders,
@@ -372,7 +372,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
     };
   }, [componentId, path, initialTable, enableLogging, logger]);
 
-  const [selectedTable, setSelectedTable] = useState(initialTable);
+  const [selectedTable, setSelectedTable] = useState<string | undefined>(initialTable);
   const [sorting, setSorting] = useState<SortingState>(
     defaultSort ? [{ id: defaultSort.column, desc: defaultSort.direction === 'desc' }] : []
   );
@@ -392,21 +392,25 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
   }, [filter, filterDebounceMs]);
 
   // Build query parameters
-  const queryParams = new URLSearchParams({
-    table: selectedTable,
-    page: String(pagination.pageIndex + 1),
-    limit: String(pagination.pageSize),
-    ...(sorting.length > 0 && {
-      sort: sorting.map((s) => `${s.id}:${s.desc ? 'desc' : 'asc'}`).join(','),
-    }),
-    ...(debouncedFilter && { filter: debouncedFilter }),
-  });
+  const queryParams = new URLSearchParams();
+  if (selectedTable) {
+    queryParams.set('table', selectedTable);
+  }
+  queryParams.set('page', String(pagination.pageIndex + 1));
+  queryParams.set('limit', String(pagination.pageSize));
+  if (sorting.length > 0) {
+    queryParams.set('sort', sorting.map((s) => `${s.id}:${s.desc ? 'desc' : 'asc'}`).join(','));
+  }
+  if (debouncedFilter) {
+    queryParams.set('filter', debouncedFilter);
+  }
 
   const url = `${path}/query?${queryParams.toString()}`;
 
   // Fetch data with TanStack Query
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['databaseData', url],
+    enabled: !!selectedTable,
     queryFn: async () => {
       const fetchId = generateId();
       const startTime = Date.now();
@@ -416,7 +420,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
           componentId,
           fetchId,
           url,
-          table: selectedTable,
+          table: selectedTable || 'none',
           page: pagination.pageIndex + 1,
           limit: pagination.pageSize,
         });
@@ -507,7 +511,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
             error: fetchError instanceof Error ? fetchError.message : String(fetchError),
             stack: fetchError instanceof Error ? fetchError.stack : undefined,
             url,
-            table: selectedTable,
+            table: selectedTable || 'none',
             duration,
           });
         }
@@ -602,7 +606,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
           error: error.message,
           stack: error.stack,
           url,
-          table: selectedTable,
+          table: selectedTable || 'none',
           timestamp: new Date().toISOString(),
         });
       }
@@ -700,12 +704,12 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
         <div style={styles.filter} className={classNames.tableSelectorDropdown}>
           <label style={{ marginRight: '0.5rem', fontWeight: 500 }}>{tableSelectorLabel}:</label>
           <select
-            value={selectedTable}
+            value={selectedTable || ''}
             onChange={(e) => {
               if (enableLogging && logger) {
                 logger.debug('Table selection changed', {
                   componentId,
-                  previousTable: selectedTable,
+                  previousTable: selectedTable || 'none',
                   newTable: e.target.value,
                 });
               }
