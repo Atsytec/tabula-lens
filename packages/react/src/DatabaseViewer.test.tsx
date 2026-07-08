@@ -50,13 +50,18 @@ describe('DatabaseViewer', () => {
 
   describe('rendering', () => {
     it('should render with required props', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => mockQueryResult,
       });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('Filter records...')).toBeInTheDocument();
@@ -64,13 +69,18 @@ describe('DatabaseViewer', () => {
     });
 
     it('should render with custom initial table', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => mockQueryResult,
       });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" initialTable="posts" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="posts"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('Filter records...')).toBeInTheDocument();
@@ -78,13 +88,19 @@ describe('DatabaseViewer', () => {
     });
 
     it('should render with custom page size', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => mockQueryResult,
       });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" pageSize={20} />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          pageSize={20}
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('Filter records...')).toBeInTheDocument();
@@ -96,7 +112,13 @@ describe('DatabaseViewer', () => {
     it('should show loading spinner while fetching', () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(() => new Promise(() => {}));
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       expect(screen.getByText('Loading data...')).toBeInTheDocument();
     });
@@ -106,7 +128,13 @@ describe('DatabaseViewer', () => {
     it('should show error message on fetch failure', async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByText(/Error loading data/)).toBeInTheDocument();
@@ -117,7 +145,13 @@ describe('DatabaseViewer', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global.fetch as any).mockRejectedValue(new Error('Network error'));
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByText('Retry')).toBeInTheDocument();
@@ -133,7 +167,13 @@ describe('DatabaseViewer', () => {
           json: async () => mockQueryResult,
         });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByText('Retry')).toBeInTheDocument();
@@ -149,13 +189,18 @@ describe('DatabaseViewer', () => {
 
   describe('data display', () => {
     it('should render table with data', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => mockQueryResult,
       });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByText('John Doe')).toBeInTheDocument();
@@ -164,13 +209,18 @@ describe('DatabaseViewer', () => {
     });
 
     it('should render column headers', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => mockQueryResult,
       });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByText('id')).toBeInTheDocument();
@@ -180,17 +230,23 @@ describe('DatabaseViewer', () => {
     });
 
     it('should show empty state when no data', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      const emptyResult = {
+        data: [],
+        columns: ['id', 'name'],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+      };
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
-        json: async () => ({
-          data: [],
-          columns: ['id', 'name'],
-          pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
-        }),
+        json: async () => emptyResult,
       });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByText('No data available')).toBeInTheDocument();
@@ -198,13 +254,18 @@ describe('DatabaseViewer', () => {
     });
 
     it('should show total records count', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => mockQueryResult,
       });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByText('Total records: 2')).toBeInTheDocument();
@@ -214,13 +275,18 @@ describe('DatabaseViewer', () => {
 
   describe('filtering', () => {
     it('should update filter input on change', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => mockQueryResult,
       });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText('Filter records...')).toBeInTheDocument();
@@ -235,13 +301,18 @@ describe('DatabaseViewer', () => {
 
   describe('pagination', () => {
     it('should render pagination controls', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => mockQueryResult,
       });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByText('<<')).toBeInTheDocument();
@@ -252,13 +323,18 @@ describe('DatabaseViewer', () => {
     });
 
     it('should show current page info', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => mockQueryResult,
       });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByText(/Page 1 of 1/)).toBeInTheDocument();
@@ -266,13 +342,18 @@ describe('DatabaseViewer', () => {
     });
 
     it('should have page size selector', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => mockQueryResult,
       });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         expect(screen.getByText('Show 10')).toBeInTheDocument();
@@ -282,13 +363,19 @@ describe('DatabaseViewer', () => {
 
   describe('sorting', () => {
     it('should render sortable column headers', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => mockQueryResult,
       });
 
-      renderWithProvider(<DatabaseViewer path="http://localhost:3000/api" enableSorting={true} />);
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          enableSorting={true}
+          tableSelector="none"
+        />
+      );
 
       await waitFor(() => {
         const nameHeader = screen.getByText('name');
@@ -299,8 +386,7 @@ describe('DatabaseViewer', () => {
 
   describe('authentication', () => {
     it('should include custom headers when provided', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (global.fetch as any).mockResolvedValue({
+      (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: true,
         json: async () => mockQueryResult,
       });
@@ -308,6 +394,8 @@ describe('DatabaseViewer', () => {
       renderWithProvider(
         <DatabaseViewer
           path="http://localhost:3000/api"
+          initialTable="users"
+          tableSelector="none"
           headers={{ 'X-Custom-Header': 'test-value' }}
         />
       );
@@ -328,13 +416,19 @@ describe('DatabaseViewer', () => {
 
 describe('DatabaseViewerWithProvider', () => {
   it('should render with default query client', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (global.fetch as any).mockResolvedValue({
+    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
       json: async () => mockQueryResult,
     });
 
-    render(<DatabaseViewerWithProvider path="http://localhost:3000/api" enableLogging={false} />);
+    render(
+      <DatabaseViewerWithProvider
+        path="http://localhost:3000/api"
+        initialTable="users"
+        tableSelector="none"
+        enableLogging={false}
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Filter records...')).toBeInTheDocument();
@@ -342,8 +436,7 @@ describe('DatabaseViewerWithProvider', () => {
   });
 
   it('should render with custom query client', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (global.fetch as any).mockResolvedValue({
+    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
       json: async () => mockQueryResult,
     });
@@ -352,6 +445,8 @@ describe('DatabaseViewerWithProvider', () => {
     render(
       <DatabaseViewerWithProvider
         path="http://localhost:3000/api"
+        initialTable="users"
+        tableSelector="none"
         queryClient={customClient}
         enableLogging={false}
       />
