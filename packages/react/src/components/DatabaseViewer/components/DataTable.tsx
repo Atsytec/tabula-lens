@@ -31,6 +31,8 @@ export interface DataTableProps {
   style?: React.CSSProperties;
   styles?: Styles;
   emptyComponent?: React.FC;
+  hasActiveFilter?: boolean;
+  onClearFilter?: () => void;
 }
 
 export const DataTable: React.FC<DataTableProps> = React.memo(
@@ -50,6 +52,8 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
     style,
     styles = {},
     emptyComponent,
+    hasActiveFilter = false,
+    onClearFilter,
   }) => {
     // Default sort icon component
     const DefaultSortIcon: React.FC<{ direction: 'asc' | 'desc' | null }> = ({ direction }) => {
@@ -137,16 +141,14 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
                     classNames={classNames}
                     style={styles.empty}
                     styles={styles}
+                    hasActiveFilter={hasActiveFilter}
+                    onClearFilter={onClearFilter}
                   />
                 </td>
               </tr>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
+                <tr key={row.id} className="tlens-table-row">
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}

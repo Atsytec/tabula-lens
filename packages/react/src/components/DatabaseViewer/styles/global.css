@@ -1,0 +1,36 @@
+/**
+ * Global styles for Tabula Lens components
+ * Includes animations and interaction states
+ */
+
+/* Spinner animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Table row hover effect */
+.tlens-table-row:hover {
+  background-color: var(--tlens-bg-hover, #f8f9fa);
+}
+
+/* Table row focus effect for keyboard navigation */
+.tlens-table-row:focus-within {
+  background-color: var(--tlens-bg-hover, #f8f9fa);
+  outline: 2px solid var(--tlens-primary, #3498db);
+  outline-offset: -2px;
+}
+
+/* Pagination button disabled state */
+.tlens-pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tlens-pagination-button:disabled:hover {
+  background-color: var(--tlens-primary, #3498db);
+}

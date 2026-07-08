@@ -23,7 +23,6 @@ export const LoadingState: React.FC<LoadingStateProps> = React.memo(
         className={className || classNames.loading}
       >
         <div style={mergeStyle(defaultStyles.spinner, styles.spinner)} />
-        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
         <p>Loading data...</p>
       </div>
     );

@@ -533,6 +533,8 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
             classNames={classNames}
             styles={styles}
             emptyComponent={emptyComponent}
+            hasActiveFilter={tableState.debouncedFilter.length > 0}
+            onClearFilter={() => tableState.setFilter('')}
           />
 
           {/* Bottom Pagination */}

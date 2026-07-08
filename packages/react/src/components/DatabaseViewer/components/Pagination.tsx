@@ -72,7 +72,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(
           onClick={() => onPageChange(0)}
           disabled={!canPreviousPage}
           style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
-          className={classNames.paginationButton}
+          className={`${classNames.paginationButton} tlens-pagination-button`}
           aria-label="First page"
         >
           {'<<'}
@@ -81,7 +81,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(
           onClick={() => onPageChange(pageIndex - 1)}
           disabled={!canPreviousPage}
           style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
-          className={classNames.paginationButton}
+          className={`${classNames.paginationButton} tlens-pagination-button`}
           aria-label="Previous page"
         >
           {'<'}
@@ -96,7 +96,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(
           onClick={() => onPageChange(pageIndex + 1)}
           disabled={!canNextPage}
           style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
-          className={classNames.paginationButton}
+          className={`${classNames.paginationButton} tlens-pagination-button`}
           aria-label="Next page"
         >
           {'>'}
@@ -105,7 +105,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(
           onClick={() => onPageChange(pageCount - 1)}
           disabled={!canNextPage}
           style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
-          className={classNames.paginationButton}
+          className={`${classNames.paginationButton} tlens-pagination-button`}
           aria-label="Last page"
         >
           {'>>'}

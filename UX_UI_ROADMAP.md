@@ -85,14 +85,14 @@ This roadmap synthesizes findings from the UX/UI Audit and shadcn/Tailwind Feasi
 
 ### Visual Design Improvements
 
-- [ ] **V1** — Migrate to CSS custom properties
+- [x] **V1** — Migrate to CSS custom properties
   - Replace hardcoded colors in `defaultStyles.ts` with CSS variables
   - Use `--tlens-*` prefix for all variables
   - Provide fallback values in all `var()` calls
   - Example: `backgroundColor: 'var(--tlens-primary, #3498db)'`
   - Location: `styles/defaultStyles.ts`
 
-- [ ] **V2** — Add dark mode support
+- [x] **V2** — Add dark mode support
   - Add `@media (prefers-color-scheme: dark)` block
   - Define dark mode values for all CSS variables
   - Variables to theme:
@@ -105,7 +105,7 @@ This roadmap synthesizes findings from the UX/UI Audit and shadcn/Tailwind Feasi
     - `--tlens-font` (font family)
   - Location: `styles/defaultStyles.ts` or new CSS file
 
-- [ ] **V3** — Remove hardcoded font family
+- [x] **V3** — Remove hardcoded font family
   - Remove `fontFamily` from `defaultStyles.container`
   - Let component inherit from consumer's DOM
   - Make font family opt-in via `styles` prop only
@@ -113,26 +113,26 @@ This roadmap synthesizes findings from the UX/UI Audit and shadcn/Tailwind Feasi
 
 ### Interaction Design Improvements
 
-- [ ] **I2** — Replace inline `<style>` spinner
+- [x] **I2** — Replace inline `<style>` spinner
   - Remove raw `<style>` tag injection from `LoadingState`
   - Use CSS module or data attribute with global stylesheet
   - Prevents duplicate style tags and CSP issues
   - Location: `LoadingState.tsx`
 
-- [ ] **A5** — Replace row hover inline event handlers
+- [x] **A5** — Replace row hover inline event handlers
   - Remove `onMouseEnter`/`onMouseLeave` from table rows
   - Implement CSS class with `:hover` and `:focus-within` selectors
   - Ensures keyboard navigation support
   - Location: `DataTable.tsx`
 
-- [ ] **I4** — Fix FilterColumnSelector array comparison
+- [x] **I4** — Fix FilterColumnSelector array comparison
   - Replace `JSON.stringify` comparison with set-based comparison
   - Prevents order-dependent bugs in "Reset to Default" button
   - Location: `FilterColumnSelector.tsx`
 
 ### Empty State & Error State Improvements
 
-- [ ] **V4** — Improve EmptyState component
+- [x] **V4** — Improve EmptyState component
   - Add icon or illustration
   - Add context-aware messaging:
     - "No records match your filter — try clearing it" (when filter active)
@@ -140,12 +140,25 @@ This roadmap synthesizes findings from the UX/UI Audit and shadcn/Tailwind Feasi
   - Add clear action button when filter is active
   - Location: `EmptyState.tsx`
 
-- [ ] **V5** — Improve ErrorState visual hierarchy
+- [x] **V5** — Improve ErrorState visual hierarchy
   - Add error icon
   - Display human-friendly message to users
   - Log technical details via console.error (logging system already handles this)
   - Distinguish between recoverable and fatal errors
   - Location: `ErrorState.tsx`
+
+**Phase 2 Status:** ✅ **COMPLETED** (2026-07-08)
+
+- All visual design improvements implemented (V1, V2, V3)
+- All interaction design improvements implemented (I2, A5, I4)
+- All empty state and error state improvements implemented (V4, V5)
+- CSS custom properties with dark mode support added
+- Inline style tags removed and replaced with CSS classes
+- Enhanced EmptyState with context-aware messaging and clear button
+- Enhanced ErrorState with visual hierarchy and human-friendly messages
+- Comprehensive tests added (66 new tests across 5 test files)
+- Type checking and linting pass
+- Changes committed to git
 
 ---
 
