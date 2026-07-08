@@ -441,20 +441,20 @@ describe('TabulaLens', () => {
 });
 ```
 
+## 📝 License
+
+Currently no license. All rights reserved.
+
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
-
-## 📄 License
-
-MIT License - see LICENSE file for details
+Contributions will be allowed soon.
 
 ## 🔗 Links
 
-- [Main Repository](https://github.com/yourusername/tabula-lens)
-- [React Package](https://www.npmjs.com/package/@tabula-lens/react)
-- [Documentation](https://tabula-lens.dev)
-- [Issues](https://github.com/yourusername/tabula-lens/issues)
+<!-- - [Main Repository](https://github.com/yourusername/tabula-lens) -->
+<!-- - [Node Package](https://www.npmjs.com/package/@tabula-lens/node) -->
+<!-- - [Documentation](https://tabula-lens.dev) -->
+<!-- - [Issues](https://github.com/yourusername/tabula-lens/issues) -->
 
 ## 🙏 Acknowledgments
 

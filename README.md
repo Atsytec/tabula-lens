@@ -565,7 +565,3 @@ Currently no license. All rights reserved.
 ## 🤝 Contributing
 
 Contributions will be allowed soon.
-
-## 📧 Contact
-
-For questions or support, please open an issue on GitHub.
