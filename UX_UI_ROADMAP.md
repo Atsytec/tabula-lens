@@ -24,29 +24,29 @@ This roadmap synthesizes findings from the UX/UI Audit and shadcn/Tailwind Feasi
 
 ### Accessibility Fixes
 
-- [ ] **A1** — Add `aria-label` to all pagination buttons
+- [x] **A1** — Add `aria-label` to all pagination buttons
   - First page: `aria-label="First page"`
   - Previous page: `aria-label="Previous page"`
   - Next page: `aria-label="Next page"`
   - Last page: `aria-label="Last page"`
   - Location: `Pagination.tsx`
 
-- [ ] **A2** — Add `aria-sort` to sortable column headers
+- [x] **A2** — Add `aria-sort` to sortable column headers
   - Add dynamic `aria-sort` attribute to `<th>` elements
   - Values: `'ascending'`, `'descending'`, or `'none'`
   - Location: `DataTable.tsx`
 
-- [ ] **A3** — Add proper `<label>` for filter input
+- [x] **A3** — Add proper `<label>` for filter input
   - Add visually hidden label: `<label htmlFor="db-filter" className="sr-only">Filter records</label>`
   - Add `id="db-filter"` to input element
   - Location: `FilterInput.tsx`
 
-- [ ] **A4** — Fix table selector label association
+- [x] **A4** — Fix table selector label association
   - Change `<label>` to use `htmlFor="table-selector"`
   - Add `id="table-selector"` to `<select>` element
   - Location: `TableSelector.tsx`
 
-- [ ] **A6** — Add ARIA role to FilterColumnSelector dropdown
+- [x] **A6** — Add ARIA role to FilterColumnSelector dropdown
   - Add `role="dialog"` or `role="listbox"` to dropdown panel
   - Add `aria-modal` and `aria-label` attributes
   - Implement proper focus management (focus trap, Escape to close)
@@ -55,13 +55,13 @@ This roadmap synthesizes findings from the UX/UI Audit and shadcn/Tailwind Feasi
 
 ### Developer Experience Fixes
 
-- [ ] **D1** — Remove or implement dead props
+- [x] **D1** — Remove or implement dead props
   - Remove `filterColumnSelectorPosition` prop (currently dead code with eslint-disable)
   - Remove `filterColumnSelectorComponent` prop (currently dead code with eslint-disable)
   - Update TypeScript interfaces and JSDoc
   - Location: `DatabaseViewer.types.ts`, `DatabaseViewer.tsx`
 
-- [ ] **D7** — Fix `sanitizeColumnData` double-escaping
+- [x] **D7** — Fix `sanitizeColumnData` double-escaping
   - Remove HTML escaping from `sanitizeColumnData` function
   - Let React handle escaping at render time
   - Prevents display issues like `Tom &amp; Jerry`

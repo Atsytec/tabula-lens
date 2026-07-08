@@ -80,6 +80,8 @@ export interface ClassNames {
   info?: string;
   /** Filter column selector class name */
   filterColumnSelector?: string;
+  /** Screen reader only class name */
+  srOnly?: string;
 }
 
 /**
@@ -137,6 +139,8 @@ export interface Styles {
   info?: React.CSSProperties;
   /** Filter column selector styles */
   filterColumnSelector?: React.CSSProperties;
+  /** Screen reader only styles */
+  srOnly?: React.CSSProperties;
 }
 
 /**
@@ -261,22 +265,6 @@ export interface DatabaseViewerProps {
    * @default true
    */
   showFilterColumnSelector?: boolean;
-
-  /**
-   * Position of the filter column selector
-   * @default 'filter'
-   */
-  filterColumnSelectorPosition?: 'top' | 'bottom' | 'filter';
-
-  /**
-   * Custom filter column selector component
-   */
-  filterColumnSelectorComponent?: React.FC<{
-    availableColumns: string[];
-    selectedColumns: string[];
-    onSelectionChange: (columns: string[]) => void;
-    defaultColumns: string[];
-  }>;
 
   /**
    * Whether to show pagination controls

@@ -42,7 +42,7 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
     pagination,
     onPaginationChange,
     pageCount,
-    enableSorting: _enableSorting,
+    enableSorting,
     multiSort = false,
     sortIcon,
     className,
@@ -83,7 +83,7 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
       pageCount,
       manualPagination: true,
       enableMultiSort: multiSort,
-      enableSorting: _enableSorting,
+      enableSorting,
     });
 
     return (
@@ -95,24 +95,35 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    onClick={header.column.getToggleSortingHandler()}
-                    style={mergeStyle(
-                      header.column.getIsSorted() ? defaultStyles.sorted : defaultStyles.sortable,
-                      defaultStyles.header,
-                      styles.header,
-                      header.column.getIsSorted() ? styles.sorted : styles.sortable
-                    )}
-                    className={classNames.header}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                    <SortIcon direction={header.column.getIsSorted() as 'asc' | 'desc' | null} />
-                  </th>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const sortDirection = header.column.getIsSorted();
+                  const ariaSortValue =
+                    sortDirection === 'asc'
+                      ? 'ascending'
+                      : sortDirection === 'desc'
+                        ? 'descending'
+                        : 'none';
+
+                  return (
+                    <th
+                      key={header.id}
+                      onClick={header.column.getToggleSortingHandler()}
+                      style={mergeStyle(
+                        header.column.getIsSorted() ? defaultStyles.sorted : defaultStyles.sortable,
+                        defaultStyles.header,
+                        styles.header,
+                        header.column.getIsSorted() ? styles.sorted : styles.sortable
+                      )}
+                      className={classNames.header}
+                      aria-sort={enableSorting ? ariaSortValue : undefined}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                      <SortIcon direction={header.column.getIsSorted() as 'asc' | 'desc' | null} />
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>

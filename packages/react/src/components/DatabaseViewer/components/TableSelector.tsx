@@ -68,8 +68,11 @@ export const TableSelector: React.FC<TableSelectorProps> = React.memo(
           style={mergeStyle(defaultStyles.filter, styles.filter, style)}
           className={className || classNames.tableSelectorDropdown}
         >
-          <label style={{ marginRight: '0.5rem', fontWeight: 500 }}>{label}:</label>
+          <label htmlFor="table-selector" style={{ marginRight: '0.5rem', fontWeight: 500 }}>
+            {label}:
+          </label>
           <select
+            id="table-selector"
             value={selectedTable || ''}
             onChange={(e) => {
               handleTableSelect(e.target.value);

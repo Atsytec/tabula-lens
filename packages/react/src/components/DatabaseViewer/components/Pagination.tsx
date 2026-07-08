@@ -73,6 +73,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(
           disabled={!canPreviousPage}
           style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
           className={classNames.paginationButton}
+          aria-label="First page"
         >
           {'<<'}
         </button>
@@ -81,6 +82,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(
           disabled={!canPreviousPage}
           style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
           className={classNames.paginationButton}
+          aria-label="Previous page"
         >
           {'<'}
         </button>
@@ -95,6 +97,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(
           disabled={!canNextPage}
           style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
           className={classNames.paginationButton}
+          aria-label="Next page"
         >
           {'>'}
         </button>
@@ -103,6 +106,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(
           disabled={!canNextPage}
           style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
           className={classNames.paginationButton}
+          aria-label="Last page"
         >
           {'>>'}
         </button>

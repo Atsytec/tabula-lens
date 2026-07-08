@@ -257,10 +257,6 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
     logPerformanceMetrics = true,
     defaultFilterColumns,
     showFilterColumnSelector = true,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    filterColumnSelectorPosition = 'filter',
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    filterColumnSelectorComponent,
   }) => {
     // Initialize logger with lifecycle logging
     const { logger, componentId } = useLogger({

@@ -86,7 +86,9 @@ export const validatePagination = (pagination: {
 };
 
 /**
- * Sanitizes column data to prevent XSS and ensure type safety
+ * Sanitizes column data to ensure type safety
+ * Note: React handles HTML escaping automatically at render time,
+ * so we don't escape here to prevent double-escaping issues
  *
  * @param value - Value to sanitize
  * @returns Sanitized value as a string
@@ -98,13 +100,8 @@ export const sanitizeColumnData = (value: unknown): string => {
 
   // Convert to string if possible
   if (typeof value === 'string') {
-    // Basic HTML escaping to prevent XSS
-    return value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    // Return string as-is - React will handle escaping at render time
+    return value;
   }
 
   if (typeof value === 'number' || typeof value === 'boolean') {

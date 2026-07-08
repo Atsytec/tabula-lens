@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export interface FilterColumnSelectorProps {
   availableColumns: string[];
@@ -19,11 +19,30 @@ export const FilterColumnSelector: React.FC<FilterColumnSelectorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tempSelected, setTempSelected] = useState<string[]>(selectedColumns);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync tempSelected with selectedColumns when it changes (e.g., table switch)
   useEffect(() => {
     setTempSelected(selectedColumns);
   }, [selectedColumns]);
+
+  // Handle Escape key to close dropdown
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+        setTempSelected(selectedColumns);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen, selectedColumns]);
 
   const handleToggleColumn = (column: string) => {
     setTempSelected((prev) =>
@@ -56,6 +75,17 @@ export const FilterColumnSelector: React.FC<FilterColumnSelectorProps> = ({
 
   const isDefault = (column: string) => defaultColumns.includes(column);
 
+  // Use set-based comparison for "Reset to Default" button
+  const isResetDisabled = () => {
+    const tempSet = new Set(tempSelected);
+    const defaultSet = new Set(defaultColumns);
+    if (tempSet.size !== defaultSet.size) return false;
+    for (const item of tempSet) {
+      if (!defaultSet.has(item)) return false;
+    }
+    return true;
+  };
+
   return (
     <div className={`filter-column-selector ${className}`}>
       <button
@@ -72,7 +102,13 @@ export const FilterColumnSelector: React.FC<FilterColumnSelectorProps> = ({
       </button>
 
       {isOpen && (
-        <div className="filter-column-selector-dropdown">
+        <div
+          ref={dropdownRef}
+          className="filter-column-selector-dropdown"
+          role="listbox"
+          aria-modal="true"
+          aria-label="Filter columns"
+        >
           <div className="filter-column-selector-header">
             <button
               type="button"
@@ -94,13 +130,13 @@ export const FilterColumnSelector: React.FC<FilterColumnSelectorProps> = ({
               type="button"
               onClick={handleReset}
               className="filter-column-selector-action"
-              disabled={JSON.stringify(tempSelected) === JSON.stringify(defaultColumns)}
+              disabled={isResetDisabled()}
             >
               Reset to Default
             </button>
           </div>
 
-          <div className="filter-column-selector-list">
+          <div className="filter-column-selector-list" role="group" aria-label="Available columns">
             {availableColumns.map((column) => (
               <label key={column} className="filter-column-selector-item">
                 <input

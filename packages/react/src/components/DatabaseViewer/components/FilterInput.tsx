@@ -40,7 +40,15 @@ export const FilterInput: React.FC<FilterInputProps> = React.memo(
         style={mergeStyle(defaultStyles.filter, styles.filter, style)}
         className={className || classNames.filter}
       >
+        <label
+          htmlFor="db-filter"
+          style={mergeStyle(defaultStyles.srOnly, styles.srOnly)}
+          className={classNames.srOnly}
+        >
+          Filter records
+        </label>
         <input
+          id="db-filter"
           type="text"
           placeholder={placeholder}
           value={value}
