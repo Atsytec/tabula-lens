@@ -11,301 +11,13 @@ import {
   SortingState,
   PaginationState,
 } from '@tanstack/react-table';
-import { Logger, createLogger, LogLevel, generateId } from './logger';
-
-// Utility functions for style merging
-const mergeClassName = (base: string, custom?: string) => {
-  if (!custom) return base;
-  return `${base} ${custom}`;
-};
-
-const mergeStyle = (
-  base: React.CSSProperties,
-  custom?: React.CSSProperties
-): React.CSSProperties => {
-  if (!custom) return base;
-  return { ...base, ...custom };
-};
-
-// Inline styles for simplicity in bundling
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const styles = {
-  container: {
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    color: '#333',
-    maxWidth: '100%',
-    margin: 0,
-    padding: '1rem',
-  },
-  loading: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '2rem',
-    gap: '1rem',
-  },
-  spinner: {
-    width: '40px',
-    height: '40px',
-    border: '4px solid #f3f3f3',
-    borderTop: '4px solid #3498db',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-  },
-  error: {
-    padding: '1rem',
-    backgroundColor: '#fee',
-    border: '1px solid #fcc',
-    borderRadius: '4px',
-    color: '#c33',
-  },
-  retry: {
-    marginTop: '0.5rem',
-    padding: '0.5rem 1rem',
-    backgroundColor: '#c33',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  filter: {
-    marginBottom: '1rem',
-  },
-  filterInput: {
-    width: '100%',
-    padding: '0.5rem',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    fontSize: '1rem',
-  },
-  tableWrapper: {
-    overflowX: 'auto' as const,
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    marginBottom: '1rem',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse' as const,
-    backgroundColor: 'white',
-  },
-  th: {
-    padding: '0.75rem',
-    textAlign: 'left' as const,
-    borderBottom: '1px solid #ddd',
-    backgroundColor: '#f8f9fa',
-    fontWeight: 600,
-    position: 'sticky' as const,
-    top: 0,
-  },
-  td: {
-    padding: '0.75rem',
-    textAlign: 'left' as const,
-    borderBottom: '1px solid #ddd',
-  },
-  empty: {
-    textAlign: 'center' as const,
-    padding: '2rem',
-    color: '#666',
-  },
-  sortable: {
-    cursor: 'pointer',
-    userSelect: 'none' as const,
-  },
-  sorted: {
-    cursor: 'pointer',
-    userSelect: 'none' as const,
-    backgroundColor: '#e9ecef',
-  },
-  pagination: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    marginBottom: '1rem',
-    flexWrap: 'wrap' as const,
-  },
-  paginationButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#3498db',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  paginationInfo: {
-    padding: '0 1rem',
-    fontWeight: 500,
-  },
-  pageSize: {
-    padding: '0.5rem',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  info: {
-    textAlign: 'center' as const,
-    color: '#666',
-    fontSize: '0.875rem',
-  },
-};
-
-// Types matching the backend response
-interface QueryResult {
-  data: Record<string, unknown>[];
-  columns: string[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-// Style customization types
-interface ClassNames {
-  container?: string;
-  tableWrapper?: string;
-  table?: string;
-  header?: string;
-  cell?: string;
-  filter?: string;
-  filterInput?: string;
-  pagination?: string;
-  paginationButton?: string;
-  paginationInfo?: string;
-  pageSize?: string;
-  tableSelector?: string;
-  tableSelectorDropdown?: string;
-  tableSelectorSidebar?: string;
-  empty?: string;
-  loading?: string;
-  error?: string;
-  info?: string;
-}
-
-interface Styles {
-  container?: React.CSSProperties;
-  tableWrapper?: React.CSSProperties;
-  table?: React.CSSProperties;
-  th?: React.CSSProperties;
-  td?: React.CSSProperties;
-  header?: React.CSSProperties;
-  cell?: React.CSSProperties;
-  sortable?: React.CSSProperties;
-  sorted?: React.CSSProperties;
-  filter?: React.CSSProperties;
-  filterInput?: React.CSSProperties;
-  pagination?: React.CSSProperties;
-  paginationButton?: React.CSSProperties;
-  paginationInfo?: React.CSSProperties;
-  pageSize?: React.CSSProperties;
-  tableSelector?: React.CSSProperties;
-  tableSelectorDropdown?: React.CSSProperties;
-  tableSelectorSidebar?: React.CSSProperties;
-  empty?: React.CSSProperties;
-  loading?: React.CSSProperties;
-  spinner?: React.CSSProperties;
-  error?: React.CSSProperties;
-  retry?: React.CSSProperties;
-  info?: React.CSSProperties;
-}
-
-// Table selector types
-type TableSelectorMode = 'dropdown' | 'sidebar' | 'none';
-
-// Filter types
-type FilterPosition = 'top' | 'bottom' | 'both';
-
-// Pagination types
-type PaginationPosition = 'top' | 'bottom' | 'both';
-
-// DatabaseViewer props
-interface DatabaseViewerProps {
-  // Core props
-  path: string;
-  initialTable?: string;
-
-  // Table selection
-  tableSelector?: TableSelectorMode;
-  tableSelectorLabel?: string;
-  tableSelectorComponent?: React.FC<{
-    tables: string[];
-    selectedTable: string | undefined;
-    onSelectTable: (table: string) => void;
-  }>;
-
-  // Authentication
-  getAuthHeaders?: () => Promise<Record<string, string>>;
-  headers?: Record<string, string>;
-
-  // Filter customization
-  showFilter?: boolean;
-  filterPlaceholder?: string;
-  filterPosition?: FilterPosition;
-  filterDebounceMs?: number;
-  filterComponent?: React.FC<{ value: string; onChange: (value: string) => void }>;
-
-  // Pagination customization
-  showPagination?: boolean;
-  pageSize?: number;
-  pageSizeOptions?: number[];
-  showPageSizeSelector?: boolean;
-  paginationPosition?: PaginationPosition;
-  paginationComponent?: React.FC<{
-    pageIndex: number;
-    pageCount: number;
-    pageSize: number;
-    canPreviousPage: boolean;
-    canNextPage: boolean;
-    previousPage: () => void;
-    nextPage: () => void;
-    firstPage: () => void;
-    lastPage: () => void;
-    setPageSize: (size: number) => void;
-  }>;
-
-  // Sorting customization
-  enableSorting?: boolean;
-  sortableColumns?: string[];
-  defaultSort?: { column: string; direction: 'asc' | 'desc' };
-  multiSort?: boolean;
-  sortIcon?: React.FC<{ direction: 'asc' | 'desc' | null }>;
-
-  // UI customization
-  className?: string;
-  classNames?: ClassNames;
-  style?: React.CSSProperties;
-  styles?: Styles;
-
-  // Custom components
-  loadingComponent?: React.FC;
-  errorComponent?: React.FC<{ error: Error; retry: () => void }>;
-  emptyComponent?: React.FC;
-  onError?: (error: Error) => void;
-
-  // Query options
-  queryOptions?: {
-    staleTime?: number;
-    cacheTime?: number;
-    retry?: number | boolean;
-    retryDelay?: number;
-    refetchOnWindowFocus?: boolean;
-    refetchOnReconnect?: boolean;
-    refetchOnMount?: boolean;
-  };
-  refetchInterval?: number;
-
-  // Logging options
-  logger?: Logger;
-  enableLogging?: boolean;
-  logLevel?: LogLevel;
-  logFetchErrors?: boolean;
-  logQueryErrors?: boolean;
-  logPerformanceMetrics?: boolean;
-}
+import { createLogger, generateId } from './logger';
+import type {
+  DatabaseViewerProps,
+  QueryResult,
+} from './components/DatabaseViewer/DatabaseViewer.types';
+import { mergeClassName, mergeStyle } from './components/DatabaseViewer/utils/styleHelpers';
+import { defaultStyles } from './components/DatabaseViewer/styles/defaultStyles';
 
 // Create a default query client
 const defaultQueryClient = new QueryClient({
@@ -656,8 +368,8 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
       return React.createElement(loadingComponent);
     }
     return (
-      <div style={styles.loading} className={classNames.loading}>
-        <div style={styles.spinner} />
+      <div style={mergeStyle(defaultStyles.loading, styles.loading)} className={classNames.loading}>
+        <div style={mergeStyle(defaultStyles.spinner, styles.spinner)} />
         <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
         <p>Loading data...</p>
       </div>
@@ -669,9 +381,9 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
       return React.createElement(errorComponent, { error: error as Error, retry: () => refetch() });
     }
     return (
-      <div style={styles.error} className={classNames.error}>
+      <div style={mergeStyle(defaultStyles.error, styles.error)} className={classNames.error}>
         <p>Error loading data: {(error as Error).message}</p>
-        <button onClick={() => refetch()} style={styles.retry}>
+        <button onClick={() => refetch()} style={mergeStyle(defaultStyles.retry, styles.retry)}>
           Retry
         </button>
       </div>
@@ -701,7 +413,10 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
 
     if (tableSelector === 'dropdown') {
       return (
-        <div style={styles.filter} className={classNames.tableSelectorDropdown}>
+        <div
+          style={mergeStyle(defaultStyles.filter, styles.filter)}
+          className={classNames.tableSelectorDropdown}
+        >
           <label style={{ marginRight: '0.5rem', fontWeight: 500 }}>{tableSelectorLabel}:</label>
           <select
             value={selectedTable || ''}
@@ -716,7 +431,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
               setSelectedTable(e.target.value);
               setPagination({ pageIndex: 0, pageSize });
             }}
-            style={styles.filterInput}
+            style={mergeStyle(defaultStyles.filterInput, styles.filterInput)}
           >
             {(tablesData as string[]).map((table) => (
               <option key={table} value={table}>
@@ -780,13 +495,13 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
     }
 
     return (
-      <div style={styles.filter} className={classNames.filter}>
+      <div style={mergeStyle(defaultStyles.filter, styles.filter)} className={classNames.filter}>
         <input
           type="text"
           placeholder={filterPlaceholder}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          style={styles.filterInput}
+          style={mergeStyle(defaultStyles.filterInput, styles.filterInput)}
           className={classNames.filterInput}
         />
       </div>
@@ -814,11 +529,14 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
     }
 
     return (
-      <div style={styles.pagination} className={classNames.pagination}>
+      <div
+        style={mergeStyle(defaultStyles.pagination, styles.pagination)}
+        className={classNames.pagination}
+      >
         <button
           onClick={() => table.setPageIndex(0)}
           disabled={!table.getCanPreviousPage()}
-          style={styles.paginationButton}
+          style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
           className={classNames.paginationButton}
         >
           {'<<'}
@@ -826,18 +544,21 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
         <button
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
-          style={styles.paginationButton}
+          style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
           className={classNames.paginationButton}
         >
           {'<'}
         </button>
-        <span style={styles.paginationInfo} className={classNames.paginationInfo}>
+        <span
+          style={mergeStyle(defaultStyles.paginationInfo, styles.paginationInfo)}
+          className={classNames.paginationInfo}
+        >
           Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
         </span>
         <button
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
-          style={styles.paginationButton}
+          style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
           className={classNames.paginationButton}
         >
           {'>'}
@@ -845,7 +566,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
         <button
           onClick={() => table.setPageIndex(table.getPageCount() - 1)}
           disabled={!table.getCanNextPage()}
-          style={styles.paginationButton}
+          style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
           className={classNames.paginationButton}
         >
           {'>>'}
@@ -856,7 +577,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
             onChange={(e) => {
               table.setPageSize(Number(e.target.value));
             }}
-            style={styles.pageSize}
+            style={mergeStyle(defaultStyles.pageSize, styles.pageSize)}
             className={classNames.pageSize}
           >
             {pageSizeOptions.map((size) => (
@@ -872,13 +593,14 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
 
   // Main container style
   const containerStyle = mergeStyle(
-    styles.container || {},
-    tableSelector === 'sidebar' ? { display: 'flex', flexDirection: 'row' as const } : {}
+    defaultStyles.container || {},
+    tableSelector === 'sidebar' ? { display: 'flex', flexDirection: 'row' as const } : undefined,
+    style,
+    styles.container
   );
-  const finalContainerStyle = style ? { ...containerStyle, ...style } : containerStyle;
 
   return (
-    <div style={finalContainerStyle} className={mergeClassName('', className || '')}>
+    <div style={containerStyle} className={mergeClassName('', className || '')}>
       {/* Table Selector Sidebar */}
       {tableSelector === 'sidebar' && renderTableSelector()}
 
@@ -894,8 +616,11 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
         {renderPagination('top')}
 
         {/* Table */}
-        <div style={styles.tableWrapper} className={classNames.tableWrapper}>
-          <table style={styles.table} className={classNames.table}>
+        <div
+          style={mergeStyle(defaultStyles.tableWrapper, styles.tableWrapper)}
+          className={classNames.tableWrapper}
+        >
+          <table style={mergeStyle(defaultStyles.table, styles.table)} className={classNames.table}>
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
@@ -904,8 +629,10 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
                       key={header.id}
                       onClick={header.column.getToggleSortingHandler()}
                       style={mergeStyle(
-                        header.column.getIsSorted() ? styles.sorted || {} : styles.sortable || {},
-                        styles.header || {}
+                        header.column.getIsSorted() ? defaultStyles.sorted : defaultStyles.sortable,
+                        defaultStyles.header,
+                        styles.header,
+                        header.column.getIsSorted() ? styles.sorted : styles.sortable
                       )}
                       className={classNames.header}
                     >
@@ -921,7 +648,11 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
             <tbody>
               {table.getRowModel().rows.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} style={styles.empty} className={classNames.empty}>
+                  <td
+                    colSpan={columns.length}
+                    style={mergeStyle(defaultStyles.empty, styles.empty)}
+                    className={classNames.empty}
+                  >
                     {emptyComponent ? React.createElement(emptyComponent) : 'No data available'}
                   </td>
                 </tr>
@@ -933,7 +664,11 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} style={styles.td} className={classNames.cell}>
+                      <td
+                        key={cell.id}
+                        style={mergeStyle(defaultStyles.td, styles.td, styles.cell)}
+                        className={classNames.cell}
+                      >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -952,7 +687,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
 
         {/* Info */}
         {data && (data as QueryResult).pagination && (
-          <div style={styles.info} className={classNames.info}>
+          <div style={mergeStyle(defaultStyles.info, styles.info)} className={classNames.info}>
             Total records: {(data as QueryResult).pagination.total}
           </div>
         )}
