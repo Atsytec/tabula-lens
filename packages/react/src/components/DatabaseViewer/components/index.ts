@@ -13,6 +13,9 @@ export type { TableSelectorProps } from './TableSelector';
 export { FilterInput } from './FilterInput';
 export type { FilterInputProps } from './FilterInput';
 
+export { FilterColumnSelector } from './FilterColumnSelector';
+export type { FilterColumnSelectorProps } from './FilterColumnSelector';
+
 export { Pagination } from './Pagination';
 export type { PaginationProps } from './Pagination';
 

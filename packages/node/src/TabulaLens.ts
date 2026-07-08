@@ -29,6 +29,7 @@ export interface QueryOptions {
   sort?: string;
   filter?: string;
   columns?: string[];
+  filterColumns?: string[];
 }
 
 export interface SortOption {
@@ -72,6 +73,7 @@ export class TabulaLens {
   private enableQueryLogging: boolean;
   private enableRequestLogging: boolean;
   private sensitiveDataMasking: boolean;
+  private columnCache: Map<string, string[]> = new Map();
 
   constructor(databaseUrl: string, options: TabulaLensOptions = {}) {
     this.db = knex({
@@ -99,7 +101,7 @@ export class TabulaLens {
   }
 
   async query(options: QueryOptions = {}): Promise<QueryResult> {
-    const { table = 'users', page = 1, limit = 10, sort, filter, columns } = options;
+    const { table = 'users', page = 1, limit = 10, sort, filter, columns, filterColumns } = options;
     const queryId = generateId();
     const startTime = Date.now();
 
@@ -128,22 +130,40 @@ export class TabulaLens {
 
       // Apply filtering
       if (filter) {
-        // Simple text filter - search across all string columns
-        query = query.where(function () {
-          this.where('name', 'ilike', `%${filter}%`)
-            .orWhere('email', 'ilike', `%${filter}%`)
-            .orWhere('description', 'ilike', `%${filter}%`);
-        });
+        let columnsToSearch: string[];
+
+        if (filterColumns && filterColumns.length > 0) {
+          columnsToSearch = filterColumns;
+        } else {
+          columnsToSearch = await this.getFilterableColumns(table);
+        }
+
+        if (columnsToSearch.length > 0) {
+          query = query.where(function () {
+            columnsToSearch.forEach((column) => {
+              this.orWhere(column, 'ilike', `%${filter}%`);
+            });
+          });
+        }
       }
 
       // Get total count before pagination
+      let columnsToSearch: string[] = [];
+      if (filter) {
+        if (filterColumns && filterColumns.length > 0) {
+          columnsToSearch = filterColumns;
+        } else {
+          columnsToSearch = await this.getFilterableColumns(table);
+        }
+      }
+
       const countResult = await this.db(table)
         .modify(function (qb) {
-          if (filter) {
+          if (filter && columnsToSearch.length > 0) {
             qb.where(function () {
-              this.where('name', 'ilike', `%${filter}%`)
-                .orWhere('email', 'ilike', `%${filter}%`)
-                .orWhere('description', 'ilike', `%${filter}%`);
+              columnsToSearch.forEach((column) => {
+                this.orWhere(column, 'ilike', `%${filter}%`);
+              });
             });
           }
         })
@@ -325,6 +345,51 @@ export class TabulaLens {
     }
   }
 
+  private async getFilterableColumns(table: string): Promise<string[]> {
+    const operationId = generateId();
+
+    this.logger.debug('Fetching filterable columns for table', { operationId, table });
+
+    try {
+      if (this.columnCache.has(table)) {
+        const cachedColumns = this.columnCache.get(table)!;
+        this.logger.debug('Using cached filterable columns', {
+          operationId,
+          table,
+          columnCount: cachedColumns.length,
+        });
+        return cachedColumns;
+      }
+
+      const columns = await this.getColumns(table);
+
+      const textTypes = ['character varying', 'varchar', 'text', 'char', 'character', 'uuid'];
+
+      const filterableColumns = columns
+        .filter((col) => textTypes.includes(col.type.toLowerCase()))
+        .map((col) => col.name);
+
+      this.columnCache.set(table, filterableColumns);
+
+      this.logger.debug('Filterable columns fetched and cached', {
+        operationId,
+        table,
+        columnCount: filterableColumns.length,
+        columns: filterableColumns,
+      });
+
+      return filterableColumns;
+    } catch (error) {
+      this.logger.error('Failed to fetch filterable columns', {
+        operationId,
+        table,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
+  }
+
   private parseSort(sortString: string): SortOption[] {
     return sortString.split(',').map((sort) => {
       const [column, direction] = sort.split(':');
@@ -420,6 +485,7 @@ export class TabulaLens {
           sort: query.sort,
           filter: query.filter,
           columns: query.columns ? query.columns.split(',') : undefined,
+          filterColumns: query.filterColumns ? query.filterColumns.split(',') : undefined,
         };
         const result = await this.query(options);
         const duration = Date.now() - startTime;

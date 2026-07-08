@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import type {
@@ -21,6 +21,7 @@ import {
   FilterInput,
   Pagination,
   DataTable,
+  FilterColumnSelector,
 } from './components/DatabaseViewer/components';
 
 // Create a default query client
@@ -254,6 +255,12 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
     logFetchErrors = true,
     logQueryErrors = true,
     logPerformanceMetrics = true,
+    defaultFilterColumns,
+    showFilterColumnSelector = true,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    filterColumnSelectorPosition = 'filter',
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    filterColumnSelectorComponent,
   }) => {
     // Initialize logger with lifecycle logging
     const { logger, componentId } = useLogger({
@@ -270,12 +277,49 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
       filterDebounceMs,
     });
 
+    // State for filter column selection per table
+    const [selectedFilterColumns, setSelectedFilterColumns] = useState<Record<string, string[]>>(
+      {}
+    );
+
+    // Determine which columns to use for current query
+    const currentFilterColumns = useMemo(() => {
+      if (!tableState.selectedTable) return [];
+      return (
+        selectedFilterColumns[tableState.selectedTable] ||
+        defaultFilterColumns?.[tableState.selectedTable] ||
+        []
+      );
+    }, [tableState.selectedTable, selectedFilterColumns, defaultFilterColumns]);
+
+    // Handle filter column selection change
+    const handleFilterColumnChange = (columns: string[]) => {
+      if (tableState.selectedTable) {
+        setSelectedFilterColumns((prev) => ({
+          ...prev,
+          [tableState.selectedTable!]: columns,
+        }));
+      }
+    };
+
+    // Handle reset to default filter columns
+    const handleResetFilterColumns = () => {
+      if (tableState.selectedTable) {
+        setSelectedFilterColumns((prev) => {
+          const newState = { ...prev };
+          delete newState[tableState.selectedTable!];
+          return newState;
+        });
+      }
+    };
+
     // Build query parameters
     const queryParams = useQueryParams({
       selectedTable: tableState.selectedTable,
       pagination: tableState.pagination,
       sorting: tableState.sorting,
       filter: tableState.debouncedFilter,
+      filterColumns: currentFilterColumns,
     });
 
     // Fetch data and tables
@@ -293,6 +337,12 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
       refetchInterval,
       tableSelectorMode: tableSelector,
     });
+
+    // Get available columns from current query result
+    const availableColumns = useMemo(() => {
+      const queryResult = data as QueryResult | undefined;
+      return queryResult?.columns || [];
+    }, [data]);
 
     // Handle errors
     useEffect(() => {
@@ -436,6 +486,18 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
             classNames={classNames}
             styles={styles}
           />
+
+          {/* Filter Column Selector */}
+          {showFilterColumnSelector && availableColumns.length > 0 && (
+            <FilterColumnSelector
+              availableColumns={availableColumns}
+              selectedColumns={currentFilterColumns}
+              defaultColumns={defaultFilterColumns?.[tableState.selectedTable || ''] || []}
+              onSelectionChange={handleFilterColumnChange}
+              onResetToDefault={handleResetFilterColumns}
+              className={classNames.filterColumnSelector}
+            />
+          )}
 
           {/* Top Pagination */}
           <PaginationRenderer

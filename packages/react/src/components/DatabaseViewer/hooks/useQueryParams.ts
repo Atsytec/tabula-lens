@@ -5,6 +5,7 @@ export interface UseQueryParamsOptions {
   pagination: PaginationState;
   sorting: SortingState;
   filter: string;
+  filterColumns?: string[];
 }
 
 /**
@@ -14,7 +15,7 @@ export interface UseQueryParamsOptions {
  * @returns Query string for URL
  */
 export const useQueryParams = (options: UseQueryParamsOptions): string => {
-  const { selectedTable, pagination, sorting, filter } = options;
+  const { selectedTable, pagination, sorting, filter, filterColumns } = options;
 
   const queryParams = new URLSearchParams();
 
@@ -31,6 +32,10 @@ export const useQueryParams = (options: UseQueryParamsOptions): string => {
 
   if (filter) {
     queryParams.set('filter', filter);
+  }
+
+  if (filterColumns && filterColumns.length > 0) {
+    queryParams.set('filterColumns', filterColumns.join(','));
   }
 
   return queryParams.toString();

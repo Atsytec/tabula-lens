@@ -78,6 +78,8 @@ export interface ClassNames {
   retry?: string;
   /** Info text class name */
   info?: string;
+  /** Filter column selector class name */
+  filterColumnSelector?: string;
 }
 
 /**
@@ -133,6 +135,8 @@ export interface Styles {
   retry?: React.CSSProperties;
   /** Info text styles */
   info?: React.CSSProperties;
+  /** Filter column selector styles */
+  filterColumnSelector?: React.CSSProperties;
 }
 
 /**
@@ -239,6 +243,40 @@ export interface DatabaseViewerProps {
    * Custom filter input component
    */
   filterComponent?: React.FC<{ value: string; onChange: (value: string) => void }>;
+
+  /**
+   * Default filter columns per table
+   * If not specified for a table, auto-detects text columns
+   * @example
+   * defaultFilterColumns={{
+   *   persons: ['name', 'surname', 'email'],
+   *   products: ['title', 'description', 'sku'],
+   *   orders: ['order_id', 'customer_name']
+   * }}
+   */
+  defaultFilterColumns?: Record<string, string[]>;
+
+  /**
+   * Whether to show the filter column selector
+   * @default true
+   */
+  showFilterColumnSelector?: boolean;
+
+  /**
+   * Position of the filter column selector
+   * @default 'filter'
+   */
+  filterColumnSelectorPosition?: 'top' | 'bottom' | 'filter';
+
+  /**
+   * Custom filter column selector component
+   */
+  filterColumnSelectorComponent?: React.FC<{
+    availableColumns: string[];
+    selectedColumns: string[];
+    onSelectionChange: (columns: string[]) => void;
+    defaultColumns: string[];
+  }>;
 
   /**
    * Whether to show pagination controls
