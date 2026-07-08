@@ -43,7 +43,7 @@ class DefaultLogger implements Logger {
     this.level = options.level || this.getDefaultLevel();
     this.includeStack = options.includeStack ?? false;
     this.includeTimestamp = options.includeTimestamp ?? true;
-    this.colorize = options.colorize ?? true;
+    this.colorize = options.colorize ?? false;
     this.format = options.format || 'pretty';
   }
 
