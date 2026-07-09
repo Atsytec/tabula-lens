@@ -2,10 +2,23 @@
 
 [![npm version](https://badge.fury.io/js/%40tabula-lens%2Fnode.svg)](https://www.npmjs.com/package/@tabula-lens/node)
 [![Downloads](https://img.shields.io/npm/dm/@tabula-lens/node)](https://www.npmjs.com/package/@tabula-lens/node)
-[![License](https://img.shields.io/npm/l/@tabula-lens/node)](https://github.com/yourusername/tabula-lens/blob/main/packages/node/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
 A secure, backend-agnostic Node.js SDK for database queries with framework adapters. Tabula Lens keeps your database credentials safe on the backend while providing a clean API for frontend data visualization.
+
+## 📑 Table of Contents
+
+- [Features](#-features)
+- [Installation](#-installation)
+- [Peer Dependencies](#-peer-dependencies)
+- [Quick Start](#-quick-start)
+- [API Reference](#-api-reference)
+- [Framework Adapters](#-framework-adapters)
+- [Advanced Usage](#-advanced-usage)
+- [Error Handling](#-error-handling)
+- [Testing](#-testing)
+- [Troubleshooting](#-troubleshooting)
+- [Security Considerations](#-security-considerations)
 
 ## 🎯 Features
 
@@ -27,7 +40,24 @@ pnpm add @tabula-lens/node
 yarn add @tabula-lens/node
 ```
 
-## 🚀 Quick Start
+## 🔗 Peer Dependencies
+
+This package requires framework-specific peer dependencies. Install the appropriate package for your framework:
+
+- **Express**: `npm install express@^4.18.0 || ^5.0.0`
+- **Fastify**: `npm install fastify@^4.0.0`
+- **Koa**: `npm install koa@^2.14.0`
+- **Hapi**: `npm install @hapi/hapi@^21.0.0`
+- **Restify**: `npm install restify@^11.0.0`
+- **Next.js**: No additional peer dependencies
+- **TanStack Start**: `npm install @tanstack/react-start@^1.0.0`
+- **Remix**: `npm install remix@^2.0.0`
+- **SvelteKit**: `npm install @sveltejs/kit@^2.0.0`
+- **Hono**: `npm install hono@^4.0.0`
+- **Elysia**: `npm install elysia@^1.0.0`
+- **Fresh**: No additional peer dependencies (Deno native)
+
+## �🚀 Quick Start
 
 ### Basic Setup
 
@@ -606,6 +636,78 @@ describe('TabulaLens', () => {
 
     await tabulaLens.close();
   });
+});
+```
+
+## � Troubleshooting
+
+### Database Connection Issues
+
+**Problem**: "Connection refused" or "Connection timeout" errors
+
+**Solutions**:
+
+- Verify your `DATABASE_URL` is correct and accessible
+- Check that your database server is running
+- Ensure your firewall allows connections to the database
+- Verify the database user has necessary permissions
+
+### Query Performance Issues
+
+**Problem**: Slow query performance
+
+**Solutions**:
+
+- Use the `columns` parameter to select only needed columns
+- Add appropriate indexes to your database tables
+- Use pagination to limit result sets
+- Enable query logging to identify slow queries
+
+### Adapter Integration Issues
+
+**Problem**: Adapter not working with your framework
+
+**Solutions**:
+
+- Ensure you have installed the required peer dependencies
+- Check that your framework version matches the peer dependency requirements
+- Verify the adapter is being used correctly according to the framework's patterns
+- Check framework-specific logs for additional error details
+
+## 🔒 Security Considerations
+
+### Database Credentials
+
+- Never commit database credentials to version control
+- Use environment variables for sensitive data
+- Rotate database credentials regularly
+- Use read-only database users when possible
+
+### API Security
+
+- Always use HTTPS in production
+- Implement proper authentication/authorization
+- Validate and sanitize all user inputs
+- Use rate limiting to prevent abuse
+- Keep dependencies updated
+
+### Logging Security
+
+- Enable `sensitiveDataMasking` in production
+- Avoid logging sensitive data (passwords, tokens)
+- Use appropriate log levels (`error` in production)
+- Secure log files with appropriate file permissions
+
+### Best Practices
+
+```typescript
+// Production configuration example
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableQueryLogging: false, // Disable query logging in production
+  enableRequestLogging: true, // Keep request logging for monitoring
 });
 ```
 
