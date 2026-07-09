@@ -109,9 +109,20 @@ export const defaultStyles: Styles = {
     borderRadius: 'var(--tlens-radius, 4px)',
     cursor: 'pointer',
   },
+  paginationButtonDisabled: {
+    opacity: 0.5,
+    cursor: 'not-allowed',
+  },
   paginationInfo: {
     padding: '0 var(--tlens-spacing-md, 1rem)',
     fontWeight: 500,
+  },
+  paginationInput: {
+    width: '60px',
+    padding: 'var(--tlens-spacing-xs, 0.5rem)',
+    textAlign: 'center',
+    border: '1px solid var(--tlens-border, #ddd)',
+    borderRadius: 'var(--tlens-radius, 4px)',
   },
   pageSize: {
     padding: 'var(--tlens-spacing-xs, 0.5rem)',

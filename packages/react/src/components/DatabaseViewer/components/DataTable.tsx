@@ -15,6 +15,32 @@ import { defaultStyles } from '../styles/defaultStyles';
 import type { ClassNames, Styles } from '../DatabaseViewer.types';
 import { EmptyState } from './EmptyState';
 
+/**
+ * Default header formatter that humanizes column names
+ * Converts snake_case to Title Case and handles common acronyms
+ */
+const defaultHeaderFormatter = (columnName: string): string => {
+  if (!columnName) return '';
+
+  const words = columnName.split('_');
+
+  return words
+    .map((word) => {
+      // Handle common acronyms (including 'id' when it's part of a compound word)
+      const acronyms = ['api', 'url', 'html', 'css', 'js', 'xml', 'json', 'sql', 'db'];
+      if (acronyms.includes(word.toLowerCase())) {
+        return word.toUpperCase();
+      }
+      // Handle 'id' - uppercase when it's part of a compound word, title case when alone
+      if (word.toLowerCase() === 'id' && words.length > 1) {
+        return 'ID';
+      }
+      // Capitalize first letter, lowercase the rest for regular words
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+};
+
 export interface DataTableProps {
   data: Record<string, unknown>[];
   columns: ColumnDef<Record<string, unknown>>[];
@@ -33,6 +59,8 @@ export interface DataTableProps {
   emptyComponent?: React.FC;
   hasActiveFilter?: boolean;
   onClearFilter?: () => void;
+  formatHeader?: ((columnName: string) => string) | null;
+  formatCell?: (value: unknown, column: string) => React.ReactNode;
 }
 
 export const DataTable: React.FC<DataTableProps> = React.memo(
@@ -54,6 +82,8 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
     emptyComponent,
     hasActiveFilter = false,
     onClearFilter,
+    formatHeader,
+    formatCell,
   }) => {
     // Default sort icon component
     const DefaultSortIcon: React.FC<{ direction: 'asc' | 'desc' | null }> = ({ direction }) => {
@@ -64,10 +94,33 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
 
     const SortIcon = sortIcon || DefaultSortIcon;
 
+    // Apply header formatting to columns
+    const formattedColumns = React.useMemo(() => {
+      return columns.map((col) => {
+        const headerValue = col.header as string;
+        let formattedHeader = headerValue;
+
+        // Apply header formatting if formatHeader is provided or use default
+        if (formatHeader === undefined) {
+          // Use default formatter
+          formattedHeader = defaultHeaderFormatter(headerValue);
+        } else if (formatHeader !== null) {
+          // Use custom formatter
+          formattedHeader = formatHeader(headerValue);
+        }
+        // If formatHeader is null, use original header value
+
+        return {
+          ...col,
+          header: formattedHeader,
+        };
+      });
+    }, [columns, formatHeader]);
+
     // Create table instance
     const table = useReactTable({
       data,
-      columns,
+      columns: formattedColumns,
       getCoreRowModel: getCoreRowModel(),
       getPaginationRowModel: getPaginationRowModel(),
       getSortedRowModel: getSortedRowModel(),
@@ -95,7 +148,11 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
         style={mergeStyle(defaultStyles.tableWrapper, styles.tableWrapper, style)}
         className={className || classNames.tableWrapper}
       >
-        <table style={mergeStyle(defaultStyles.table, styles.table)} className={classNames.table}>
+        <table
+          style={mergeStyle(defaultStyles.table, styles.table)}
+          className={classNames.table}
+          role="table"
+        >
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
@@ -120,6 +177,7 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
                       )}
                       className={classNames.header}
                       aria-sort={enableSorting ? ariaSortValue : undefined}
+                      scope="col"
                     >
                       {header.isPlaceholder
                         ? null
@@ -149,15 +207,25 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
             ) : (
               table.getRowModel().rows.map((row) => (
                 <tr key={row.id} className="tlens-table-row">
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      style={mergeStyle(defaultStyles.td, styles.td, styles.cell)}
-                      className={classNames.cell}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const columnName = cell.column.id;
+                    const cellValue = cell.getValue();
+
+                    // Apply cell formatting if formatCell is provided
+                    const renderedContent = formatCell
+                      ? formatCell(cellValue, columnName)
+                      : flexRender(cell.column.columnDef.cell, cell.getContext());
+
+                    return (
+                      <td
+                        key={cell.id}
+                        style={mergeStyle(defaultStyles.td, styles.td, styles.cell)}
+                        className={classNames.cell}
+                      >
+                        {renderedContent}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))
             )}

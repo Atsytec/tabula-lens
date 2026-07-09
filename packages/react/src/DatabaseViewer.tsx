@@ -239,6 +239,8 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
     defaultSort,
     multiSort = false,
     sortIcon,
+    formatHeader,
+    formatCell,
     className,
     classNames = {},
     style,
@@ -530,6 +532,8 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
             enableSorting={enableSorting}
             multiSort={multiSort}
             sortIcon={sortIcon}
+            formatHeader={formatHeader}
+            formatCell={formatCell}
             classNames={classNames}
             styles={styles}
             emptyComponent={emptyComponent}

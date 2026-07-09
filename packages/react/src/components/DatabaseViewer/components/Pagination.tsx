@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { mergeStyle } from '../utils/styleHelpers';
 import { defaultStyles } from '../styles/defaultStyles';
 import type { ClassNames, Styles } from '../DatabaseViewer.types';
@@ -48,6 +48,50 @@ export const Pagination: React.FC<PaginationProps> = React.memo(
     style,
     styles = {},
   }) => {
+    // State for page number input
+    const [pageInput, setPageInput] = useState<string>((pageIndex + 1).toString());
+
+    // Update input when pageIndex changes externally
+    React.useEffect(() => {
+      setPageInput((pageIndex + 1).toString());
+    }, [pageIndex]);
+
+    // Handle page input change
+    const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setPageInput(e.target.value);
+    };
+
+    // Handle page input submission (Enter key or blur)
+    const handlePageInputSubmit = () => {
+      const pageNum = parseInt(pageInput, 10);
+      if (pageNum >= 1 && pageNum <= pageCount) {
+        onPageChange(pageNum - 1); // Convert to 0-indexed
+      } else {
+        // Reset to current page if invalid
+        setPageInput((pageIndex + 1).toString());
+      }
+    };
+
+    // Handle Enter key
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        handlePageInputSubmit();
+      }
+    };
+
+    // Helper function to merge button styles with disabled state
+    const getButtonStyle = (disabled: boolean) => {
+      if (disabled) {
+        return mergeStyle(
+          defaultStyles.paginationButton,
+          styles.paginationButton,
+          defaultStyles.paginationButtonDisabled,
+          styles.paginationButtonDisabled
+        );
+      }
+      return mergeStyle(defaultStyles.paginationButton, styles.paginationButton);
+    };
+
     if (customComponent) {
       return React.createElement(customComponent, {
         pageIndex,
@@ -71,7 +115,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(
         <button
           onClick={() => onPageChange(0)}
           disabled={!canPreviousPage}
-          style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
+          style={getButtonStyle(!canPreviousPage)}
           className={`${classNames.paginationButton} tlens-pagination-button`}
           aria-label="First page"
         >
@@ -80,22 +124,34 @@ export const Pagination: React.FC<PaginationProps> = React.memo(
         <button
           onClick={() => onPageChange(pageIndex - 1)}
           disabled={!canPreviousPage}
-          style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
+          style={getButtonStyle(!canPreviousPage)}
           className={`${classNames.paginationButton} tlens-pagination-button`}
           aria-label="Previous page"
         >
           {'<'}
         </button>
+        <input
+          type="number"
+          min="1"
+          max={pageCount}
+          value={pageInput}
+          onChange={handlePageInputChange}
+          onKeyDown={handleKeyDown}
+          onBlur={handlePageInputSubmit}
+          aria-label="Go to page"
+          style={mergeStyle(defaultStyles.paginationInput, styles.paginationInput)}
+          className={classNames.paginationInfo}
+        />
         <span
           style={mergeStyle(defaultStyles.paginationInfo, styles.paginationInfo)}
           className={classNames.paginationInfo}
         >
-          Page {pageIndex + 1} of {pageCount}
+          of {pageCount}
         </span>
         <button
           onClick={() => onPageChange(pageIndex + 1)}
           disabled={!canNextPage}
-          style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
+          style={getButtonStyle(!canNextPage)}
           className={`${classNames.paginationButton} tlens-pagination-button`}
           aria-label="Next page"
         >
@@ -104,7 +160,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(
         <button
           onClick={() => onPageChange(pageCount - 1)}
           disabled={!canNextPage}
-          style={mergeStyle(defaultStyles.paginationButton, styles.paginationButton)}
+          style={getButtonStyle(!canNextPage)}
           className={`${classNames.paginationButton} tlens-pagination-button`}
           aria-label="Last page"
         >

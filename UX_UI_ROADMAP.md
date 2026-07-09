@@ -211,38 +211,47 @@ This roadmap synthesizes findings from the UX/UI Audit and shadcn/Tailwind Feasi
 
 ### Column Formatting
 
-- [ ] **V6** — Add column header formatter
+- [x] **V6** — Add column header formatter
   - Add `formatHeader?: (columnName: string) => string` prop
   - Implement default humanization (title-case, underscore-to-space)
   - Example: `created_at` → `Created At`
   - Allow opt-out via prop
   - Location: `DatabaseViewer.types.ts`, `DataTable.tsx`
 
-- [ ] **MF1** — Add cell value formatter
+- [x] **MF1** — Add cell value formatter
   - Add `formatCell?: (value: unknown, column: string) => ReactNode` prop
   - Enables custom cell renderers (badges, avatars, links)
   - Location: `DatabaseViewer.types.ts`, `DataTable.tsx`
 
 ### Pagination Improvements
 
-- [ ] **I3** — Add page number input field
+- [x] **I3** — Add page number input field
   - Add `<input type="number">` between navigation buttons
   - Allows direct page jumping for large datasets
   - Validate min/max values
   - Location: `Pagination.tsx`
 
-- [ ] **A7** — Add visual disabled state to pagination buttons
+- [x] **A7** — Add visual disabled state to pagination buttons
   - Add CSS `:disabled` styles to `defaultStyles.paginationButton`
   - Ensure disabled buttons look visually distinct
   - Location: `styles/defaultStyles.ts`
 
 ### Table Accessibility
 
-- [ ] **A8** — Add table role and scope attributes
+- [x] **A8** — Add table role and scope attributes
   - Add `role="table"` to `<table>` element
   - Add `scope="col"` to all `<th>` elements
   - Improves screen reader navigation
   - Location: `DataTable.tsx`
+
+**Phase 4 Status:** ✅ **COMPLETED** (2026-07-09)
+
+- All column formatting features implemented (V6, MF1)
+- All pagination improvements implemented (I3, A7)
+- All table accessibility improvements implemented (A8)
+- Comprehensive tests added (23 new tests across 2 test files)
+- Type checking and linting pass
+- Changes committed to git
 
 ---
 

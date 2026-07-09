@@ -115,8 +115,12 @@ export interface Styles {
   pagination?: React.CSSProperties;
   /** Pagination button styles */
   paginationButton?: React.CSSProperties;
+  /** Pagination button disabled styles */
+  paginationButtonDisabled?: React.CSSProperties;
   /** Pagination info text styles */
   paginationInfo?: React.CSSProperties;
+  /** Pagination input field styles */
+  paginationInput?: React.CSSProperties;
   /** Page size selector styles */
   pageSize?: React.CSSProperties;
   /** Table selector container styles */
@@ -339,6 +343,22 @@ export interface DatabaseViewerProps {
    * Custom sort icon component
    */
   sortIcon?: React.FC<{ direction: 'asc' | 'desc' | null }>;
+
+  /**
+   * Custom column header formatter function
+   * Converts column names to display format
+   * @default Default humanization (snake_case to Title Case)
+   * @example formatHeader={(name) => name.toUpperCase()}
+   * @example formatHeader={null} // disable default formatting
+   */
+  formatHeader?: ((columnName: string) => string) | null;
+
+  /**
+   * Custom cell value formatter function
+   * Enables custom cell renderers (badges, avatars, links, etc.)
+   * @example formatCell={(value, column) => column === 'email' ? <a href={`mailto:${value}`}>{value}</a> : value}
+   */
+  formatCell?: (value: unknown, column: string) => React.ReactNode;
 
   /**
    * Additional CSS class name for the container
