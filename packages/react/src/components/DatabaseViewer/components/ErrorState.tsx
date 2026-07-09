@@ -3,17 +3,104 @@ import { mergeStyle } from '../utils/styleHelpers';
 import { defaultStyles } from '../styles/defaultStyles';
 import type { ClassNames, Styles } from '../DatabaseViewer.types';
 
+/**
+ * Props for the ErrorState component
+ * @interface ErrorStateProps
+ */
 export interface ErrorStateProps {
+  /**
+   * The error that occurred
+   */
   error: Error;
+  /**
+   * Callback function to retry the failed operation
+   */
   onRetry: () => void;
+  /**
+   * Custom error component to render instead of the default
+   * @example
+   * ```tsx
+   * const CustomError = ({ error, retry }) => (
+   *   <div className="error-container">
+   *     <h3>Error: {error.message}</h3>
+   *     <button onClick={retry}>Try Again</button>
+   *   </div>
+   * );
+   * <ErrorState customComponent={CustomError} error={error} onRetry={retry} />
+   * ```
+   */
   customComponent?: React.FC<{ error: Error; retry: () => void }>;
+  /**
+   * Custom className for the error container
+   */
   className?: string;
+  /**
+   * Custom classNames for specific elements
+   */
   classNames?: ClassNames;
+  /**
+   * Custom styles for the error container
+   */
   style?: React.CSSProperties;
+  /**
+   * Custom styles for specific elements
+   */
   styles?: Styles;
+  /**
+   * Whether the error is recoverable (shows retry button)
+   * @default true
+   */
   isRecoverable?: boolean;
 }
 
+/**
+ * ErrorState component - displays error messages with retry functionality
+ *
+ * @component
+ * @example
+ * ```tsx
+ * // Default usage
+ * <ErrorState error={error} onRetry={() => refetch()} />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom styling
+ * <ErrorState
+ *   error={error}
+ *   onRetry={() => refetch()}
+ *   style={{ padding: '2rem' }}
+ *   styles={{
+ *     error: { backgroundColor: '#fff3f3' },
+ *     retry: { backgroundColor: '#ff4444' },
+ *   }}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // For fatal errors (no retry)
+ * <ErrorState
+ *   error={error}
+ *   onRetry={() => refetch()}
+ *   isRecoverable={false}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom component
+ * const MyCustomError = ({ error, retry }) => (
+ *   <div className="my-error-state">
+ *     <div className="error-icon">⚠️</div>
+ *     <h3>Something went wrong</h3>
+ *     <p>{error.message}</p>
+ *     <button onClick={retry}>Try Again</button>
+ *   </div>
+ * );
+ * <ErrorState customComponent={MyCustomError} error={error} onRetry={retry} />
+ * ```
+ */
 export const ErrorState: React.FC<ErrorStateProps> = React.memo(
   ({
     error,

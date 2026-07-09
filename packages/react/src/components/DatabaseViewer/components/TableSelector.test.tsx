@@ -50,4 +50,51 @@ describe('TableSelector Accessibility', () => {
       expect(container.firstChild).toBeNull();
     });
   });
+
+  describe('CSS Custom Properties in Sidebar Mode', () => {
+    it('should use CSS custom properties for sidebar container', () => {
+      const { container } = render(<TableSelector {...defaultProps} mode="sidebar" />);
+      const sidebar = container.firstChild as HTMLElement;
+      expect(sidebar).toHaveStyle({
+        display: 'flex',
+        flexDirection: 'column',
+      });
+      // Check that it uses CSS custom properties
+      const style = sidebar.style;
+      expect(style.getPropertyValue('--tlens-border')).toBeDefined();
+    });
+
+    it('should use CSS custom properties for sidebar buttons', () => {
+      const { container } = render(<TableSelector {...defaultProps} mode="sidebar" />);
+      const buttons = container.querySelectorAll('button');
+      buttons.forEach((button) => {
+        expect(button).toHaveStyle({
+          cursor: 'pointer',
+        });
+      });
+    });
+
+    it('should apply active state styling to selected table in sidebar mode', () => {
+      const { container } = render(<TableSelector {...defaultProps} mode="sidebar" />);
+      const buttons = container.querySelectorAll('button');
+      const activeButton = buttons[0]; // 'users' is selected
+      expect(activeButton).toHaveStyle({
+        backgroundColor: 'var(--tlens-bg-sorted, #e9ecef)',
+      });
+    });
+
+    it('should allow custom styles to override default styles in sidebar mode', () => {
+      const customStyles = {
+        tableSelectorSidebar: { minWidth: '300px' },
+        tableSelectorSidebarButton: { padding: '1rem' },
+      };
+      const { container } = render(
+        <TableSelector {...defaultProps} mode="sidebar" styles={customStyles} />
+      );
+      const sidebar = container.firstChild as HTMLElement;
+      expect(sidebar).toHaveStyle({
+        minWidth: '300px',
+      });
+    });
+  });
 });

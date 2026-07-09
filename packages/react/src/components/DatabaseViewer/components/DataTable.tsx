@@ -40,25 +40,115 @@ const defaultHeaderFormatter = (columnName: string): string => {
     .join(' ');
 };
 
+/**
+ * Props for the DataTable component
+ * @interface DataTableProps
+ */
 export interface DataTableProps {
+  /**
+   * Array of data records to display
+   */
   data: Record<string, unknown>[];
+  /**
+   * Column definitions for the table
+   */
   columns: ColumnDef<Record<string, unknown>>[];
+  /**
+   * Current sorting state
+   */
   sorting: SortingState;
+  /**
+   * Callback function when sorting changes
+   */
   onSortingChange: (sorting: SortingState) => void;
+  /**
+   * Current pagination state
+   */
   pagination: PaginationState;
+  /**
+   * Callback function when pagination changes
+   */
   onPaginationChange: (pagination: PaginationState) => void;
+  /**
+   * Total number of pages
+   */
   pageCount: number;
+  /**
+   * Whether sorting is enabled
+   */
   enableSorting: boolean;
+  /**
+   * Whether multi-column sorting is enabled
+   * @default false
+   */
   multiSort?: boolean;
+  /**
+   * Custom sort icon component
+   * @example
+   * ```tsx
+   * const CustomSortIcon = ({ direction }) => {
+   *   if (direction === 'asc') return <ArrowUp />;
+   *   if (direction === 'desc') return <ArrowDown />;
+   *   return <ArrowUpDown />;
+   * };
+   * <DataTable sortIcon={CustomSortIcon} {...otherProps} />
+   * ```
+   */
   sortIcon?: React.FC<{ direction: 'asc' | 'desc' | null }>;
+  /**
+   * Custom className for the table wrapper
+   */
   className?: string;
+  /**
+   * Custom classNames for specific elements
+   */
   classNames?: ClassNames;
+  /**
+   * Custom styles for the table wrapper
+   */
   style?: React.CSSProperties;
+  /**
+   * Custom styles for specific elements
+   */
   styles?: Styles;
+  /**
+   * Custom empty state component
+   */
   emptyComponent?: React.FC;
+  /**
+   * Whether a filter is currently active
+   */
   hasActiveFilter?: boolean;
+  /**
+   * Callback function to clear the active filter
+   */
   onClearFilter?: () => void;
+  /**
+   * Custom header formatting function
+   * @example
+   * ```tsx
+   * // Convert snake_case to Title Case
+   * formatHeader={(columnName) => {
+   *   return columnName.split('_').map(word =>
+   *     word.charAt(0).toUpperCase() + word.slice(1)
+   *   ).join(' ');
+   * }}
+   * ```
+   */
   formatHeader?: ((columnName: string) => string) | null;
+  /**
+   * Custom cell formatting function
+   * @example
+   * ```tsx
+   * // Format dates
+   * formatCell={(value, column) => {
+   *   if (column === 'created_at' && typeof value === 'string') {
+   *     return new Date(value).toLocaleDateString();
+   *   }
+   *   return value;
+   * }}
+   * ```
+   */
   formatCell?: (value: unknown, column: string) => React.ReactNode;
 }
 
@@ -88,7 +178,7 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
     const DefaultSortIcon: React.FC<{ direction: 'asc' | 'desc' | null }> = ({ direction }) => {
       if (direction === 'asc') return <span> ↑</span>;
       if (direction === 'desc') return <span> ↓</span>;
-      return null;
+      return <span className="sort-indicator-hover"> ⇅</span>;
     };
 
     const SortIcon = sortIcon || DefaultSortIcon;
@@ -175,7 +265,7 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
                         styles.header,
                         header.column.getIsSorted() ? styles.sorted : styles.sortable
                       )}
-                      className={classNames.header}
+                      className={`${classNames.header} tlens-table-header`}
                       aria-sort={enableSorting ? ariaSortValue : undefined}
                       scope="col"
                     >

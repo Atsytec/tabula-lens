@@ -146,4 +146,30 @@ export const defaultStyles: Styles = {
     whiteSpace: 'nowrap',
     border: 0,
   },
+  tableSelectorSidebar: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 'var(--tlens-spacing-sm, 0.5rem)',
+    padding: 'var(--tlens-spacing-md, 1rem)',
+    borderRight: '1px solid var(--tlens-border, #ddd)',
+    minWidth: '200px',
+  },
+  tableSelectorSidebarLabel: {
+    fontWeight: 600,
+    marginBottom: 'var(--tlens-spacing-sm, 0.5rem)',
+  },
+  tableSelectorSidebarButton: {
+    padding: 'var(--tlens-spacing-xs, 0.5rem)',
+    textAlign: 'left',
+    backgroundColor: 'var(--tlens-bg-white, white)',
+    border: '1px solid var(--tlens-border, #ddd)',
+    borderRadius: 'var(--tlens-radius, 4px)',
+    cursor: 'pointer',
+  },
+  tableSelectorSidebarButtonActive: {
+    backgroundColor: 'var(--tlens-bg-sorted, #e9ecef)',
+  },
+  sortableHover: {
+    opacity: 0.3,
+  },
 };

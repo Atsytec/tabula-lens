@@ -3,27 +3,169 @@ import { mergeStyle } from '../utils/styleHelpers';
 import { defaultStyles } from '../styles/defaultStyles';
 import type { ClassNames, Styles, TableSelectorMode } from '../DatabaseViewer.types';
 
+/**
+ * Props for the TableSelector component
+ * @interface TableSelectorProps
+ */
 export interface TableSelectorProps {
+  /**
+   * Display mode for the table selector
+   * @example
+   * ```tsx
+   * // Dropdown mode (default)
+   * <TableSelector mode="dropdown" />
+   *
+   * // Sidebar mode
+   * <TableSelector mode="sidebar" />
+   *
+   * // No selector
+   * <TableSelector mode="none" />
+   * ```
+   */
   mode: TableSelectorMode;
+  /**
+   * Array of available table names
+   */
   tables: string[];
+  /**
+   * Currently selected table name
+   */
   selectedTable: string | undefined;
+  /**
+   * Label for the table selector
+   */
   label: string;
+  /**
+   * Callback function when a table is selected
+   */
   onSelectTable: (table: string) => void;
+  /**
+   * Custom table selector component
+   * @example
+   * ```tsx
+   * const CustomTableSelector = ({ tables, selectedTable, onSelectTable }) => (
+   *   <div className="custom-table-selector">
+   *     <h3>Select a Table</h3>
+   *     <div className="table-grid">
+   *       {tables.map(table => (
+   *         <button
+   *           key={table}
+   *           onClick={() => onSelectTable(table)}
+   *           className={selectedTable === table ? 'active' : ''}
+   *         >
+   *           {table}
+   *         </button>
+   *       ))}
+   *     </div>
+   *   </div>
+   * );
+   * <TableSelector customComponent={CustomTableSelector} {...otherProps} />
+   * ```
+   */
   customComponent?: React.FC<{
     tables: string[];
     selectedTable: string | undefined;
     onSelectTable: (table: string) => void;
   }>;
+  /**
+   * Custom className for the table selector container
+   */
   className?: string;
+  /**
+   * Custom classNames for specific elements
+   */
   classNames?: ClassNames;
+  /**
+   * Custom styles for the table selector container
+   */
   style?: React.CSSProperties;
+  /**
+   * Custom styles for specific elements
+   */
   styles?: Styles;
+  /**
+   * Logger instance for debugging
+   */
   logger?: {
     debug: (message: string, data?: Record<string, unknown>) => void;
   };
+  /**
+   * Component ID for logging purposes
+   */
   componentId?: string;
 }
 
+/**
+ * TableSelector component - allows users to select which database table to view
+ *
+ * @component
+ * @example
+ * ```tsx
+ * // Dropdown mode (default)
+ * <TableSelector
+ *   mode="dropdown"
+ *   tables={['users', 'products', 'orders']}
+ *   selectedTable="users"
+ *   label="Select Table"
+ *   onSelectTable={(table) => setSelectedTable(table)}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Sidebar mode
+ * <TableSelector
+ *   mode="sidebar"
+ *   tables={['users', 'products', 'orders']}
+ *   selectedTable="users"
+ *   label="Tables"
+ *   onSelectTable={(table) => setSelectedTable(table)}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom styling
+ * <TableSelector
+ *   mode="dropdown"
+ *   tables={['users', 'products', 'orders']}
+ *   selectedTable="users"
+ *   label="Select Table"
+ *   onSelectTable={(table) => setSelectedTable(table)}
+ *   style={{ marginBottom: '1.5rem' }}
+ *   styles={{
+ *     filterInput: {
+ *       padding: '0.75rem',
+ *       fontSize: '1rem',
+ *       borderRadius: '8px',
+ *     },
+ *   }}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom component
+ * const MyCustomTableSelector = ({ tables, selectedTable, onSelectTable }) => (
+ *   <div className="my-table-selector">
+ *     <h3>Choose a Table</h3>
+ *     <div className="table-list">
+ *       {tables.map(table => (
+ *         <div
+ *           key={table}
+ *           onClick={() => onSelectTable(table)}
+ *           className={`table-item ${selectedTable === table ? 'selected' : ''}`}
+ *         >
+ *           <span className="table-icon">📊</span>
+ *           <span className="table-name">{table}</span>
+ *         </div>
+ *       ))}
+ *     </div>
+ *   </div>
+ * );
+ * <TableSelector customComponent={MyCustomTableSelector} {...otherProps} />
+ * ```
+ */
 export const TableSelector: React.FC<TableSelectorProps> = React.memo(
   ({
     mode,
@@ -93,30 +235,31 @@ export const TableSelector: React.FC<TableSelectorProps> = React.memo(
     if (mode === 'sidebar') {
       return (
         <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column' as const,
-            gap: '0.5rem',
-            padding: '1rem',
-            borderRight: '1px solid #ddd',
-            minWidth: '200px',
-            ...style,
-          }}
+          style={mergeStyle(defaultStyles.tableSelectorSidebar, styles.tableSelectorSidebar, style)}
           className={className || classNames.tableSelectorSidebar}
         >
-          <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>{label}</div>
+          <div
+            style={mergeStyle(
+              defaultStyles.tableSelectorSidebarLabel,
+              styles.tableSelectorSidebarLabel
+            )}
+          >
+            {label}
+          </div>
           {tables.map((table) => (
             <button
               key={table}
               onClick={() => handleTableSelect(table)}
-              style={{
-                padding: '0.5rem',
-                textAlign: 'left',
-                backgroundColor: selectedTable === table ? '#e9ecef' : 'white',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
+              style={mergeStyle(
+                defaultStyles.tableSelectorSidebarButton,
+                styles.tableSelectorSidebarButton,
+                selectedTable === table
+                  ? mergeStyle(
+                      defaultStyles.tableSelectorSidebarButtonActive,
+                      styles.tableSelectorSidebarButtonActive
+                    )
+                  : {}
+              )}
             >
               {table}
             </button>

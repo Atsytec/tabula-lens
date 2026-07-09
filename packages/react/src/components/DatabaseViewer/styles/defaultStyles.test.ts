@@ -133,6 +133,11 @@ describe('defaultStyles - Phase 2 CSS Custom Properties Migration', () => {
         'pageSize',
         'info',
         'srOnly',
+        'tableSelectorSidebar',
+        'tableSelectorSidebarLabel',
+        'tableSelectorSidebarButton',
+        'tableSelectorSidebarButtonActive',
+        'sortableHover',
       ];
 
       expect(styleKeys).toEqual(expect.arrayContaining(expectedKeys));

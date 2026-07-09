@@ -14,6 +14,7 @@ import { useTableState } from './components/DatabaseViewer/hooks/useTableState';
 import { buildQueryParams } from './components/DatabaseViewer/hooks/buildQueryParams';
 import { useDatabaseData } from './components/DatabaseViewer/hooks/useDatabaseData';
 import { sanitizeColumnData } from './components/DatabaseViewer/utils/validationHelpers';
+import { validateProps } from './components/DatabaseViewer/utils/propValidation';
 import {
   LoadingState,
   ErrorState,
@@ -201,7 +202,97 @@ PaginationRenderer.displayName = 'PaginationRenderer';
  * @component
  * @example
  * ```tsx
+ * // Basic usage
  * <DatabaseViewer path="/api/database" initialTable="users" />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With authentication
+ * <DatabaseViewer
+ *   path="/api/database"
+ *   initialTable="users"
+ *   getAuthHeaders={async () => ({
+ *     Authorization: `Bearer ${token}`,
+ *   })}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Custom styling
+ * <DatabaseViewer
+ *   path="/api/database"
+ *   initialTable="users"
+ *   className="my-custom-class"
+ *   styles={{
+ *     container: { padding: '2rem' },
+ *     header: { backgroundColor: '#f0f0f0' },
+ *   }}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom components
+ * <DatabaseViewer
+ *   path="/api/database"
+ *   initialTable="users"
+ *   loadingComponent={() => <div>Loading...</div>}
+ *   errorComponent={({ error, retry }) => (
+ *     <div>
+ *       <p>Error: {error.message}</p>
+ *       <button onClick={retry}>Retry</button>
+ *     </div>
+ *   )}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom sorting and filtering
+ * <DatabaseViewer
+ *   path="/api/database"
+ *   initialTable="users"
+ *   enableSorting={true}
+ *   sortableColumns={['name', 'email', 'created_at']}
+ *   defaultSort={{ column: 'name', direction: 'asc' }}
+ *   showFilter={true}
+ *   filterDebounceMs={500}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom pagination
+ * <DatabaseViewer
+ *   path="/api/database"
+ *   initialTable="users"
+ *   pageSize={25}
+ *   pageSizeOptions={[10, 25, 50, 100]}
+ *   paginationPosition="both"
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom header and cell formatting
+ * <DatabaseViewer
+ *   path="/api/database"
+ *   initialTable="users"
+ *   formatHeader={(columnName) => {
+ *     // Convert snake_case to Title Case
+ *     return columnName.split('_').map(word =>
+ *       word.charAt(0).toUpperCase() + word.slice(1)
+ *     ).join(' ');
+ *   }}
+ *   formatCell={(value, column) => {
+ *     if (column === 'created_at' && typeof value === 'string') {
+ *       return new Date(value).toLocaleDateString();
+ *     }
+ *     return value;
+ *   }}
+ * />
  * ```
  */
 export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
@@ -250,6 +341,60 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
     defaultFilterColumns,
     showFilterColumnSelector = true,
   }) => {
+    // Validate props at runtime for development
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        validateProps({
+          path,
+          initialTable,
+          tableSelector,
+          tableSelectorLabel,
+          tableSelectorComponent,
+          getAuthHeaders,
+          headers,
+          showFilter,
+          filterPlaceholder,
+          filterPosition,
+          filterDebounceMs,
+          filterComponent,
+          showPagination,
+          pageSize,
+          pageSizeOptions,
+          showPageSizeSelector,
+          paginationPosition,
+          paginationComponent,
+          enableSorting,
+          sortableColumns,
+          defaultSort,
+          multiSort,
+          sortIcon,
+          formatHeader,
+          formatCell,
+          className,
+          classNames,
+          style,
+          styles,
+          loadingComponent,
+          errorComponent,
+          emptyComponent,
+          onError,
+          queryOptions,
+          refetchInterval,
+          logger: propLogger,
+          enableLogging,
+          logLevel,
+          logFetchErrors,
+          logQueryErrors,
+          logPerformanceMetrics,
+          defaultFilterColumns,
+          showFilterColumnSelector,
+        });
+      } catch (error) {
+        // Log validation errors but don't prevent rendering
+        console.warn('[DatabaseViewer] Prop validation failed:', error);
+      }
+    }
+
     // Initialize logger with lifecycle logging
     const { logger, componentId } = useLogger({
       logger: propLogger,
@@ -392,6 +537,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
     // Handle table change with pagination, sorting, and filter reset
     const handleTableChange = (_table: string) => {
       tableState.setPagination({ pageIndex: 0, pageSize });
+      // Always reset sorting when switching tables to avoid using invalid column names
       tableState.setSorting(
         defaultSort ? [{ id: defaultSort.column, desc: defaultSort.direction === 'desc' }] : []
       );

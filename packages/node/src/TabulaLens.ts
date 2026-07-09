@@ -133,7 +133,21 @@ export class TabulaLens {
         let columnsToSearch: string[];
 
         if (filterColumns && filterColumns.length > 0) {
-          columnsToSearch = filterColumns;
+          // Validate that provided filter columns are actually filterable (text-based)
+          const filterableColumns = await this.getFilterableColumns(table);
+          const validFilterColumns = filterColumns.filter((col) => filterableColumns.includes(col));
+
+          if (validFilterColumns.length !== filterColumns.length) {
+            const invalidColumns = filterColumns.filter((col) => !filterableColumns.includes(col));
+            this.logger.warn('Some filter columns are not text-based and will be ignored', {
+              queryId,
+              table,
+              invalidColumns,
+              validColumns: validFilterColumns,
+            });
+          }
+
+          columnsToSearch = validFilterColumns;
         } else {
           columnsToSearch = await this.getFilterableColumns(table);
         }
@@ -151,7 +165,10 @@ export class TabulaLens {
       let columnsToSearch: string[] = [];
       if (filter) {
         if (filterColumns && filterColumns.length > 0) {
-          columnsToSearch = filterColumns;
+          // Validate that provided filter columns are actually filterable (text-based)
+          const filterableColumns = await this.getFilterableColumns(table);
+          const validFilterColumns = filterColumns.filter((col) => filterableColumns.includes(col));
+          columnsToSearch = validFilterColumns;
         } else {
           columnsToSearch = await this.getFilterableColumns(table);
         }
@@ -388,7 +405,11 @@ export class TabulaLens {
     }
   }
 
-  private async getFilterableColumns(table: string): Promise<string[]> {
+  /**
+   * Get filterable (text-based) columns for a table
+   * This is a public method that can be used by frontend components to validate filter column selection
+   */
+  async getFilterableColumns(table: string): Promise<string[]> {
     const operationId = generateId();
 
     this.logger.debug('Fetching filterable columns for table', { operationId, table });

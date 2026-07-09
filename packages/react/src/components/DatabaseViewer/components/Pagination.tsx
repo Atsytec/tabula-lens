@@ -3,16 +3,73 @@ import { mergeStyle } from '../utils/styleHelpers';
 import { defaultStyles } from '../styles/defaultStyles';
 import type { ClassNames, Styles } from '../DatabaseViewer.types';
 
+/**
+ * Props for the Pagination component
+ * @interface PaginationProps
+ */
 export interface PaginationProps {
+  /**
+   * Current page index (0-based)
+   */
   pageIndex: number;
+  /**
+   * Total number of pages
+   */
   pageCount: number;
+  /**
+   * Number of records per page
+   */
   pageSize: number;
+  /**
+   * Whether previous page navigation is available
+   */
   canPreviousPage: boolean;
+  /**
+   * Whether next page navigation is available
+   */
   canNextPage: boolean;
+  /**
+   * Available page size options
+   */
   pageSizeOptions: number[];
+  /**
+   * Whether to show the page size selector
+   */
   showPageSizeSelector: boolean;
+  /**
+   * Callback function when page changes
+   */
   onPageChange: (pageIndex: number) => void;
+  /**
+   * Callback function when page size changes
+   */
   onPageSizeChange: (pageSize: number) => void;
+  /**
+   * Custom pagination component
+   * @example
+   * ```tsx
+   * const CustomPagination = ({
+   *   pageIndex, pageCount, pageSize,
+   *   canPreviousPage, canNextPage,
+   *   previousPage, nextPage, firstPage, lastPage,
+   *   setPageSize
+   * }) => (
+   *   <div className="custom-pagination">
+   *     <button onClick={firstPage} disabled={!canPreviousPage}>First</button>
+   *     <button onClick={previousPage} disabled={!canPreviousPage}>Prev</button>
+   *     <span>Page {pageIndex + 1} of {pageCount}</span>
+   *     <button onClick={nextPage} disabled={!canNextPage}>Next</button>
+   *     <button onClick={lastPage} disabled={!canNextPage}>Last</button>
+   *     <select onChange={(e) => setPageSize(Number(e.target.value))}>
+   *       {[10, 25, 50, 100].map(size => (
+   *         <option key={size} value={size}>{size}</option>
+   *       ))}
+   *     </select>
+   *   </div>
+   * );
+   * <Pagination customComponent={CustomPagination} {...otherProps} />
+   * ```
+   */
   customComponent?: React.FC<{
     pageIndex: number;
     pageCount: number;
@@ -25,9 +82,21 @@ export interface PaginationProps {
     lastPage: () => void;
     setPageSize: (size: number) => void;
   }>;
+  /**
+   * Custom className for the pagination container
+   */
   className?: string;
+  /**
+   * Custom classNames for specific elements
+   */
   classNames?: ClassNames;
+  /**
+   * Custom styles for the pagination container
+   */
   style?: React.CSSProperties;
+  /**
+   * Custom styles for specific elements
+   */
   styles?: Styles;
 }
 

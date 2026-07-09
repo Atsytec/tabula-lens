@@ -72,4 +72,43 @@ describe('DataTable Accessibility', () => {
       expect(emailHeader).toHaveAttribute('aria-sort', 'descending');
     });
   });
+
+  describe('Sortable column hover indicator (I1)', () => {
+    it('should show hover indicator on unsorted sortable columns', () => {
+      render(<DataTable {...defaultProps} />);
+      const headers = screen.getAllByRole('columnheader');
+      headers.forEach((header) => {
+        const hoverIndicator = header.querySelector('.sort-indicator-hover');
+        expect(hoverIndicator).toBeInTheDocument();
+        expect(hoverIndicator).toHaveTextContent('⇅');
+      });
+    });
+
+    it('should not show hover indicator on sorted columns', () => {
+      render(<DataTable {...defaultProps} sorting={[{ id: 'name', desc: false }]} />);
+      const nameHeader = screen.getByText('Name');
+      const hoverIndicator = nameHeader.querySelector('.sort-indicator-hover');
+      expect(hoverIndicator).not.toBeInTheDocument();
+    });
+
+    it('should show up arrow on ascending sorted column', () => {
+      render(<DataTable {...defaultProps} sorting={[{ id: 'name', desc: false }]} />);
+      const nameHeader = screen.getByText('Name');
+      expect(nameHeader).toHaveTextContent('↑');
+    });
+
+    it('should show down arrow on descending sorted column', () => {
+      render(<DataTable {...defaultProps} sorting={[{ id: 'name', desc: true }]} />);
+      const nameHeader = screen.getByText('Name');
+      expect(nameHeader).toHaveTextContent('↓');
+    });
+
+    it('should add tlens-table-header class to headers', () => {
+      render(<DataTable {...defaultProps} />);
+      const headers = screen.getAllByRole('columnheader');
+      headers.forEach((header) => {
+        expect(header).toHaveClass('tlens-table-header');
+      });
+    });
+  });
 });

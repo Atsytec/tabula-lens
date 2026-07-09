@@ -382,6 +382,60 @@ describe('DatabaseViewer', () => {
         expect(nameHeader).toBeInTheDocument();
       });
     });
+
+    it('should reset sorting state when switching tables without defaultSort', async () => {
+      const mockTablesResult = ['users', 'posts'];
+      const mockUsersResult = {
+        data: [{ id: 1, name: 'John Doe' }],
+        columns: ['id', 'name'],
+        pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
+      };
+      const mockPostsResult = {
+        data: [{ id: 1, title: 'Test Post' }],
+        columns: ['id', 'title'],
+        pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
+      };
+
+      (global.fetch as unknown as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockTablesResult,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockUsersResult,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockPostsResult,
+        });
+
+      renderWithProvider(
+        <DatabaseViewer
+          path="http://localhost:3000/api"
+          initialTable="users"
+          enableSorting={true}
+          tableSelector="dropdown"
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('John Doe')).toBeInTheDocument();
+      });
+
+      // Simulate table switch by selecting a different table
+      const tableSelector = screen.getByRole('combobox');
+      fireEvent.change(tableSelector, { target: { value: 'posts' } });
+
+      await waitFor(() => {
+        expect(screen.getByText('Test Post')).toBeInTheDocument();
+      });
+
+      // Verify that the request for posts doesn't include the invalid sort parameter
+      const lastCall = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.at(-1);
+      const url = lastCall?.[0] as string;
+      expect(url).not.toContain('sort=name');
+    });
   });
 
   describe('authentication', () => {

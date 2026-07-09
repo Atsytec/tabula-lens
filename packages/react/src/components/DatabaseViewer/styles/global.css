@@ -25,6 +25,16 @@
   outline-offset: -2px;
 }
 
+/* Table header hover effect for sortable columns */
+.tlens-table-header:hover .sort-indicator-hover {
+  opacity: 1;
+}
+
+.sort-indicator-hover {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
 /* Pagination button disabled state */
 .tlens-pagination-button:disabled {
   opacity: 0.5;

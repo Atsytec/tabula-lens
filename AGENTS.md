@@ -211,3 +211,95 @@ The following are now available for advanced use cases:
 - `mergeClassName` - Class name merging
 - `mergeStyle` - Style merging
 - `buildQueryParams` - Query parameter building
+- `validateProps` - Runtime prop validation (Phase 7)
+
+## Phase 7: Styling Cohesion & Developer Experience (2026-07-09)
+
+The DatabaseViewer component has been enhanced with styling cohesion improvements and developer experience features.
+
+### Styling Cohesion Improvements
+
+**TableSelector Sidebar Mode CSS Custom Properties**
+
+- Updated `TableSelector.tsx` sidebar mode to use CSS custom properties instead of hardcoded values
+- Added new style properties to `defaultStyles.ts`:
+  - `tableSelectorSidebar` - Container styles with CSS variables
+  - `tableSelectorSidebarLabel` - Label styles
+  - `tableSelectorSidebarButton` - Button styles
+  - `tableSelectorSidebarButtonActive` - Active state styles
+- Updated `DatabaseViewer.types.ts` to include new style properties
+- Ensures visual consistency with other components and supports theming
+
+**Sortable Column Hover Indicators**
+
+- Added visual indicator (⇅) for unsorted sortable columns on hover
+- Shows up/down arrows (↑/↓) for sorted columns
+- Added CSS class `sort-indicator-hover` with opacity transition in `global.css`
+- Added `tlens-table-header` class to headers for hover targeting
+- Location: `DataTable.tsx`, `global.css`
+
+### Developer Experience Improvements
+
+**Runtime Prop Validation**
+
+- Created `utils/propValidation.ts` with comprehensive prop validation
+- Validates all props at runtime in development mode
+- Provides helpful error messages for invalid props
+- Validates:
+  - Required props (path)
+  - Enum props (tableSelector, filterPosition, paginationPosition)
+  - Numeric props (pageSize, filterDebounceMs, refetchInterval)
+  - Array props (pageSizeOptions, sortableColumns, defaultFilterColumns)
+  - Component props (custom components)
+  - Callback props (getAuthHeaders, onError)
+  - Object props (defaultSort, headers)
+- Integrated into `DatabaseViewer.tsx` with development-only validation
+- 38 comprehensive tests added
+
+**Comprehensive JSDoc Documentation**
+
+- Added detailed JSDoc examples to all major components:
+  - `DatabaseViewer.tsx` - 8 usage examples covering authentication, styling, custom components, sorting, filtering, pagination, and formatting
+  - `LoadingState.tsx` - 3 usage examples
+  - `ErrorState.tsx` - 4 usage examples
+  - `EmptyState.tsx` - 4 usage examples
+  - `DataTable.tsx` - Detailed prop documentation with examples
+  - `Pagination.tsx` - Detailed prop documentation with examples
+  - `FilterInput.tsx` - 4 usage examples
+  - `TableSelector.tsx` - 4 usage examples
+- All examples demonstrate real-world usage patterns
+- Custom component patterns documented throughout
+
+### Test Coverage
+
+- Added 38 tests for prop validation (`propValidation.test.ts`)
+- Added 5 tests for DataTable hover indicators
+- Added 4 tests for TableSelector CSS custom properties
+- Updated defaultStyles test to include new style properties
+- All new tests pass
+- Type checking and linting pass
+
+### New Style Properties
+
+The following new style properties were added to support the styling cohesion improvements:
+
+```typescript
+interface Styles {
+  // ... existing properties
+  tableSelectorSidebar?: React.CSSProperties;
+  tableSelectorSidebarLabel?: React.CSSProperties;
+  tableSelectorSidebarButton?: React.CSSProperties;
+  tableSelectorSidebarButtonActive?: React.CSSProperties;
+  sortableHover?: React.CSSProperties;
+}
+```
+
+### Backward Compatibility
+
+All Phase 7 changes maintain 100% backward compatibility:
+
+- New style properties are optional with sensible defaults
+- Prop validation only runs in development mode
+- JSDoc additions are documentation-only
+- Hover indicators enhance UX without breaking existing behavior
+- CSS custom properties include fallback values

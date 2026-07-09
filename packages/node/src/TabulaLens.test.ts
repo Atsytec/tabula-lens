@@ -280,4 +280,114 @@ describe('TabulaLens', () => {
       tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
     });
   });
+
+  describe('filtering validation', () => {
+    it('should filter out non-text columns from filterColumns parameter', async () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+
+      // Mock getFilterableColumns to return only text-based columns
+      const originalGetFilterableColumns = tabulaLens['getFilterableColumns'];
+      tabulaLens['getFilterableColumns'] = vi.fn().mockResolvedValue(['email', 'name']);
+
+      // Mock the database query
+      const mockQuery = {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        modify: vi.fn().mockReturnThis(),
+        count: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ count: 0 }),
+        orderBy: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        offset: vi.fn().mockResolvedValue([]),
+      };
+
+      tabulaLens['db'] = vi.fn().mockReturnValue(mockQuery);
+
+      const options: QueryOptions = {
+        table: 'users',
+        filter: 'test',
+        filterColumns: ['id', 'email', 'name'], // 'id' is not a text column
+      };
+
+      await tabulaLens.query(options);
+
+      // Should call getFilterableColumns to validate the provided filterColumns
+      expect(tabulaLens['getFilterableColumns']).toHaveBeenCalledWith('users');
+
+      // Restore original method
+      tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
+    });
+
+    it('should handle empty filterColumns gracefully', async () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+
+      // Mock getFilterableColumns to return text-based columns
+      const originalGetFilterableColumns = tabulaLens['getFilterableColumns'];
+      tabulaLens['getFilterableColumns'] = vi.fn().mockResolvedValue(['email', 'name']);
+
+      // Mock the database query
+      const mockQuery = {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        modify: vi.fn().mockReturnThis(),
+        count: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ count: 0 }),
+        orderBy: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        offset: vi.fn().mockResolvedValue([]),
+      };
+
+      tabulaLens['db'] = vi.fn().mockReturnValue(mockQuery);
+
+      const options: QueryOptions = {
+        table: 'users',
+        filter: 'test',
+        filterColumns: [], // Empty array
+      };
+
+      await tabulaLens.query(options);
+
+      // Should fall back to getFilterableColumns when filterColumns is empty
+      expect(tabulaLens['getFilterableColumns']).toHaveBeenCalledWith('users');
+
+      // Restore original method
+      tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
+    });
+
+    it('should use getFilterableColumns when filterColumns is not provided', async () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+
+      // Mock getFilterableColumns to return text-based columns
+      const originalGetFilterableColumns = tabulaLens['getFilterableColumns'];
+      tabulaLens['getFilterableColumns'] = vi.fn().mockResolvedValue(['email', 'name']);
+
+      // Mock the database query
+      const mockQuery = {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        modify: vi.fn().mockReturnThis(),
+        count: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ count: 0 }),
+        orderBy: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        offset: vi.fn().mockResolvedValue([]),
+      };
+
+      tabulaLens['db'] = vi.fn().mockReturnValue(mockQuery);
+
+      const options: QueryOptions = {
+        table: 'users',
+        filter: 'test',
+        // No filterColumns provided
+      };
+
+      await tabulaLens.query(options);
+
+      // Should call getFilterableColumns when filterColumns is not provided
+      expect(tabulaLens['getFilterableColumns']).toHaveBeenCalledWith('users');
+
+      // Restore original method
+      tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
+    });
+  });
 });

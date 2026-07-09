@@ -150,6 +150,14 @@ export interface Styles {
   filterColumnSelector?: React.CSSProperties;
   /** Screen reader only styles */
   srOnly?: React.CSSProperties;
+  /** Table selector sidebar label styles */
+  tableSelectorSidebarLabel?: React.CSSProperties;
+  /** Table selector sidebar button styles */
+  tableSelectorSidebarButton?: React.CSSProperties;
+  /** Table selector sidebar button active state styles */
+  tableSelectorSidebarButtonActive?: React.CSSProperties;
+  /** Sortable column hover indicator styles */
+  sortableHover?: React.CSSProperties;
 }
 
 /**

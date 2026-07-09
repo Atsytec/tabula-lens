@@ -347,6 +347,55 @@ This roadmap synthesizes findings from the UX/UI Audit and shadcn/Tailwind Feasi
   - Export current page or all filtered data
   - Location: New utility or component method
 
+**Phase 6 Status:** ⏸️ **PENDING** (Not yet implemented)
+
+---
+
+## Phase 7: Styling Cohesion & Developer Experience (v0.2.8)
+
+**Priority:** P1 - High priority for consistency  
+**Impact:** Visual cohesion and better developer experience
+
+### Styling Cohesion
+
+- [x] **S1** — Fix TableSelector sidebar mode to use CSS custom properties
+  - Update sidebar mode to use CSS custom properties instead of hardcoded values
+  - Add new style properties: `tableSelectorSidebar`, `tableSelectorSidebarLabel`, `tableSelectorSidebarButton`, `tableSelectorSidebarButtonActive`
+  - Ensures visual consistency with other components
+  - Location: `TableSelector.tsx`, `defaultStyles.ts`, `DatabaseViewer.types.ts`
+
+- [x] **S2** — Add visual indicator for sortable columns (hover state with chevron icon)
+  - Add hover indicator (⇅) for unsorted sortable columns
+  - Show up/down arrows for sorted columns
+  - Add CSS class for hover effect with opacity transition
+  - Location: `DataTable.tsx`, `global.css`
+
+### Developer Experience
+
+- [x] **D9** — Add prop validation with runtime type checking
+  - Create `propValidation.ts` utility with comprehensive prop validation
+  - Validate all props at runtime in development mode
+  - Provide helpful error messages for invalid props
+  - Location: `utils/propValidation.ts`, `DatabaseViewer.tsx`
+
+- [x] **D10** — Add comprehensive JSDoc examples to components
+  - Add detailed JSDoc examples to all major components
+  - Include usage examples for common scenarios
+  - Document custom component patterns
+  - Location: All component files
+
+**Phase 7 Status:** ✅ **COMPLETED** (2026-07-09)
+
+- All styling cohesion improvements implemented (S1, S2)
+- All developer experience improvements implemented (D9, D10)
+- TableSelector sidebar mode now uses CSS custom properties for consistency
+- Added hover indicator for sortable columns with chevron icon
+- Added comprehensive prop validation with runtime type checking
+- Added detailed JSDoc examples to all major components
+- Comprehensive tests added (38 new tests for prop validation, 5 new tests for DataTable hover indicators, 4 new tests for TableSelector CSS properties)
+- Type checking and linting pass
+- Changes committed to git
+
 - [ ] Add JSON export functionality
   - Add `exportToJSON` method or prop
   - Export current page or all filtered data
