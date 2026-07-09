@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { TabulaLens, QueryOptions, SortOption, FilterOption } from './TabulaLens';
 
 describe('TabulaLens', () => {
@@ -169,6 +169,115 @@ describe('TabulaLens', () => {
       // Should handle empty string gracefully
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('should use first available column as fallback when no valid sort columns', async () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+
+      // Mock getFilterableColumns to return specific columns
+      const originalGetFilterableColumns = tabulaLens['getFilterableColumns'];
+      tabulaLens['getFilterableColumns'] = vi
+        .fn()
+        .mockResolvedValue(['email', 'name', 'created_at']);
+
+      // Mock the database query
+      const mockQuery = {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        modify: vi.fn().mockReturnThis(),
+        count: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ count: 0 }),
+        orderBy: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        offset: vi.fn().mockResolvedValue([]),
+      };
+
+      tabulaLens['db'] = vi.fn().mockReturnValue(mockQuery);
+
+      const options: QueryOptions = {
+        table: 'users',
+        sort: 'nonexistent:asc',
+      };
+
+      await tabulaLens.query(options);
+
+      // Should fall back to first available column ('email')
+      expect(mockQuery.orderBy).toHaveBeenCalledWith('email', 'asc');
+
+      // Restore original method
+      tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
+    });
+
+    it('should use first available column as default when no sort specified', async () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+
+      // Mock getFilterableColumns to return specific columns
+      const originalGetFilterableColumns = tabulaLens['getFilterableColumns'];
+      tabulaLens['getFilterableColumns'] = vi.fn().mockResolvedValue(['name', 'email', 'id']);
+
+      // Mock the database query
+      const mockQuery = {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        modify: vi.fn().mockReturnThis(),
+        count: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ count: 0 }),
+        orderBy: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        offset: vi.fn().mockResolvedValue([]),
+      };
+
+      tabulaLens['db'] = vi.fn().mockReturnValue(mockQuery);
+
+      const options: QueryOptions = {
+        table: 'users',
+        // No sort parameter
+      };
+
+      await tabulaLens.query(options);
+
+      // Should use first available column ('name') as default
+      expect(mockQuery.orderBy).toHaveBeenCalledWith('name', 'asc');
+
+      // Restore original method
+      tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
+    });
+
+    it('should handle tables with no columns gracefully', async () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+
+      // Mock getFilterableColumns to return empty array
+      const originalGetFilterableColumns = tabulaLens['getFilterableColumns'];
+      tabulaLens['getFilterableColumns'] = vi.fn().mockResolvedValue([]);
+
+      // Mock the database query
+      const mockQuery = {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        modify: vi.fn().mockReturnThis(),
+        count: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ count: 0 }),
+        orderBy: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        offset: vi.fn().mockResolvedValue([]),
+      };
+
+      tabulaLens['db'] = vi.fn().mockReturnValue(mockQuery);
+
+      const options: QueryOptions = {
+        table: 'users',
+        sort: 'name:asc',
+      };
+
+      // Should not throw error
+      const result = await tabulaLens.query(options);
+      expect(result).toBeDefined();
+
+      // Should not call orderBy since no columns available
+      expect(mockQuery.orderBy).not.toHaveBeenCalled();
+
+      // Restore original method
+      tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
     });
   });
 });

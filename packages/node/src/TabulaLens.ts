@@ -172,10 +172,13 @@ export class TabulaLens {
 
       const total = countResult ? Number((countResult as { count: string | number }).count) : 0;
 
+      // Get table columns for sorting validation and fallback
+      const tableColumns = await this.getFilterableColumns(table);
+      const defaultSortColumn = tableColumns.length > 0 ? tableColumns[0] : null;
+
       // Apply sorting with column validation
       if (sort) {
         const sortOptions = this.parseSort(sort);
-        const tableColumns = await this.getFilterableColumns(table);
 
         let hasValidSortColumn = false;
         sortOptions.forEach(({ column, direction }) => {
@@ -193,17 +196,33 @@ export class TabulaLens {
           }
         });
 
-        // Fallback to default sorting if no valid sort columns
+        // Fallback to first available column if no valid sort columns
         if (!hasValidSortColumn) {
-          this.logger.warn('No valid sort columns found, using default', {
-            queryId,
-            table,
-            requestedSort: sortOptions,
-          });
-          query = query.orderBy('id', 'asc');
+          if (defaultSortColumn) {
+            this.logger.warn('No valid sort columns found, using first available column', {
+              queryId,
+              table,
+              requestedSort: sortOptions,
+              fallbackColumn: defaultSortColumn,
+            });
+            query = query.orderBy(defaultSortColumn, 'asc');
+          } else {
+            this.logger.warn('No columns available for sorting', {
+              queryId,
+              table,
+            });
+          }
         }
       } else {
-        query = query.orderBy('id', 'asc');
+        // Use first available column as default sort when no sort specified
+        if (defaultSortColumn) {
+          query = query.orderBy(defaultSortColumn, 'asc');
+        } else {
+          this.logger.warn('No columns available for default sorting', {
+            queryId,
+            table,
+          });
+        }
       }
 
       // Apply pagination
