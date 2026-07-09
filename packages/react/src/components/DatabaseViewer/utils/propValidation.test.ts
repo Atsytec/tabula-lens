@@ -20,7 +20,7 @@ describe('propValidation', () => {
     });
 
     it('should throw error when path is not a string', () => {
-      expect(() => validateProps({ path: 123 } as DatabaseViewerProps)).toThrow(
+      expect(() => validateProps({ path: 123 } as unknown as DatabaseViewerProps)).toThrow(
         'Invalid props passed to DatabaseViewer'
       );
     });
