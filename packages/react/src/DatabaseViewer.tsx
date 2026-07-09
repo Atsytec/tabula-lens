@@ -389,9 +389,13 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
       );
     }, [tableSelector, style, styles.container]);
 
-    // Handle table change with pagination reset
+    // Handle table change with pagination, sorting, and filter reset
     const handleTableChange = (_table: string) => {
       tableState.setPagination({ pageIndex: 0, pageSize });
+      tableState.setSorting(
+        defaultSort ? [{ id: defaultSort.column, desc: defaultSort.direction === 'desc' }] : []
+      );
+      tableState.setFilter('');
     };
 
     if (isLoading) {

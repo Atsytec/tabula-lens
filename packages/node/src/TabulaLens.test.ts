@@ -126,4 +126,49 @@ describe('TabulaLens', () => {
       expect(filter.value).toBe(25);
     });
   });
+
+  describe('sorting validation', () => {
+    it('should parse sort options correctly', () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+      const sortString = 'name:asc,created_at:desc';
+
+      const parseSort = (
+        tabulaLens as unknown as { parseSort: (sortString: string) => SortOption[] }
+      ).parseSort.bind(tabulaLens);
+      const result = parseSort(sortString);
+
+      expect(result).toEqual([
+        { column: 'name', direction: 'asc' },
+        { column: 'created_at', direction: 'desc' },
+      ]);
+    });
+
+    it('should handle invalid sort format gracefully', () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+      const sortString = 'invalid::format';
+
+      const parseSort = (
+        tabulaLens as unknown as { parseSort: (sortString: string) => SortOption[] }
+      ).parseSort.bind(tabulaLens);
+      const result = parseSort(sortString);
+
+      // Should not throw and should return some default
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('should handle empty sort string', () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+      const sortString = '';
+
+      const parseSort = (
+        tabulaLens as unknown as { parseSort: (sortString: string) => SortOption[] }
+      ).parseSort.bind(tabulaLens);
+      const result = parseSort(sortString);
+
+      // Should handle empty string gracefully
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+    });
+  });
 });

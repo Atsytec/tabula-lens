@@ -172,12 +172,36 @@ export class TabulaLens {
 
       const total = countResult ? Number((countResult as { count: string | number }).count) : 0;
 
-      // Apply sorting
+      // Apply sorting with column validation
       if (sort) {
         const sortOptions = this.parseSort(sort);
+        const tableColumns = await this.getFilterableColumns(table);
+
+        let hasValidSortColumn = false;
         sortOptions.forEach(({ column, direction }) => {
-          query = query.orderBy(column, direction);
+          // Only apply sorting if column exists in table
+          if (tableColumns.includes(column)) {
+            query = query.orderBy(column, direction);
+            hasValidSortColumn = true;
+          } else {
+            this.logger.warn('Sort column does not exist in table, skipping', {
+              queryId,
+              table,
+              column,
+              availableColumns: tableColumns,
+            });
+          }
         });
+
+        // Fallback to default sorting if no valid sort columns
+        if (!hasValidSortColumn) {
+          this.logger.warn('No valid sort columns found, using default', {
+            queryId,
+            table,
+            requestedSort: sortOptions,
+          });
+          query = query.orderBy('id', 'asc');
+        }
       } else {
         query = query.orderBy('id', 'asc');
       }

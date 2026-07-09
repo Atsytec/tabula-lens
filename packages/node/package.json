@@ -1,6 +1,6 @@
 {
   "name": "@tabula-lens/node",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "private": false,
   "type": "module",
   "description": "Node.js backend SDK for Tabula Lens",
