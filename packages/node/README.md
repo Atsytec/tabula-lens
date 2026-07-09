@@ -14,9 +14,7 @@ A secure, backend-agnostic Node.js SDK for database queries with framework adapt
 - [Quick Start](#-quick-start)
 - [API Reference](#-api-reference)
 - [Framework Adapters](#-framework-adapters)
-- [Advanced Usage](#-advanced-usage)
-- [Error Handling](#-error-handling)
-- [Testing](#-testing)
+- [Configuration](#-configuration)
 - [Troubleshooting](#-troubleshooting)
 - [Security Considerations](#-security-considerations)
 
@@ -151,47 +149,17 @@ interface TabulaLensOptions {
 
 **Logging Configuration:**
 
-The package includes a built-in logging system with configurable log levels:
-
-- **Default Log Levels** (based on environment):
-  - `production`: `'error'` - Only error messages
-  - `test`: `'silent'` - No logging
-  - `development`: `'debug'` - All log levels
-
-- **Log Level Hierarchy** (most to least verbose):
-  - `debug` - All messages including debug info
-  - `info` - Info, warnings, and errors
-  - `warn` - Warnings and errors only
-  - `error` - Errors only
-  - `silent` - No output
-
-**Logging Examples:**
+The package includes built-in logging with configurable levels:
 
 ```typescript
-import { TabulaLens, createLogger } from '@tabula-lens/node';
+import { TabulaLens } from '@tabula-lens/node';
 
 // Basic usage with default logging
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
 // Custom log level
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
-  logLevel: 'info', // or 'error', 'warn', 'debug', 'silent'
-});
-
-// Custom logger with full configuration
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
-  logger: createLogger({
-    level: 'debug',
-    includeTimestamp: true,
-    colorize: true,
-    format: 'pretty', // or 'json', 'text'
-  }),
-});
-
-// Disable query/request logging
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
-  enableQueryLogging: false,
-  enableRequestLogging: false,
+  logLevel: 'info', // 'error' | 'warn' | 'info' | 'debug' | 'silent'
 });
 
 // Production configuration
@@ -260,14 +228,6 @@ async getTableMetadata(table: string): Promise<{
 ```
 
 Returns complete metadata for a table including name and columns.
-
-#### handle()
-
-```typescript
-async handle(request: RequestContext): Promise<ResponseContext>
-```
-
-Handles HTTP requests and returns appropriate responses. Used internally by adapters.
 
 #### close()
 
@@ -395,66 +355,7 @@ const server = http.createServer(async (req, res) => {
 });
 ```
 
-## 🌐 API Endpoints
-
-When using an adapter, the following endpoints are automatically available:
-
-### GET /tables
-
-Returns a list of all tables in the database.
-
-**Response:**
-
-```json
-["users", "posts", "comments", "products"]
-```
-
-### GET /tables/:tableName
-
-Returns metadata for a specific table.
-
-**Response:**
-
-```json
-{
-  "name": "users",
-  "columns": [
-    { "name": "id", "type": "integer" },
-    { "name": "name", "type": "character varying" },
-    { "name": "email", "type": "character varying" }
-  ]
-}
-```
-
-### GET /query
-
-Executes a database query with query parameters.
-
-**Query Parameters:**
-
-- `table` - Table name to query
-- `page` - Page number (default: 1)
-- `limit` - Records per page (default: 10)
-- `sort` - Sort string (e.g., `name:asc,email:desc`)
-- `filter` - Text filter for searching
-- `columns` - Comma-separated column names
-
-**Response:**
-
-```json
-{
-  "data": [{ "id": 1, "name": "John", "email": "john@example.com" }],
-  "columns": ["id", "name", "email"],
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "total": 100,
-    "totalPages": 10
-  }
-}
-```
-
-## 🔒 Security
+## 🔒 Security Considerations
 
 Tabula Lens is designed with security in mind:
 
@@ -472,109 +373,6 @@ Since Tabula Lens uses your existing framework, you can add authentication using
 import authMiddleware from './auth-middleware';
 
 app.use('/api/tabula-lens', authMiddleware, expressAdapter(tabulaLens));
-```
-
-## 📝 Advanced Usage
-
-### Logging Configuration
-
-The logging system provides detailed insights into database operations, query execution, and request handling.
-
-**Log Levels:**
-
-```typescript
-import { TabulaLens, createLogger } from '@tabula-lens/node';
-
-// Development - verbose logging
-const devTabulaLens = new TabulaLens(databaseUrl, {
-  logLevel: 'debug',
-  enableQueryLogging: true,
-  enableRequestLogging: true,
-});
-
-// Production - minimal logging
-const prodTabulaLens = new TabulaLens(databaseUrl, {
-  logLevel: 'error',
-  logFormat: 'json',
-  sensitiveDataMasking: true,
-});
-
-// Testing - no logging
-const testTabulaLens = new TabulaLens(databaseUrl, {
-  logLevel: 'silent',
-});
-```
-
-**Custom Logger:**
-
-```typescript
-import { createLogger, type Logger } from '@tabula-lens/node';
-
-// Create a custom logger with specific configuration
-const customLogger = createLogger({
-  level: 'info',
-  includeTimestamp: true,
-  colorize: true,
-  format: 'pretty',
-});
-
-const tabulaLens = new TabulaLens(databaseUrl, {
-  logger: customLogger,
-});
-
-// Or implement your own logger
-const customLogger: Logger = {
-  error(message, context) {
-    // Custom error handling
-    console.error('[CUSTOM]', message, context);
-    // Send to external service, etc.
-  },
-  warn(message, context) {
-    console.warn('[CUSTOM]', message, context);
-  },
-  info(message, context) {
-    console.log('[CUSTOM]', message, context);
-  },
-  debug(message, context) {
-    console.debug('[CUSTOM]', message, context);
-  },
-};
-
-const tabulaLens = new TabulaLens(databaseUrl, {
-  logger: customLogger,
-});
-```
-
-**Accessing the Logger:**
-
-```typescript
-// Get the logger instance for direct use
-const logger = tabulaLens.getLogger();
-
-// Log custom messages
-logger.info('Application started', { version: '1.0.0' });
-logger.debug('Processing request', { requestId: 'abc-123' });
-logger.warn('High memory usage', { memoryUsage: '85%' });
-logger.error('Database connection failed', { error: err });
-```
-
-**Log Formats:**
-
-```typescript
-// Pretty format (default, human-readable)
-const tabulaLens = new TabulaLens(databaseUrl, {
-  logFormat: 'pretty',
-});
-
-// JSON format (structured logging for log aggregation)
-const tabulaLens = new TabulaLens(databaseUrl, {
-  logFormat: 'json',
-});
-
-// Text format (simple text output)
-const tabulaLens = new TabulaLens(databaseUrl, {
-  logFormat: 'text',
-});
 ```
 
 ### Custom Query Options
@@ -619,27 +417,32 @@ process.on('SIGTERM', async () => {
 });
 ```
 
-## 🧪 Testing
+## 🔧 Configuration
+
+### Production Configuration
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import { TabulaLens } from '@tabula-lens/node';
-
-describe('TabulaLens', () => {
-  it('should query data', async () => {
-    const tabulaLens = new TabulaLens('test-database-url');
-    const result = await tabulaLens.query({ table: 'users' });
-
-    expect(result.data).toBeInstanceOf(Array);
-    expect(result.columns).toBeInstanceOf(Array);
-    expect(result.pagination).toBeDefined();
-
-    await tabulaLens.close();
-  });
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableQueryLogging: false,
+  enableRequestLogging: true,
 });
 ```
 
-## � Troubleshooting
+### Development Configuration
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'debug',
+  logFormat: 'pretty',
+  enableQueryLogging: true,
+  enableRequestLogging: true,
+});
+```
+
+## 🔧 Troubleshooting
 
 ### Database Connection Issues
 
@@ -697,19 +500,6 @@ describe('TabulaLens', () => {
 - Avoid logging sensitive data (passwords, tokens)
 - Use appropriate log levels (`error` in production)
 - Secure log files with appropriate file permissions
-
-### Best Practices
-
-```typescript
-// Production configuration example
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
-  logLevel: 'error',
-  logFormat: 'json',
-  sensitiveDataMasking: true,
-  enableQueryLogging: false, // Disable query logging in production
-  enableRequestLogging: true, // Keep request logging for monitoring
-});
-```
 
 ## 📝 License
 
