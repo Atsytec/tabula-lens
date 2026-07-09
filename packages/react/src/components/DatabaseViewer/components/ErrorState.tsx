@@ -155,40 +155,15 @@ export const ErrorState: React.FC<ErrorStateProps> = React.memo(
         style={mergeStyle(defaultStyles.error, styles.error, style)}
         className={className || classNames.error}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            marginBottom: '1rem',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '2rem',
-              opacity: 0.8,
-            }}
-          >
+        <div style={mergeStyle(defaultStyles.errorContent, styles.errorContent)}>
+          <div style={mergeStyle(defaultStyles.errorIcon, styles.errorIcon)}>
             {isRecoverable ? '⚠️' : '❌'}
           </div>
           <div>
-            <h3
-              style={{
-                margin: 0,
-                fontSize: '1.1rem',
-                fontWeight: 600,
-                color: 'var(--tlens-error, #c33)',
-              }}
-            >
+            <h3 style={mergeStyle(defaultStyles.errorTitle, styles.errorTitle)}>
               {isRecoverable ? 'Unable to Load Data' : 'Fatal Error'}
             </h3>
-            <p
-              style={{
-                margin: '0.5rem 0 0 0',
-                fontSize: '0.95rem',
-                lineHeight: 1.5,
-              }}
-            >
+            <p style={mergeStyle(defaultStyles.errorMessage, styles.errorMessage)}>
               {friendlyMessage}
             </p>
           </div>

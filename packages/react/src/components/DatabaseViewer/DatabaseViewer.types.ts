@@ -85,6 +85,32 @@ export interface ClassNames {
   info?: string;
   /** Filter column selector class name */
   filterColumnSelector?: string;
+  /** Filter column selector button class name */
+  filterColumnSelectorButton?: string;
+  /** Filter column selector dropdown class name */
+  filterColumnSelectorDropdown?: string;
+  /** Filter column selector header class name */
+  filterColumnSelectorHeader?: string;
+  /** Filter column selector action button class name */
+  filterColumnSelectorAction?: string;
+  /** Filter column selector list class name */
+  filterColumnSelectorList?: string;
+  /** Filter column selector item class name */
+  filterColumnSelectorItem?: string;
+  /** Filter column selector checkbox class name */
+  filterColumnSelectorCheckbox?: string;
+  /** Filter column selector checkbox indicator class name */
+  filterColumnSelectorCheckboxIndicator?: string;
+  /** Filter column selector column name class name */
+  filterColumnSelectorColumnName?: string;
+  /** Filter column selector default badge class name */
+  filterColumnSelectorDefaultBadge?: string;
+  /** Filter column selector footer class name */
+  filterColumnSelectorFooter?: string;
+  /** Filter column selector cancel button class name */
+  filterColumnSelectorCancel?: string;
+  /** Filter column selector apply button class name */
+  filterColumnSelectorApply?: string;
   /** Screen reader only class name */
   srOnly?: string;
 }
@@ -148,6 +174,40 @@ export interface Styles {
   info?: React.CSSProperties;
   /** Filter column selector styles */
   filterColumnSelector?: React.CSSProperties;
+  /** Filter column selector button styles */
+  filterColumnSelectorButton?: React.CSSProperties;
+  /** Filter column selector dropdown styles */
+  filterColumnSelectorDropdown?: React.CSSProperties;
+  /** Filter column selector header styles */
+  filterColumnSelectorHeader?: React.CSSProperties;
+  /** Filter column selector action button styles */
+  filterColumnSelectorAction?: React.CSSProperties;
+  /** Filter column selector action button disabled styles */
+  filterColumnSelectorActionDisabled?: React.CSSProperties;
+  /** Filter column selector list styles */
+  filterColumnSelectorList?: React.CSSProperties;
+  /** Filter column selector item styles */
+  filterColumnSelectorItem?: React.CSSProperties;
+  /** Filter column selector checkbox styles */
+  filterColumnSelectorCheckbox?: React.CSSProperties;
+  /** Filter column selector checkbox checked styles */
+  filterColumnSelectorCheckboxChecked?: React.CSSProperties;
+  /** Filter column selector checkbox indicator styles */
+  filterColumnSelectorCheckboxIndicator?: React.CSSProperties;
+  /** Filter column selector column name styles */
+  filterColumnSelectorColumnName?: React.CSSProperties;
+  /** Filter column selector column name default styles */
+  filterColumnSelectorColumnNameDefault?: React.CSSProperties;
+  /** Filter column selector default badge styles */
+  filterColumnSelectorDefaultBadge?: React.CSSProperties;
+  /** Filter column selector footer styles */
+  filterColumnSelectorFooter?: React.CSSProperties;
+  /** Filter column selector cancel button styles */
+  filterColumnSelectorCancel?: React.CSSProperties;
+  /** Filter column selector apply button styles */
+  filterColumnSelectorApply?: React.CSSProperties;
+  /** Filter column selector apply button disabled styles */
+  filterColumnSelectorApplyDisabled?: React.CSSProperties;
   /** Screen reader only styles */
   srOnly?: React.CSSProperties;
   /** Table selector sidebar label styles */
@@ -158,6 +218,16 @@ export interface Styles {
   tableSelectorSidebarButtonActive?: React.CSSProperties;
   /** Sortable column hover indicator styles */
   sortableHover?: React.CSSProperties;
+  /** Empty state button styles */
+  emptyStateButton?: React.CSSProperties;
+  /** Error icon styles */
+  errorIcon?: React.CSSProperties;
+  /** Error title styles */
+  errorTitle?: React.CSSProperties;
+  /** Error message styles */
+  errorMessage?: React.CSSProperties;
+  /** Error content wrapper styles */
+  errorContent?: React.CSSProperties;
 }
 
 /**

@@ -219,6 +219,60 @@ The main component for displaying database data with a full-featured table inter
 | `logQueryErrors`        | `boolean`                                | `true`                                   | Log query errors        |
 | `logPerformanceMetrics` | `boolean`                                | `true`                                   | Log performance metrics |
 
+**Logging Configuration:**
+
+The DatabaseViewer component includes a built-in logging system for debugging and monitoring:
+
+- **Default Log Levels** (based on environment):
+  - `production`: `'error'` - Only error messages
+  - `test`: `'silent'` - No logging
+  - `development`: `'debug'` - All log levels
+
+- **Log Level Hierarchy** (most to least verbose):
+  - `debug` - All messages including debug info
+  - `info` - Info, warnings, and errors
+  - `warn` - Warnings and errors only
+  - `error` - Errors only
+  - `silent` - No output
+
+**Logging Examples:**
+
+```jsx
+import { DatabaseViewer, createLogger } from '@tabula-lens/react';
+
+// Basic usage with default logging (enabled in development)
+<DatabaseViewer path="/api/tabula-lens" />
+
+// Explicitly enable logging
+<DatabaseViewer
+  path="/api/tabula-lens"
+  enableLogging={true}
+  logLevel="debug"
+/>
+
+// Disable logging
+<DatabaseViewer
+  path="/api/tabula-lens"
+  enableLogging={false}
+/>
+
+// Custom log level
+<DatabaseViewer
+  path="/api/tabula-lens"
+  enableLogging={true}
+  logLevel="info" // or 'error', 'warn', 'debug'
+/>
+
+// Disable specific logging types
+<DatabaseViewer
+  path="/api/tabula-lens"
+  enableLogging={true}
+  logFetchErrors={false}
+  logQueryErrors={false}
+  logPerformanceMetrics={false}
+/>
+```
+
 ## 🎨 Customization Examples
 
 ### Custom Styling
@@ -320,14 +374,137 @@ function App() {
 
 ## 🔧 Advanced Usage
 
+### Logging Configuration
+
+The logging system provides detailed insights into component lifecycle, data fetching, and user interactions.
+
+**Custom Logger:**
+
+```jsx
+import { DatabaseViewer, createLogger } from '@tabula-lens/react';
+
+// Create a custom logger with specific configuration
+const customLogger = createLogger({
+  level: 'debug',
+  includeTimestamp: true,
+  colorize: true,
+  format: 'pretty',
+});
+
+function App() {
+  return <DatabaseViewer path="/api/tabula-lens" logger={customLogger} enableLogging={true} />;
+}
+```
+
+**Custom Logger Implementation:**
+
+```jsx
+import { DatabaseViewer, type Logger } from '@tabula-lens/react';
+
+// Implement your own logger for custom integrations
+const customLogger: Logger = {
+  error(message, context) {
+    // Send to error tracking service
+    console.error('[CUSTOM ERROR]', message, context);
+    // Sentry.captureException(new Error(message), { extra: context });
+  },
+  warn(message, context) {
+    console.warn('[CUSTOM WARN]', message, context);
+  },
+  info(message, context) {
+    console.log('[CUSTOM INFO]', message, context);
+    // Send to analytics service
+    // analytics.track('database_viewer_event', { message, ...context });
+  },
+  debug(message, context) {
+    console.debug('[CUSTOM DEBUG]', message, context);
+  },
+};
+
+function App() {
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      logger={customLogger}
+      enableLogging={true}
+      logLevel="debug"
+    />
+  );
+}
+```
+
+**Using the useLogger Hook:**
+
+```jsx
+import { useLogger } from '@tabula-lens/react';
+
+function CustomComponent() {
+  const { logger } = useLogger({
+    enableLogging: true,
+    logLevel: 'debug',
+  });
+
+  const handleClick = () => {
+    logger.info('Button clicked', { component: 'CustomComponent' });
+  };
+
+  return <button onClick={handleClick}>Click me</button>;
+}
+```
+
+**Log Formats:**
+
+```jsx
+import { createLogger } from '@tabula-lens/react';
+
+// Pretty format (default, human-readable with colors)
+const prettyLogger = createLogger({
+  level: 'info',
+  format: 'pretty',
+  colorize: true,
+});
+
+// JSON format (structured logging for log aggregation)
+const jsonLogger = createLogger({
+  level: 'info',
+  format: 'json',
+});
+
+// Text format (simple text output)
+const textLogger = createLogger({
+  level: 'info',
+  format: 'text',
+});
+```
+
+**Environment-Specific Logging:**
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      enableLogging={isDevelopment}
+      logLevel={isDevelopment ? 'debug' : 'error'}
+      logPerformanceMetrics={isDevelopment}
+    />
+  );
+}
+```
+
 ### Using Custom Hooks
 
 The package exports custom hooks that can be used independently for advanced use cases:
 
 ```jsx
-import { useDatabaseData, useTableState, buildQueryParams } from '@tabula-lens/react';
+import { useDatabaseData, useTableState, useLogger, buildQueryParams } from '@tabula-lens/react';
 
 function CustomDatabaseViewer({ path }) {
+  const { logger } = useLogger({ enableLogging: true, logLevel: 'debug' });
   const tableState = useTableState({
     initialTable: 'users',
     pageSize: 20,
@@ -345,6 +522,12 @@ function CustomDatabaseViewer({ path }) {
     selectedTable: tableState.selectedTable,
     queryParams,
   });
+
+  // Log custom events
+  const handleTableChange = (table) => {
+    logger.info('Table changed', { from: tableState.selectedTable, to: table });
+    tableState.setSelectedTable(table);
+  };
 
   // Custom implementation using the hooks
   if (isLoading) return <div>Loading...</div>;
@@ -365,6 +548,7 @@ import {
   sanitizeColumnData,
   createAuthenticatedHeaders,
   validateResponse,
+  createLogger,
 } from '@tabula-lens/react';
 
 // Type guard for query results
@@ -388,6 +572,10 @@ const headers = await createAuthenticatedHeaders({
 
 // Validate API response
 const isValid = await validateResponse(response);
+
+// Create a logger for utility functions
+const logger = createLogger({ level: 'debug' });
+logger.info('Data validation complete', { isValid, recordCount: data.length });
 ```
 
 ### Using Sub-Components

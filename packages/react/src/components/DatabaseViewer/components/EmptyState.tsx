@@ -133,15 +133,7 @@ export const EmptyState: React.FC<EmptyStateProps> = React.memo(
         {hasActiveFilter && onClearFilter && (
           <button
             onClick={onClearFilter}
-            style={{
-              marginTop: '1rem',
-              padding: '0.5rem 1rem',
-              backgroundColor: 'var(--tlens-primary, #3498db)',
-              color: 'white',
-              border: 'none',
-              borderRadius: 'var(--tlens-radius, 4px)',
-              cursor: 'pointer',
-            }}
+            style={mergeStyle(defaultStyles.emptyStateButton, styles.emptyStateButton)}
           >
             Clear Filter
           </button>

@@ -96,7 +96,7 @@ export { handler as GET, handler as POST, handler as PUT, handler as DELETE };
 #### Constructor
 
 ```typescript
-constructor(databaseUrl: string)
+constructor(databaseUrl: string, options?: TabulaLensOptions)
 ```
 
 Creates a new TabulaLens instance with a PostgreSQL database connection.
@@ -104,6 +104,73 @@ Creates a new TabulaLens instance with a PostgreSQL database connection.
 **Parameters:**
 
 - `databaseUrl` - PostgreSQL connection string (e.g., `postgresql://user:password@host:port/database`)
+- `options` - Optional configuration object
+
+**TabulaLensOptions:**
+
+```typescript
+interface TabulaLensOptions {
+  logger?: Logger;
+  logLevel?: 'error' | 'warn' | 'info' | 'debug' | 'silent';
+  enableQueryLogging?: boolean;
+  enableRequestLogging?: boolean;
+  sensitiveDataMasking?: boolean;
+  logFormat?: 'json' | 'text' | 'pretty';
+}
+```
+
+**Logging Configuration:**
+
+The package includes a built-in logging system with configurable log levels:
+
+- **Default Log Levels** (based on environment):
+  - `production`: `'error'` - Only error messages
+  - `test`: `'silent'` - No logging
+  - `development`: `'debug'` - All log levels
+
+- **Log Level Hierarchy** (most to least verbose):
+  - `debug` - All messages including debug info
+  - `info` - Info, warnings, and errors
+  - `warn` - Warnings and errors only
+  - `error` - Errors only
+  - `silent` - No output
+
+**Logging Examples:**
+
+```typescript
+import { TabulaLens, createLogger } from '@tabula-lens/node';
+
+// Basic usage with default logging
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Custom log level
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info', // or 'error', 'warn', 'debug', 'silent'
+});
+
+// Custom logger with full configuration
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: createLogger({
+    level: 'debug',
+    includeTimestamp: true,
+    colorize: true,
+    format: 'pretty', // or 'json', 'text'
+  }),
+});
+
+// Disable query/request logging
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  enableQueryLogging: false,
+  enableRequestLogging: false,
+});
+
+// Production configuration
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+});
+```
 
 #### query()
 
@@ -378,6 +445,107 @@ app.use('/api/tabula-lens', authMiddleware, expressAdapter(tabulaLens));
 ```
 
 ## 📝 Advanced Usage
+
+### Logging Configuration
+
+The logging system provides detailed insights into database operations, query execution, and request handling.
+
+**Log Levels:**
+
+```typescript
+import { TabulaLens, createLogger } from '@tabula-lens/node';
+
+// Development - verbose logging
+const devTabulaLens = new TabulaLens(databaseUrl, {
+  logLevel: 'debug',
+  enableQueryLogging: true,
+  enableRequestLogging: true,
+});
+
+// Production - minimal logging
+const prodTabulaLens = new TabulaLens(databaseUrl, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+});
+
+// Testing - no logging
+const testTabulaLens = new TabulaLens(databaseUrl, {
+  logLevel: 'silent',
+});
+```
+
+**Custom Logger:**
+
+```typescript
+import { createLogger, type Logger } from '@tabula-lens/node';
+
+// Create a custom logger with specific configuration
+const customLogger = createLogger({
+  level: 'info',
+  includeTimestamp: true,
+  colorize: true,
+  format: 'pretty',
+});
+
+const tabulaLens = new TabulaLens(databaseUrl, {
+  logger: customLogger,
+});
+
+// Or implement your own logger
+const customLogger: Logger = {
+  error(message, context) {
+    // Custom error handling
+    console.error('[CUSTOM]', message, context);
+    // Send to external service, etc.
+  },
+  warn(message, context) {
+    console.warn('[CUSTOM]', message, context);
+  },
+  info(message, context) {
+    console.log('[CUSTOM]', message, context);
+  },
+  debug(message, context) {
+    console.debug('[CUSTOM]', message, context);
+  },
+};
+
+const tabulaLens = new TabulaLens(databaseUrl, {
+  logger: customLogger,
+});
+```
+
+**Accessing the Logger:**
+
+```typescript
+// Get the logger instance for direct use
+const logger = tabulaLens.getLogger();
+
+// Log custom messages
+logger.info('Application started', { version: '1.0.0' });
+logger.debug('Processing request', { requestId: 'abc-123' });
+logger.warn('High memory usage', { memoryUsage: '85%' });
+logger.error('Database connection failed', { error: err });
+```
+
+**Log Formats:**
+
+```typescript
+// Pretty format (default, human-readable)
+const tabulaLens = new TabulaLens(databaseUrl, {
+  logFormat: 'pretty',
+});
+
+// JSON format (structured logging for log aggregation)
+const tabulaLens = new TabulaLens(databaseUrl, {
+  logFormat: 'json',
+});
+
+// Text format (simple text output)
+const tabulaLens = new TabulaLens(databaseUrl, {
+  logFormat: 'text',
+});
+```
 
 ### Custom Query Options
 

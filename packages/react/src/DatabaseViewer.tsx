@@ -634,6 +634,8 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
               onSelectionChange={handleFilterColumnChange}
               onResetToDefault={handleResetFilterColumns}
               className={classNames.filterColumnSelector}
+              classNames={classNames}
+              styles={styles}
             />
           )}
 
