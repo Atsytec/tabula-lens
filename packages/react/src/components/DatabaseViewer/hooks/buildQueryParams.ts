@@ -1,6 +1,6 @@
 import { SortingState, PaginationState } from '@tanstack/react-table';
 
-export interface UseQueryParamsOptions {
+export interface BuildQueryParamsOptions {
   selectedTable: string | undefined;
   pagination: PaginationState;
   sorting: SortingState;
@@ -9,12 +9,12 @@ export interface UseQueryParamsOptions {
 }
 
 /**
- * Custom hook for building query parameters from table state
+ * Pure function for building query parameters from table state
  *
  * @param options - Table state options
  * @returns Query string for URL
  */
-export const useQueryParams = (options: UseQueryParamsOptions): string => {
+export const buildQueryParams = (options: BuildQueryParamsOptions): string => {
   const { selectedTable, pagination, sorting, filter, filterColumns } = options;
 
   const queryParams = new URLSearchParams();

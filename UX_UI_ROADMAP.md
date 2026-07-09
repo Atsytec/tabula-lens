@@ -262,28 +262,28 @@ This roadmap synthesizes findings from the UX/UI Audit and shadcn/Tailwind Feasi
 
 ### API Cleanup
 
-- [ ] **D2** — Wire up or remove Theme/createTheme
+- [x] **D2** — Wire up or remove Theme/createTheme
   - Either implement `Theme` system with `theme` prop
   - Or remove from public API exports
   - Location: `styleTypes.ts`, `DatabaseViewer.types.ts`
 
-- [ ] **D3** — Remove duplicate StyleOverrides type
+- [x] **D3** — Remove duplicate StyleOverrides type
   - Remove `StyleOverrides` from `styleTypes.ts`
   - Use existing `Styles` type consistently
   - Location: `styleTypes.ts`
 
-- [ ] **D4** — Rename useQueryParams to buildQueryParams
+- [x] **D4** — Rename useQueryParams to buildQueryParams
   - Rename function to match its actual behavior (pure function, not a hook)
   - Update all imports and references
   - Location: `hooks/useQueryParams.ts`, all usages
 
-- [ ] **D5** — Remove module-level QueryClient singleton
+- [x] **D5** — Remove module-level QueryClient singleton
   - Remove `defaultQueryClient` singleton from module level
   - Ensure all instances use `DatabaseViewerWithProvider` pattern
   - Prevents request data leakage in SSR contexts
   - Location: `hooks/useDatabaseData.ts`
 
-- [ ] **D6** — Add React.memo to FilterColumnSelector
+- [x] **D6** — Add React.memo to FilterColumnSelector
   - Wrap `FilterColumnSelector` in `React.memo`
   - Add `displayName` for debugging
   - Matches pattern of other sub-components
@@ -291,20 +291,34 @@ This roadmap synthesizes findings from the UX/UI Audit and shadcn/Tailwind Feasi
 
 ### Code Quality
 
-- [ ] **C1** — Remove DOM mutation in row hover
+- [x] **C1** — Remove DOM mutation in row hover
   - Already addressed in Phase 2 (A5)
   - Verify no other DOM mutations exist
 
-- [ ] **C2** — Clarify className vs classNames API
+- [x] **C2** — Clarify className vs classNames API
   - Document priority: `className` takes precedence over `classNames.tableWrapper`
   - Consider renaming for clarity
   - Location: `DataTable.tsx`, documentation
 
-- [ ] **D8** — Remove unused getSortedRowModel
+- [x] **D8** — Remove unused getSortedRowModel
   - Remove `getSortedRowModel()` from table configuration
   - Not invoked with manual sorting
   - Reduces confusion and overhead
   - Location: `DatabaseViewer.tsx`
+
+**Phase 5 Status:** ✅ **COMPLETED** (2026-07-09)
+
+- All API cleanup tasks implemented (D2, D3, D4, D5, D6)
+- All code quality improvements implemented (C1, C2, D8)
+- Removed unused Theme/createTheme system from public API
+- Renamed useQueryParams to buildQueryParams to match actual behavior
+- Removed module-level QueryClient singleton to prevent SSR data leakage
+- Added React.memo to FilterColumnSelector for performance
+- Clarified className vs classNames API with comprehensive documentation
+- Removed unused getSortedRowModel from table configuration
+- Type checking and linting pass
+- Tests pass (pre-existing failures unrelated to Phase 5 changes)
+- Changes committed to git
 
 ---
 

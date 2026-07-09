@@ -89,7 +89,7 @@ The DatabaseViewer component has been successfully refactored through Phase 6 to
 
 - Created `useLogger.ts` for logging functionality
 - Created `useTableState.ts` for table state management
-- Created `useQueryParams.ts` for query parameter building
+- Created `buildQueryParams.ts` for query parameter building
 - Created `useDatabaseData.ts` for data fetching logic
 - All hooks are fully tested and documented
 - Type checks and linting pass
@@ -146,7 +146,7 @@ packages/react/src/
 │       ├── hooks/                  # Custom React hooks
 │       │   ├── useLogger.ts       # Logging functionality
 │       │   ├── useTableState.ts   # Table state management
-│       │   ├── useQueryParams.ts  # Query parameter building
+│       │   ├── buildQueryParams.ts  # Query parameter building
 │       │   └── useDatabaseData.ts # Data fetching logic
 │       ├── components/             # Reusable sub-components
 │       │   ├── LoadingState.tsx   # Loading state display
@@ -189,7 +189,6 @@ The following are now available for advanced use cases:
 
 - `useLogger` - Logging functionality
 - `useTableState` - Table state management
-- `useQueryParams` - Query parameter building
 - `useDatabaseData` - Data fetching logic
 
 **Sub-Components:**
@@ -211,3 +210,4 @@ The following are now available for advanced use cases:
 - `validateResponse` - Response validation
 - `mergeClassName` - Class name merging
 - `mergeStyle` - Style merging
+- `buildQueryParams` - Query parameter building

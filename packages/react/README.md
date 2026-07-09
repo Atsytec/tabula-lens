@@ -93,7 +93,7 @@ src/
 │       ├── hooks/                  # Custom React hooks
 │       │   ├── useLogger.ts       # Logging functionality
 │       │   ├── useTableState.ts   # Table state management
-│       │   ├── useQueryParams.ts  # Query parameter building
+│       │   ├── buildQueryParams.ts # Query parameter building
 │       │   └── useDatabaseData.ts # Data fetching logic
 │       ├── components/             # Reusable sub-components
 │       │   ├── LoadingState.tsx   # Loading state display
@@ -325,7 +325,7 @@ function App() {
 The package exports custom hooks that can be used independently for advanced use cases:
 
 ```jsx
-import { useDatabaseData, useTableState, useQueryParams } from '@tabula-lens/react';
+import { useDatabaseData, useTableState, buildQueryParams } from '@tabula-lens/react';
 
 function CustomDatabaseViewer({ path }) {
   const tableState = useTableState({
@@ -333,7 +333,7 @@ function CustomDatabaseViewer({ path }) {
     pageSize: 20,
   });
 
-  const queryParams = useQueryParams({
+  const queryParams = buildQueryParams({
     selectedTable: tableState.selectedTable,
     pagination: tableState.pagination,
     sorting: tableState.sorting,

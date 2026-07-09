@@ -11,7 +11,7 @@ import { mergeClassName, mergeStyle } from './components/DatabaseViewer/utils/st
 import { defaultStyles } from './components/DatabaseViewer/styles/defaultStyles';
 import { useLogger } from './components/DatabaseViewer/hooks/useLogger';
 import { useTableState } from './components/DatabaseViewer/hooks/useTableState';
-import { useQueryParams } from './components/DatabaseViewer/hooks/useQueryParams';
+import { buildQueryParams } from './components/DatabaseViewer/hooks/buildQueryParams';
 import { useDatabaseData } from './components/DatabaseViewer/hooks/useDatabaseData';
 import { sanitizeColumnData } from './components/DatabaseViewer/utils/validationHelpers';
 import {
@@ -23,16 +23,6 @@ import {
   DataTable,
   FilterColumnSelector,
 } from './components/DatabaseViewer/components';
-
-// Create a default query client
-const defaultQueryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
 
 /**
  * Memoized component for rendering the table selector
@@ -312,7 +302,7 @@ export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
     };
 
     // Build query parameters
-    const queryParams = useQueryParams({
+    const queryParams = buildQueryParams({
       selectedTable: tableState.selectedTable,
       pagination: tableState.pagination,
       sorting: tableState.sorting,
@@ -593,9 +583,25 @@ DatabaseViewer.displayName = 'DatabaseViewer';
 // Export a provider-wrapped version for easier usage
 export const DatabaseViewerWithProvider: React.FC<
   DatabaseViewerProps & { queryClient?: QueryClient }
-> = React.memo(({ queryClient = defaultQueryClient, ...props }) => {
+> = React.memo(({ queryClient, ...props }) => {
+  // Create a new QueryClient instance if not provided
+  // This prevents request data leakage in SSR contexts
+  const client = useMemo(
+    () =>
+      queryClient ||
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            retry: 1,
+          },
+        },
+      }),
+    [queryClient]
+  );
+
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={client}>
       <DatabaseViewer {...props} />
     </QueryClientProvider>
   );

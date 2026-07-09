@@ -3,7 +3,6 @@ import {
   useReactTable,
   getCoreRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   getFilteredRowModel,
   flexRender,
   ColumnDef,
@@ -123,7 +122,6 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
       columns: formattedColumns,
       getCoreRowModel: getCoreRowModel(),
       getPaginationRowModel: getPaginationRowModel(),
-      getSortedRowModel: getSortedRowModel(),
       getFilteredRowModel: getFilteredRowModel(),
       state: {
         sorting,
@@ -139,6 +137,7 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
       },
       pageCount,
       manualPagination: true,
+      manualSorting: true,
       enableMultiSort: multiSort,
       enableSorting,
     });
@@ -146,6 +145,7 @@ export const DataTable: React.FC<DataTableProps> = React.memo(
     return (
       <div
         style={mergeStyle(defaultStyles.tableWrapper, styles.tableWrapper, style)}
+        // className prop takes precedence over classNames.tableWrapper for backward compatibility
         className={className || classNames.tableWrapper}
       >
         <table

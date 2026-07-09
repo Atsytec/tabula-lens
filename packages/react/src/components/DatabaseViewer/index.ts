@@ -23,8 +23,9 @@ export * from './utils/validationHelpers';
 
 // Style definitions
 export { defaultStyles } from './styles/defaultStyles';
-export type { StyleOverrides, Theme } from './styles/styleTypes';
-export { defaultTheme, createTheme } from './styles/styleTypes';
+
+// Hooks and utilities
+export * from './hooks';
 
 // CSS imports for theming
 import './styles/variables.css';

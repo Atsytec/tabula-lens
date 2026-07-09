@@ -38,6 +38,11 @@ export interface QueryResult {
 /**
  * CSS class names for customizing component appearance
  * @interface ClassNames
+ *
+ * @remarks
+ * The `className` prop (single string) takes precedence over `classNames` (object with specific element classes).
+ * Use `className` for simple class overrides on the main container.
+ * Use `classNames` for granular control over specific elements within the component.
  */
 export interface ClassNames {
   /** Container wrapper class name */
@@ -362,21 +367,35 @@ export interface DatabaseViewerProps {
 
   /**
    * Additional CSS class name for the container
+   * @remarks
+   * Takes precedence over `classNames.container` for backward compatibility.
+   * Use this for simple class overrides on the main container element.
    */
   className?: string;
 
   /**
    * Custom CSS class names for specific elements
+   * @remarks
+   * Provides granular control over specific elements within the component.
+   * Use this when you need to style individual elements (table, header, cells, etc.).
+   * The `className` prop takes precedence over `classNames.container` only.
    */
   classNames?: ClassNames;
 
   /**
    * Custom inline styles for the container
+   * @remarks
+   * Takes precedence over `styles.container` for backward compatibility.
+   * Use this for simple style overrides on the main container element.
    */
   style?: React.CSSProperties;
 
   /**
    * Custom inline styles for specific elements
+   * @remarks
+   * Provides granular control over specific elements within the component.
+   * Use this when you need to style individual elements (table, header, cells, etc.).
+   * The `style` prop takes precedence over `styles.container` only.
    */
   styles?: Styles;
 
