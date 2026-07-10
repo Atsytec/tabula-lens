@@ -5,7 +5,7 @@ description: Complete HTTP API reference for Tabula Lens.
 
 # HTTP API Reference
 
-The HTTP API is the universal interface contract that connects Tabula Lens frontends and backends.
+The HTTP API is the universal interface contract that connects Tabula Lens frontends and backends. This API follows RESTful conventions and provides a standardized way to query database tables with pagination, filtering, and sorting capabilities.
 
 ## Base Endpoint
 
@@ -15,27 +15,94 @@ All API calls are made to a single endpoint configured in your backend:
 GET /api/tabula-lens
 ```
 
-## Query Parameters
+## Request Format
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `table` | `string` | Yes | Table name to query |
-| `page` | `number` | No | Page number (default: 1) |
-| `pageSize` | `number` | No | Rows per page (default: 50) |
-| `filter` | `string` | No | Filter string for searching |
-| `sortColumn` | `string` | No | Column to sort by |
-| `sortDirection` | `'asc' \| 'desc'` | No | Sort direction (default: 'asc') |
+### HTTP Method
 
-## Request Example
+`GET /api/tabula-lens`
+
+### Query Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `table` | `string` | Yes | - | Table name to query |
+| `page` | `number` | No | `1` | Page number (1-indexed) |
+| `pageSize` | `number` | No | `50` | Number of rows per page |
+| `filter` | `string` | No | - | Filter string for searching across text columns |
+| `filterColumns` | `string[]` | No | - | Specific columns to filter (comma-separated) |
+| `sort` | `string` | No | - | Sort specification (format: `column:direction,column:direction`) |
+| `columns` | `string[]` | No | - | Specific columns to return (comma-separated) |
+
+### Request Headers
+
+| Header | Type | Required | Description |
+|--------|------|----------|-------------|
+| `Authorization` | `string` | No* | Authentication token (Bearer token or custom scheme) |
+| `Content-Type` | `string` | No | Request content type (typically `application/json`) |
+| `Accept` | `string` | No | Response content type (typically `application/json`) |
+
+*Authentication headers are required if your backend implementation requires authentication.
+
+### Request Examples
+
+#### Basic Query
 
 ```http
-GET /api/tabula-lens?table=users&page=1&pageSize=25&filter=status:active&sortColumn=created_at&sortDirection=desc
+GET /api/tabula-lens?table=users
+```
+
+#### Paginated Query
+
+```http
+GET /api/tabula-lens?table=users&page=2&pageSize=25
+```
+
+#### Filtered Query
+
+```http
+GET /api/tabula-lens?table=users&filter=john
+```
+
+#### Filtered Query with Specific Columns
+
+```http
+GET /api/tabula-lens?table=users&filter=john&filterColumns=name,email
+```
+
+#### Sorted Query
+
+```http
+GET /api/tabula-lens?table=users&sort=created_at:desc
+```
+
+#### Multi-column Sort
+
+```http
+GET /api/tabula-lens?table=users&sort=status:asc,created_at:desc
+```
+
+#### Column Selection
+
+```http
+GET /api/tabula-lens?table=users&columns=id,name,email
+```
+
+#### Complete Query with All Parameters
+
+```http
+GET /api/tabula-lens?table=users&page=1&pageSize=25&filter=john&filterColumns=name,email&sort=created_at:desc&columns=id,name,email,created_at
 Authorization: Bearer your-token-here
 ```
 
 ## Response Format
 
 ### Success Response
+
+#### Status Code
+
+`200 OK`
+
+#### Response Body
 
 ```json
 {
@@ -45,49 +112,430 @@ Authorization: Bearer your-token-here
       "name": "John Doe",
       "email": "john@example.com",
       "created_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "created_at": "2024-01-02T00:00:00Z"
     }
   ],
-  "meta": {
-    "table": "users",
+  "columns": ["id", "name", "email", "created_at"],
+  "pagination": {
     "page": 1,
-    "pageSize": 25,
-    "totalPages": 10,
-    "totalRows": 250
+    "limit": 25,
+    "total": 250,
+    "totalPages": 10
   }
 }
 ```
 
+#### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `data` | `array` | Array of data records from the queried table |
+| `columns` | `string[]` | Array of column names in the result set |
+| `pagination` | `object` | Pagination metadata |
+| `pagination.page` | `number` | Current page number |
+| `pagination.limit` | `number` | Number of records per page |
+| `pagination.total` | `number` | Total number of records matching the query |
+| `pagination.totalPages` | `number` | Total number of pages available |
+
 ### Error Response
+
+#### Status Codes
+
+| Status Code | Error Type |
+|-------------|------------|
+| `400` | Bad Request (invalid parameters) |
+| `401` | Unauthorized (authentication failed) |
+| `404` | Not Found (table not found) |
+| `500` | Internal Server Error (database or server error) |
+
+#### Response Body
 
 ```json
 {
   "error": {
-    "message": "Table not found",
+    "message": "Table 'users' does not exist",
     "code": "TABLE_NOT_FOUND",
-    "details": {}
+    "statusCode": 404,
+    "details": {
+      "table": "users",
+      "availableTables": ["customers", "products", "orders"]
+    }
   }
 }
 ```
 
+#### Error Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `error` | `object` | Error details object |
+| `error.message` | `string` | Human-readable error message |
+| `error.code` | `string` | Machine-readable error code |
+| `error.statusCode` | `number` | HTTP status code |
+| `error.details` | `object` | Additional error context (optional) |
+
 ## Authentication
 
-Authentication is handled via the `Authorization` header:
+### Bearer Token Authentication
+
+The most common authentication method uses Bearer tokens:
 
 ```http
-Authorization: Bearer your-token-here
+GET /api/tabula-lens?table=users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-Or use custom headers via the `getAuthHeaders` prop in the React component.
+### Custom Authentication Headers
 
-## Error Codes
+You can implement custom authentication schemes using the `getAuthHeaders` prop in the React component:
 
-| Code | Description |
-|------|-------------|
-| `TABLE_NOT_FOUND` | Specified table does not exist |
-| `INVALID_QUERY` | Query parameters are invalid |
-| `AUTHENTICATION_FAILED` | Authentication failed |
-| `DATABASE_ERROR` | Database connection or query error |
-| `INTERNAL_ERROR` | Internal server error |
+```javascript
+const getAuthHeaders = () => ({
+  'X-API-Key': 'your-api-key-here',
+  'X-User-ID': 'user-123'
+});
+```
+
+### API Key Authentication
+
+```http
+GET /api/tabula-lens?table=users
+X-API-Key: your-api-key-here
+```
+
+### No Authentication
+
+If your backend doesn't require authentication, you can omit authentication headers entirely:
+
+```http
+GET /api/tabula-lens?table=users
+```
+
+## Error Catalog
+
+### TABLE_NOT_FOUND
+
+**Status Code:** `404`
+
+**Description:** The specified table does not exist in the database.
+
+**Causes:**
+- Table name typo in the request
+- Table doesn't exist in the database
+- Insufficient database permissions
+
+**Example Response:**
+```json
+{
+  "error": {
+    "message": "Table 'users' does not exist",
+    "code": "TABLE_NOT_FOUND",
+    "statusCode": 404,
+    "details": {
+      "table": "users",
+      "availableTables": ["customers", "products", "orders"]
+    }
+  }
+}
+```
+
+**Solution:** Verify the table name exists in your database and that you have the necessary permissions.
+
+---
+
+### INVALID_QUERY
+
+**Status Code:** `400`
+
+**Description:** Query parameters are invalid or malformed.
+
+**Causes:**
+- Invalid parameter values
+- Missing required parameters
+- Malformed sort or filter syntax
+- Invalid column names in sort/filter/columns parameters
+
+**Example Response:**
+```json
+{
+  "error": {
+    "message": "Invalid query parameter: page must be a positive number",
+    "code": "INVALID_QUERY",
+    "statusCode": 400,
+    "details": {
+      "parameter": "page",
+      "value": "abc",
+      "constraint": "must be a positive number"
+    }
+  }
+}
+```
+
+**Solution:** Check that all query parameters are valid and properly formatted.
+
+---
+
+### AUTHENTICATION_FAILED
+
+**Status Code:** `401`
+
+**Description:** Authentication failed or was not provided.
+
+**Causes:**
+- Missing authentication headers
+- Invalid or expired authentication token
+- Insufficient permissions for the requested resource
+
+**Example Response:**
+```json
+{
+  "error": {
+    "message": "Authentication failed: Invalid or expired token",
+    "code": "AUTHENTICATION_FAILED",
+    "statusCode": 401,
+    "details": {
+      "authMethod": "Bearer",
+      "reason": "token_expired"
+    }
+  }
+}
+```
+
+**Solution:** Provide valid authentication credentials and ensure they haven't expired.
+
+---
+
+### DATABASE_ERROR
+
+**Status Code:** `500`
+
+**Description:** Database connection or query error.
+
+**Causes:**
+- Database connection failure
+- Database query syntax error
+- Database constraint violation
+- Insufficient database permissions
+
+**Example Response:**
+```json
+{
+  "error": {
+    "message": "Database error: connection timeout",
+    "code": "DATABASE_ERROR",
+    "statusCode": 500,
+    "details": {
+      "error": "connection timeout",
+      "database": "postgresql",
+      "query": "SELECT * FROM users"
+    }
+  }
+}
+```
+
+**Solution:** Check your database connection, ensure the database is running, and verify your database credentials.
+
+---
+
+### INTERNAL_ERROR
+
+**Status Code:** `500`
+
+**Description:** Internal server error.
+
+**Causes:**
+- Unexpected server error
+- Configuration error
+- Resource exhaustion
+
+**Example Response:**
+```json
+{
+  "error": {
+    "message": "Internal server error",
+    "code": "INTERNAL_ERROR",
+    "statusCode": 500,
+    "details": {
+      "requestId": "req_abc123",
+      "timestamp": "2024-01-01T00:00:00Z"
+    }
+  }
+}
+```
+
+**Solution:** Contact your system administrator or check server logs for more details.
+
+---
+
+## Parameter Details
+
+### Table Parameter
+
+The `table` parameter specifies which database table to query.
+
+**Requirements:**
+- Must be a valid table name in your database
+- Must match exactly (case-sensitive depending on database)
+- Required parameter
+
+**Example:**
+```
+table=users
+```
+
+### Pagination Parameters
+
+#### Page
+
+The `page` parameter specifies which page of results to return.
+
+**Requirements:**
+- Must be a positive integer
+- Default: `1`
+- 1-indexed (first page is 1)
+
+**Example:**
+```
+page=2
+```
+
+#### PageSize
+
+The `pageSize` parameter specifies how many records to return per page.
+
+**Requirements:**
+- Must be a positive integer
+- Default: `50`
+- Recommended range: 1-1000
+
+**Example:**
+```
+pageSize=25
+```
+
+### Filtering Parameters
+
+#### Filter
+
+The `filter` parameter performs a case-insensitive search across text columns.
+
+**Requirements:**
+- Optional parameter
+- Performs partial matching (ILIKE in PostgreSQL)
+- Searches across all text columns by default
+
+**Example:**
+```
+filter=john
+```
+
+#### FilterColumns
+
+The `filterColumns` parameter restricts filtering to specific columns.
+
+**Requirements:**
+- Optional parameter
+- Comma-separated list of column names
+- Only text-based columns are supported
+- If not specified, searches all text columns
+
+**Example:**
+```
+filterColumns=name,email
+```
+
+**Combined Example:**
+```
+filter=john&filterColumns=name,email
+```
+
+### Sorting Parameters
+
+#### Sort
+
+The `sort` parameter specifies sorting order for results.
+
+**Format:**
+```
+sort=column:direction,column:direction
+```
+
+**Requirements:**
+- Optional parameter
+- Direction can be `asc` or `desc`
+- Multiple columns can be specified
+- Column must exist in the table
+
+**Examples:**
+```
+sort=created_at:desc
+sort=status:asc,created_at:desc
+```
+
+### Column Selection
+
+#### Columns
+
+The `columns` parameter specifies which columns to return in the result.
+
+**Requirements:**
+- Optional parameter
+- Comma-separated list of column names
+- Columns must exist in the table
+- If not specified, returns all columns
+
+**Example:**
+```
+columns=id,name,email
+```
+
+## Rate Limiting
+
+Rate limiting is implementation-specific and should be configured on your backend. Consider implementing:
+
+- Per-IP rate limits
+- Per-user rate limits (if authenticated)
+- Tiered rate limits based on user roles
+
+Example rate limit headers:
+```http
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 999
+X-RateLimit-Reset: 1609459200
+```
+
+## Caching
+
+Responses can be cached based on the query parameters to improve performance and reduce database load.
+
+### Caching Strategies
+
+#### Client-Side Caching
+
+Use HTTP caching headers:
+```http
+Cache-Control: public, max-age=300
+ETag: "abc123"
+```
+
+#### Server-Side Caching
+
+Implement caching in your backend:
+- Redis for distributed caching
+- In-memory caching for single instances
+- Database query caching
+
+### Cache Keys
+
+Cache keys should be based on the complete query parameters:
+```
+cache_key = "tabula_lens:{table}:{page}:{pageSize}:{filter}:{filterColumns}:{sort}:{columns}"
+```
 
 ## Interchangeability
 
@@ -99,12 +547,137 @@ The HTTP API is designed to be implementation-agnostic:
 
 This allows you to mix and match implementations while maintaining a stable interface contract.
 
-## Rate Limiting
+## Code Examples
 
-Rate limiting is implementation-specific and should be configured on your backend.
+### cURL
 
-## Caching
+```bash
+# Basic query
+curl "http://localhost:3000/api/tabula-lens?table=users"
 
-Responses can be cached based on the query parameters. Implement caching strategies on your backend as needed.
+# With authentication
+curl -H "Authorization: Bearer your-token" \
+  "http://localhost:3000/api/tabula-lens?table=users&page=1&pageSize=25"
 
-Coming soon: Advanced API features and optimization guides.
+# With filtering and sorting
+curl "http://localhost:3000/api/tabula-lens?table=users&filter=john&sort=created_at:desc"
+```
+
+### JavaScript (Fetch)
+
+```javascript
+// Basic query
+const response = await fetch('http://localhost:3000/api/tabula-lens?table=users');
+const data = await response.json();
+
+// With authentication
+const response = await fetch('http://localhost:3000/api/tabula-lens?table=users', {
+  headers: {
+    'Authorization': 'Bearer your-token'
+  }
+});
+const data = await response.json();
+
+// With all parameters
+const params = new URLSearchParams({
+  table: 'users',
+  page: '1',
+  pageSize: '25',
+  filter: 'john',
+  sort: 'created_at:desc'
+});
+
+const response = await fetch(`http://localhost:3000/api/tabula-lens?${params}`);
+const data = await response.json();
+```
+
+### JavaScript (Axios)
+
+```javascript
+import axios from 'axios';
+
+// Basic query
+const response = await axios.get('http://localhost:3000/api/tabula-lens', {
+  params: { table: 'users' }
+});
+
+// With authentication
+const response = await axios.get('http://localhost:3000/api/tabula-lens', {
+  params: { table: 'users', page: 1, pageSize: 25 },
+  headers: { 'Authorization': 'Bearer your-token' }
+});
+
+// With all parameters
+const response = await axios.get('http://localhost:3000/api/tabula-lens', {
+  params: {
+    table: 'users',
+    page: 1,
+    pageSize: 25,
+    filter: 'john',
+    filterColumns: 'name,email',
+    sort: 'created_at:desc',
+    columns: 'id,name,email,created_at'
+  }
+});
+```
+
+### Python (Requests)
+
+```python
+import requests
+
+# Basic query
+response = requests.get('http://localhost:3000/api/tabula-lens', 
+                       params={'table': 'users'})
+data = response.json()
+
+# With authentication
+response = requests.get('http://localhost:3000/api/tabula-lens',
+                       params={'table': 'users', 'page': 1, 'pageSize': 25},
+                       headers={'Authorization': 'Bearer your-token'})
+data = response.json()
+
+# With all parameters
+params = {
+    'table': 'users',
+    'page': 1,
+    'pageSize': 25,
+    'filter': 'john',
+    'filterColumns': 'name,email',
+    'sort': 'created_at:desc',
+    'columns': 'id,name,email,created_at'
+}
+response = requests.get('http://localhost:3000/api/tabula-lens', params=params)
+data = response.json()
+```
+
+## Best Practices
+
+### Performance
+
+- Use appropriate page sizes (10-100 records per page)
+- Implement caching for frequently accessed data
+- Use column selection to reduce data transfer
+- Filter and sort at the database level when possible
+
+### Security
+
+- Always use authentication in production
+- Validate and sanitize all input parameters
+- Implement rate limiting to prevent abuse
+- Use HTTPS for all API communications
+- Never expose sensitive data in API responses
+
+### Error Handling
+
+- Always check the HTTP status code
+- Parse error responses to provide meaningful feedback to users
+- Implement retry logic for transient errors
+- Log errors for debugging and monitoring
+
+### Pagination
+
+- Use pagination for large datasets
+- Display total pages and current page to users
+- Implement infinite scroll or traditional pagination based on use case
+- Cache pagination metadata when possible

@@ -425,6 +425,302 @@ All Phase 2 changes maintain 100% backward compatibility:
 - No breaking changes to any packages
 - All existing functionality preserved
 
+## Phase 5: Content Development - API Reference (2026-07-11)
+
+Phase 5 focused on creating comprehensive API reference documentation for the HTTP API, Node package, and React package.
+
+### HTTP API Reference
+
+**Enhanced HTTP API Documentation**
+
+- Created comprehensive HTTP API reference with complete endpoint documentation
+- Documented all query parameters with detailed descriptions and examples
+- Added request/response format documentation with JSON examples
+- Documented all request headers and authentication methods
+- Created comprehensive error catalog with 5 error types:
+  - TABLE_NOT_FOUND (404)
+  - INVALID_QUERY (400)
+  - AUTHENTICATION_FAILED (401)
+  - DATABASE_ERROR (500)
+  - INTERNAL_ERROR (500)
+- Added code examples in multiple languages:
+  - cURL
+  - JavaScript (Fetch)
+  - JavaScript (Axios)
+  - Python (Requests)
+- Documented parameter details for all query parameters
+- Added best practices for performance, security, error handling, and pagination
+- Documented caching strategies and rate limiting considerations
+
+### Node API Reference
+
+**Enhanced Node Package Documentation**
+
+- Created complete Node API reference for @tabula-lens/node package
+- Documented TabulaLens class with all methods:
+  - Constructor with TabulaLensOptions
+  - query() method with all parameters
+  - handle() method for HTTP request handling
+  - getLogger() method
+  - getTables() method
+  - getFilterableColumns() method
+- Documented TabulaLensError class with constructor and usage
+- Documented Logger API with all interfaces and functions:
+  - Logger interface
+  - LogContext interface
+  - LogLevel type
+  - LoggerOptions interface
+  - createLogger() function
+  - generateId() function
+  - maskSensitiveData() function
+- Documented all 15 framework adapters with complete examples:
+  - Express (5.x+ and 4.x)
+  - Fastify
+  - Koa
+  - Hapi
+  - Restify
+  - Next.js
+  - TanStack Start
+  - Remix
+  - SvelteKit
+  - Hono
+  - Elysia
+  - Fresh
+  - Native adapter
+- Added type exports documentation
+- Included complete example with all features
+
+### React API Reference
+
+**Enhanced React Package Documentation**
+
+- Created comprehensive React API reference for @tabula-lens/react package
+- Documented DatabaseViewer component with all props organized by category:
+  - Required props (path)
+  - Table selection props (initialTable, tableSelector, etc.)
+  - Authentication props (getAuthHeaders, headers)
+  - Filtering props (showFilter, filterPlaceholder, etc.)
+  - Pagination props (showPagination, pageSize, etc.)
+  - Sorting props (enableSorting, sortableColumns, etc.)
+  - Formatting props (formatHeader, formatCell)
+  - Styling props (className, classNames, styles)
+  - Data fetching props (refetchInterval, onError)
+  - Custom component props (loadingComponent, errorComponent, etc.)
+- Documented all sub-components with props and examples:
+  - LoadingState
+  - ErrorState
+  - EmptyState
+  - TableSelector
+  - FilterInput
+  - Pagination
+  - DataTable
+- Documented all custom hooks with parameters and returns:
+  - useLogger
+  - useTableState
+  - useDatabaseData
+  - buildQueryParams
+- Documented all utility functions with parameters and returns:
+  - isQueryResult
+  - validatePagination
+  - sanitizeColumnData
+  - createAuthenticatedHeaders
+  - validateResponse
+  - mergeClassName
+  - mergeStyle
+- Added type exports documentation
+- Documented ClassNames and Styles interfaces
+- Included complete example with all features
+
+### TypeDoc Integration Decision
+
+**Evaluation Results**
+
+- Evaluated TypeDoc integration for automated API documentation generation
+- Reviewed existing JSDoc comments in React package (100+ matches found)
+- Reviewed existing TypeScript types and interfaces
+- Compared manual documentation vs. auto-generated documentation
+
+**Decision: Manual Documentation Superior**
+
+After evaluation, it was decided that comprehensive manual documentation provides better results than auto-generated API docs:
+
+**Advantages of Manual Documentation:**
+
+- Detailed explanations and context beyond type signatures
+- Real-world usage examples and patterns
+- Best practices and guidance
+- Clear organization and structure
+- Better developer experience
+- Ability to explain "why" not just "what"
+- Consistent formatting and style
+- Better for user-facing documentation
+
+**Role of Existing JSDoc:**
+
+- Existing JSDoc comments serve as inline documentation for IDEs
+- TypeScript types provide excellent IDE autocomplete
+- Manual docs in documentation site provide user-facing API reference
+- Both approaches complement each other
+
+**Deferred Items:**
+
+- OpenAPI specification (comprehensive manual docs sufficient)
+- Automated API documentation generation to CI (manual review process better)
+
+### Documentation Build Verification
+
+**Build Success**
+
+- Documentation build completed successfully
+- All 18 pages generated without errors
+- Search index built successfully
+- All API documentation pages included:
+  - /api/http/index.html
+  - /api/node/index.html
+  - /api/react/index.html
+
+### Files Modified
+
+**Modified:**
+
+- `apps/docs/src/content/docs/api/http.mdx` - Complete HTTP API reference
+- `apps/docs/src/content/docs/api/node.mdx` - Complete Node API reference
+- `apps/docs/src/content/docs/api/react.mdx` - Complete React API reference
+- `DOCUMENTATION_PLAN.md` - Marked Phase 5 as complete
+- `AGENTS.md` - Added Phase 5 implementation notes
+
+### Backward Compatibility
+
+All Phase 5 changes maintain 100% backward compatibility:
+
+- Documentation changes are information-only
+- No code changes to packages
+- No breaking changes to existing functionality
+- All existing documentation preserved and enhanced
+  - Express (5.x+ and 4.x)
+  - Fastify
+  - Koa
+  - Hapi
+  - Restify
+  - Next.js
+  - TanStack Start
+  - Remix
+  - SvelteKit
+  - Hono
+  - Elysia
+  - Fresh
+  - Native adapter
+- Added type exports documentation
+- Included complete example with all features
+
+### React API Reference
+
+**Enhanced React Package Documentation**
+
+- Created comprehensive React API reference for @tabula-lens/react package
+- Documented DatabaseViewer component with all props organized by category:
+  - Required props (path)
+  - Table selection props (initialTable, tableSelector, etc.)
+  - Authentication props (getAuthHeaders, headers)
+  - Filtering props (showFilter, filterPlaceholder, etc.)
+  - Pagination props (showPagination, pageSize, etc.)
+  - Sorting props (enableSorting, sortableColumns, etc.)
+  - Formatting props (formatHeader, formatCell)
+  - Styling props (className, classNames, styles)
+  - Data fetching props (refetchInterval, onError)
+  - Custom component props (loadingComponent, errorComponent, etc.)
+- Documented all sub-components with props and examples:
+  - LoadingState
+  - ErrorState
+  - EmptyState
+  - TableSelector
+  - FilterInput
+  - Pagination
+  - DataTable
+- Documented all custom hooks with parameters and returns:
+  - useLogger
+  - useTableState
+  - useDatabaseData
+  - buildQueryParams
+- Documented all utility functions with parameters and returns:
+  - isQueryResult
+  - validatePagination
+  - sanitizeColumnData
+  - createAuthenticatedHeaders
+  - validateResponse
+  - mergeClassName
+  - mergeStyle
+- Added type exports documentation
+- Documented ClassNames and Styles interfaces
+- Included complete example with all features
+
+### TypeDoc Integration Decision
+
+**Evaluation Results**
+
+- Evaluated TypeDoc integration for automated API documentation generation
+- Reviewed existing JSDoc comments in React package (100+ matches found)
+- Reviewed existing TypeScript types and interfaces
+- Compared manual documentation vs. auto-generated documentation
+
+**Decision: Manual Documentation Superior**
+
+After evaluation, it was decided that comprehensive manual documentation provides better results than auto-generated API docs:
+
+**Advantages of Manual Documentation:**
+
+- Detailed explanations and context beyond type signatures
+- Real-world usage examples and patterns
+- Best practices and guidance
+- Clear organization and structure
+- Better developer experience
+- Ability to explain "why" not just "what"
+- Consistent formatting and style
+- Better for user-facing documentation
+
+**Role of Existing JSDoc:**
+
+- Existing JSDoc comments serve as inline documentation for IDEs
+- TypeScript types provide excellent IDE autocomplete
+- Manual docs in documentation site provide user-facing API reference
+- Both approaches complement each other
+
+**Deferred Items:**
+
+- OpenAPI specification (comprehensive manual docs sufficient)
+- Automated API documentation generation to CI (manual review process better)
+
+### Documentation Build Verification
+
+**Build Success**
+
+- Documentation build completed successfully
+- All 18 pages generated without errors
+- Search index built successfully
+- All API documentation pages included:
+  - /api/http/index.html
+  - /api/node/index.html
+  - /api/react/index.html
+
+### Files Modified
+
+**Modified:**
+
+- `apps/docs/src/content/docs/api/http.mdx` - Complete HTTP API reference
+- `apps/docs/src/content/docs/api/node.mdx` - Complete Node API reference
+- `apps/docs/src/content/docs/api/react.mdx` - Complete React API reference
+- `DOCUMENTATION_PLAN.md` - Marked Phase 5 as complete
+- `AGENTS.md` - Added Phase 5 implementation notes
+
+### Backward Compatibility
+
+All Phase 5 changes maintain 100% backward compatibility:
+
+- Documentation changes are information-only
+- No code changes to packages
+- No breaking changes to existing functionality
+- All existing documentation preserved and enhanced
+
 ## Phase 4: Content Development - Implementation Guides (2026-07-10)
 
 Phase 4 focused on creating comprehensive implementation guides for frontend, backend, database integration, and advanced features.
