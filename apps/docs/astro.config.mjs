@@ -114,12 +114,6 @@ export default defineConfig({
 						{ label: 'Architecture Decision Records', slug: 'concepts/architecture-decisions' },
 					],
 				},
-				{
-					label: 'About',
-					items: [
-						{ label: 'Accessibility', slug: 'accessibility' },
-					],
-				},
 			],
 		}),
 	],
