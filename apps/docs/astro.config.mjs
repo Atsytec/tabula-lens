@@ -29,8 +29,12 @@ export default defineConfig({
 					label: 'Guides',
 					items: [
 						{ label: 'Frontend Implementation', slug: 'guides/frontend-implementation' },
+						{ label: 'React Component Architecture', slug: 'guides/react-component-architecture' },
+						{ label: 'TanStack Query Integration', slug: 'guides/tanstack-query-integration' },
+						{ label: 'TanStack Table Integration', slug: 'guides/tanstack-table-integration' },
 						{ label: 'Backend Implementation', slug: 'guides/backend-implementation' },
 						{ label: 'Database Integration', slug: 'guides/database-integration' },
+						{ label: 'Logging System', slug: 'guides/logging-system' },
 					],
 				},
 				{
