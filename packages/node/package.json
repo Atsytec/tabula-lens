@@ -62,7 +62,7 @@
     "koa": "^3.2.1",
     "restify": "^11.1.0",
     "tsup": "^8.0.0",
-    "typescript": "^7.0.2",
+    "typescript": "5.9.2",
     "vitest": "^4.1.10"
   },
   "peerDependencies": {
