@@ -114,4 +114,4 @@ Currently no license. All rights reserved.
 
 ## 🤝 Contributing
 
-Contributions will be allowed soon.
+Contributions are welcome! Please see our contributing guidelines for details.
