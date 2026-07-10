@@ -1,6 +1,5 @@
 {
   "name": "tabula-lens",
-  "description": "A component library for viewing database data with secure, backend-agnostic architecture",
   "private": true,
   "scripts": {
     "build": "turbo run build",
@@ -19,7 +18,7 @@
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "@vitejs/plugin-react": "^4.0.0",
+    "@vitejs/plugin-react": "^6.0.3",
     "eslint": "^8.0.0",
     "eslint-plugin-react": "^7.33.0",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -27,9 +26,9 @@
     "lint-staged": "^17.0.8",
     "prettier": "^3.7.4",
     "tsx": "^4.23.0",
-    "turbo": "^2.10.3",
+    "turbo": "^2.10.4",
     "typescript": "5.9.2",
-    "vite": "^6.4.3"
+    "vite": "^8.1.4"
   },
   "packageManager": "pnpm@9.0.0",
   "lint-staged": {
@@ -50,7 +49,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   }
 }
