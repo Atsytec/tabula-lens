@@ -6,8 +6,48 @@ on:
   pull_request:
     branches: [main, dev]
 
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Set explicit permissions for security
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
 jobs:
-  ci:
+  # Detect which packages changed
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      node: ${{ steps.filter.outputs.node }}
+      react: ${{ steps.filter.outputs.react }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            node:
+              - 'packages/node/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+            react:
+              - 'packages/react/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+
+  # Validate Node.js package
+  node:
+    needs: changes
+    if: ${{ needs.changes.outputs.node == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -32,13 +72,52 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Type check
-        run: pnpm --filter @tabula-lens/node --filter @tabula-lens/react run check-types
+        run: pnpm --filter @tabula-lens/node run check-types
 
       - name: Lint
-        run: pnpm --filter @tabula-lens/node --filter @tabula-lens/react run lint
+        run: pnpm --filter @tabula-lens/node run lint
 
       - name: Test
-        run: pnpm --filter @tabula-lens/node --filter @tabula-lens/react run test
+        run: pnpm --filter @tabula-lens/node run test
 
       - name: Build
-        run: pnpm --filter @tabula-lens/node --filter @tabula-lens/react run build
+        run: pnpm --filter @tabula-lens/node run build
+
+  # Validate React package
+  react:
+    needs: changes
+    if: ${{ needs.changes.outputs.react == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm --filter @tabula-lens/react run check-types
+
+      - name: Lint
+        run: pnpm --filter @tabula-lens/react run lint
+
+      - name: Test
+        run: pnpm --filter @tabula-lens/react run test
+
+      - name: Build
+        run: pnpm --filter @tabula-lens/react run build
