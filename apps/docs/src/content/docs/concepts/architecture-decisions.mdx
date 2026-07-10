@@ -1,0 +1,588 @@
+---
+title: Architecture Decision Records
+description: Review key architectural decisions made during Tabula Lens development.
+---
+
+# Architecture Decision Records
+
+This document contains Architecture Decision Records (ADRs) for Tabula Lens, capturing key architectural decisions, their context, and consequences.
+
+## What are Architecture Decision Records?
+
+Architecture Decision Records (ADRs) document important architectural decisions made during the development of a system. Each ADR captures:
+
+- **Context**: The situation that led to the decision
+- **Decision**: The decision that was made
+- **Consequences**: The results of the decision, both positive and negative
+
+## ADR-001: HTTP API as Universal Interface
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens needed to support multiple frontend frameworks (React, Vue, Svelte, etc.) and backend frameworks (Express, Fastify, Next.js, etc.). A direct database connection from the frontend would expose credentials and create security vulnerabilities.
+
+### Decision
+
+Implement an HTTP API as the universal interface between frontend and backend. The backend handles database connections and exposes a RESTful API that any frontend can consume.
+
+### Consequences
+
+**Positive:**
+- Frontend-agnostic: Any frontend technology can be used
+- Security: Database credentials never leave the backend
+- Flexibility: Backend can be implemented in any language/framework
+- Scalability: API can be cached, load-balanced, and monitored
+- Standard: Uses well-understood HTTP/REST patterns
+
+**Negative:**
+- Additional layer: Adds HTTP overhead compared to direct connection
+- Complexity: Requires API implementation and maintenance
+- Latency: Network latency between frontend and backend
+- State management: HTTP is stateless, requires session/token management
+
+### Alternatives Considered
+
+1. **Direct Database Connection**: Rejected due to security concerns
+2. **GraphQL**: Considered but REST chosen for simplicity and broader compatibility
+3. **WebSocket**: Rejected as overkill for query/response pattern
+
+---
+
+## ADR-002: PostgreSQL as Primary Database
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens needed a database that could handle structured data, support complex queries, and provide strong consistency guarantees. The database needed to be widely supported, well-documented, and suitable for production use.
+
+### Decision
+
+Use PostgreSQL as the primary and supported database for Tabula Lens.
+
+### Consequences
+
+**Positive:**
+- Powerful: Advanced features (JSON, indexes, constraints, etc.)
+- Reliable: ACID compliance and strong consistency
+- Performant: Excellent query optimization and indexing
+- Widely Supported: Available on all major cloud platforms
+- Open Source: No licensing costs
+- Extensible: Supports custom functions and extensions
+
+**Negative:**
+- Single Database: Limits database flexibility (though other databases could be added)
+- Resource Intensive: Requires more resources than lighter databases
+- Complexity: Advanced features have learning curve
+
+### Alternatives Considered
+
+1. **MySQL**: Good alternative but PostgreSQL chosen for advanced features
+2. **SQLite**: Rejected for production use cases
+3. **MongoDB**: Rejected as Tabula Lens focuses on structured data
+4. **Multi-Database Support**: Deferred to future versions
+
+---
+
+## ADR-003: Modular Component Architecture
+
+### Status
+
+Accepted
+
+### Context
+
+The DatabaseViewer React component was becoming monolithic, making it difficult to maintain, test, and customize. Users needed flexibility to customize individual UI elements while maintaining the overall component functionality.
+
+### Decision
+
+Refactor the DatabaseViewer component into a modular architecture with:
+- Sub-components (LoadingState, ErrorState, EmptyState, etc.)
+- Custom hooks (useLogger, useTableState, useDatabaseData)
+- Utility functions (fetchHelpers, validationHelpers, styleHelpers)
+- Runtime prop validation
+
+### Consequences
+
+**Positive:**
+- Maintainability: Easier to understand and modify
+- Testability: Individual components can be tested in isolation
+- Customizability: Users can override specific sub-components
+- Reusability: Hooks and utilities can be used independently
+- Performance: React.memo optimization on sub-components
+- Developer Experience: Better code organization and documentation
+
+**Negative:**
+- Complexity: More files and components to manage
+- Learning Curve: Users need to understand the architecture
+- Bundle Size: Slightly larger due to modular structure
+- Migration: Existing users need to understand new structure
+
+### Alternatives Considered
+
+1. **Keep Monolithic Component**: Rejected due to maintainability concerns
+2. **Separate Package**: Rejected as overkill for this use case
+3. **Higher-Order Components**: Rejected in favor of hooks pattern
+
+---
+
+## ADR-004: CSS Custom Properties for Theming
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens needed a theming system that would:
+- Support dark mode
+- Allow brand customization
+- Work across different frontend frameworks
+- Enable runtime theming without JavaScript
+- Maintain consistency across components
+
+### Decision
+
+Use CSS custom properties (CSS variables) as the foundation of the theming system, with a `--tlens-` prefix to avoid conflicts.
+
+### Consequences
+
+**Positive:**
+- Runtime Theming: Theme changes without JavaScript re-render
+- Dark Mode: Native support through CSS media queries
+- Framework Agnostic: Works with any CSS-based framework
+- Performance: No JavaScript overhead for theme switching
+- Maintainability: Single source of truth for design tokens
+- Customization: Easy for users to override specific tokens
+
+**Negative:**
+- Browser Support: Requires modern browsers (IE11 not supported)
+- Fallbacks: Need fallback values for older browsers
+- Complexity: CSS custom properties have learning curve
+- Debugging: Can be harder to debug than preprocessor variables
+
+### Alternatives Considered
+
+1. **CSS Preprocessors (Sass/Less)**: Rejected as they require build step
+2. **JavaScript-based Theming**: Rejected due to performance overhead
+3. **CSS-in-JS**: Rejected for framework agnosticism requirements
+
+---
+
+## ADR-005: Comprehensive Logging System
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens needed a logging system that would:
+- Provide visibility into database operations
+- Help with debugging and troubleshooting
+- Support different environments (development, production)
+- Allow sensitive data masking
+- Support multiple log formats (JSON, text, pretty)
+
+### Decision
+
+Implement a comprehensive logging system with:
+- Multiple log levels (error, warn, info, debug, silent)
+- Configurable log formats
+- Request and query logging
+- Sensitive data masking
+- Environment-specific defaults
+- Custom logger integration
+
+### Consequences
+
+**Positive:**
+- Debugging: Easier to troubleshoot issues
+- Monitoring: Better visibility into system behavior
+- Security: Sensitive data can be masked
+- Flexibility: Users can integrate their own loggers
+- Production-Ready: JSON format for log aggregation
+- Configurable: Can be adjusted per environment
+
+**Negative:**
+- Complexity: Additional configuration required
+- Performance: Logging has overhead (though minimal)
+- Storage: Logs need storage and rotation strategy
+- Noise: Can generate large amounts of log data
+
+### Alternatives Considered
+
+1. **Console.log Only**: Rejected as insufficient for production
+2. **Third-Party Logger**: Considered but custom implementation chosen for control
+3. **No Logging**: Rejected as it would make debugging impossible
+
+---
+
+## ADR-006: Framework Adapter Pattern
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens needed to support multiple Node.js frameworks (Express, Fastify, Koa, Next.js, etc.) while maintaining a consistent API. Each framework has different middleware patterns and request/response handling.
+
+### Decision
+
+Implement a framework adapter pattern that provides:
+- Consistent API across frameworks
+- Framework-specific adapters
+- Middleware integration
+- Request/response handling
+- Authentication hooks
+
+### Consequences
+
+**Positive:**
+- Flexibility: Supports 15+ frameworks out of the box
+- Consistency: Same API regardless of framework
+- Maintainability: Framework-specific code isolated
+- Extensibility: Easy to add new framework adapters
+- Documentation: Clear examples for each framework
+
+**Negative:**
+- Maintenance: Need to maintain multiple adapters
+- Testing: Each adapter needs testing
+- Complexity: Additional abstraction layer
+- Learning: Users need to understand adapter pattern
+
+### Alternatives Considered
+
+1. **Framework-Specific Packages**: Rejected due to maintenance overhead
+2. **Core Package Only**: Rejected as it would limit adoption
+3. **Community Adapters**: Rejected as it would create inconsistency
+
+---
+
+## ADR-007: Manual API Documentation Over TypeDoc
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens needed comprehensive API documentation for both Node and React packages. The codebase had extensive JSDoc comments, and TypeDoc could auto-generate API documentation from these comments.
+
+### Decision
+
+Use comprehensive manual documentation instead of TypeDoc auto-generation. Manual documentation provides:
+- Detailed explanations and context
+- Real-world usage examples
+- Best practices and guidance
+- Clear organization and structure
+- Better developer experience
+
+### Consequences
+
+**Positive:**
+- Quality: Higher quality documentation with context
+- Examples: Real-world usage patterns
+- Guidance: Best practices and recommendations
+- Organization: Logical structure for navigation
+- Experience: Better for developers learning the system
+
+**Negative:**
+- Maintenance: Manual updates required when code changes
+- Effort: More time to create initially
+- Synchronization Risk: Documentation could become out of sync
+- Consistency: Requires discipline to maintain
+
+### Alternatives Considered
+
+1. **TypeDoc Auto-Generation**: Evaluated but manual chosen for quality
+2. **Hybrid Approach**: Considered but manual only chosen for simplicity
+3. **Community Documentation**: Rejected as it would be inconsistent
+
+---
+
+## ADR-008: Vitest as Testing Framework
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens needed a modern testing framework that would:
+- Work with TypeScript
+- Support React component testing
+- Provide fast test execution
+- Have good watch mode
+- Integrate well with modern build tools
+
+### Decision
+
+Use Vitest as the testing framework for both Node and React packages, with:
+- Node environment for backend testing
+- jsdom environment for React testing
+- React Testing Library for component testing
+- Jest-compatible API for familiarity
+
+### Consequences
+
+**Positive:**
+- Performance: Faster test execution than Jest
+- Modern: Built with modern tooling (Vite)
+- TypeScript: Native TypeScript support
+- React: Excellent React Testing Library integration
+- Familiarity: Jest-compatible API
+- Watch Mode: Fast and reliable watch mode
+
+**Negative:**
+- Ecosystem: Smaller ecosystem than Jest
+- Maturity: Newer framework with less battle-testing
+- Migration: Requires migration from Jest if used previously
+
+### Alternatives Considered
+
+1. **Jest**: Considered but Vitest chosen for performance
+2. **Mocha**: Rejected due to configuration complexity
+3. **Ava**: Rejected due to smaller ecosystem
+
+---
+
+## ADR-009: Astro with Starlight for Documentation
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens needed a documentation site that would:
+- Be fast and performant
+- Support MDX content
+- Provide excellent navigation
+- Have built-in search
+- Support dark mode
+- Be easy to deploy
+
+### Decision
+
+Use Astro with Starlight theme for the documentation site, providing:
+- Static site generation for performance
+- MDX support for rich content
+- Built-in navigation and search
+- Dark mode support
+- Responsive design
+- Easy deployment
+
+### Consequences
+
+**Positive:**
+- Performance: Static site generation for fast loading
+- Developer Experience: Excellent DX with Astro
+- Features: Built-in search, navigation, dark mode
+- Modern: Modern tooling and best practices
+- Customization: Starlight theme is highly customizable
+- Deployment: Easy to deploy to any static host
+
+**Negative:**
+- Learning Curve: Team needs to learn Astro
+- Build Time: Static generation requires build step
+- Dynamic Content: Limited dynamic content support
+- Theme: Customizing Starlight requires understanding
+
+### Alternatives Considered
+
+1. **Docusaurus**: Considered but Astro chosen for performance
+2. **VitePress**: Rejected due to less mature theme
+3. **Custom Next.js**: Rejected as overkill for documentation
+
+---
+
+## ADR-010: Security-First Architecture
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens deals with database access and sensitive data. Security needed to be a core consideration from the ground up, not an afterthought.
+
+### Decision
+
+Implement security-first architecture with:
+- Credential isolation (never in frontend)
+- Authentication at API level
+- Authorization enforcement
+- Input validation and sanitization
+- Secure error handling
+- Comprehensive security documentation
+
+### Consequences
+
+**Positive:**
+- Security: Strong security posture by default
+- Trust: Users can trust the system with sensitive data
+- Compliance: Helps with regulatory compliance (GDPR, SOC 2, etc.)
+- Best Practices: Encourages security best practices
+- Documentation: Comprehensive security guidance
+
+**Negative:**
+- Complexity: Additional security layers add complexity
+- Performance: Security checks have overhead
+- Configuration: Requires proper security configuration
+- Learning: Users need to understand security model
+
+### Alternatives Considered
+
+1. **Security as Add-On**: Rejected as security must be core
+2. **User-Managed Security**: Rejected as it would lead to insecure implementations
+3. **Minimal Security**: Rejected as insufficient for production use
+
+---
+
+## ADR-011: Design System Source of Truth
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens needed a design system that would be used across:
+- React package components
+- Documentation site
+- Future applications
+
+A decision needed to be made about where to store the design system source of truth.
+
+### Decision
+
+Use the React package CSS files as the source of truth for the design system. The React package CSS files (variables.css, global.css) contain all design tokens and styles.
+
+### Consequences
+
+**Positive:**
+- Single Source: One source of truth for design tokens
+- Consistency: Ensures consistency across all uses
+- Simplicity: No additional files or directories needed
+- Maintenance: Design tokens updated in one place
+- Package-Centric: Design system lives with the components
+
+**Negative:**
+- Coupling: Documentation site depends on React package
+- Access: Design tokens not accessible without package
+- Updates: Documentation site needs React package updates
+- Separation: Design system not clearly separated
+
+### Alternatives Considered
+
+1. **Shared styles/ Directory**: Rejected as it would create duplication
+2. **Separate Design Package**: Rejected as overkill for current needs
+3. **Documentation-Only**: Rejected as React components need the styles
+
+---
+
+## ADR-012: Error Handling with TabulaLensError
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens needed a consistent error handling approach that would:
+- Provide clear error messages
+- Include error context
+- Support error codes
+- Enable proper error handling in applications
+- Distinguish between different error types
+
+### Decision
+
+Implement a custom TabulaLensError class with:
+- Error codes for different error types
+- Detailed error messages
+- Error context and metadata
+- Stack trace preservation
+- Consistent error structure
+
+### Consequences
+
+**Positive:**
+- Consistency: Consistent error structure across the system
+- Debugging: Better error information for debugging
+- Handling: Easier to handle different error types
+- Context: Error context helps understand issues
+- Codes: Error codes enable programmatic handling
+
+**Negative:**
+- Complexity: Custom error class adds complexity
+- Learning: Users need to understand error structure
+- Maintenance: Error codes and messages need maintenance
+
+### Alternatives Considered
+
+1. **Standard Error Objects**: Rejected as insufficient context
+2. **Third-Party Error Library**: Rejected as overkill
+3. **No Structured Errors**: Rejected as it would make handling difficult
+
+---
+
+## Future ADRs
+
+The following architectural decisions may need to be made in the future:
+
+- **ADR-013**: Multi-Database Support (MySQL, SQLite, etc.)
+- **ADR-014**: Real-Time Data Streaming (WebSocket, Server-Sent Events)
+- **ADR-015**: GraphQL API Support
+- **ADR-016**: Edge Computing Support (Cloudflare Workers, Vercel Edge)
+- **ADR-017**: Advanced Caching Strategies (CDN, Edge Caching)
+- **ADR-018**: AI/ML Integration Features
+
+## ADR Template
+
+When creating new ADRs, use this template:
+
+```markdown
+## ADR-XXX: [Decision Title]
+
+### Status
+[Proposed | Accepted | Deprecated | Superseded]
+
+### Context
+[Describe the context and problem statement]
+
+### Decision
+[Describe the decision that was made]
+
+### Consequences
+[Describe the consequences, both positive and negative]
+
+### Alternatives Considered
+[List and describe alternatives that were considered]
+```
+
+## Contributing ADRs
+
+To contribute a new ADR:
+
+1. Create a new ADR using the template above
+2. Discuss with the team
+3. Update the status to "Accepted" once approved
+4. Reference the ADR in relevant code and documentation
+5. Review and update ADRs as the system evolves
+
+## Next Steps
+
+- Review existing ADRs to understand architectural decisions
+- Propose new ADRs for significant architectural changes
+- Update existing ADRs as the system evolves
+- Reference ADRs in code comments and documentation
+- Use ADRs to guide future architectural decisions

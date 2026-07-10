@@ -309,6 +309,210 @@ All Phase 7 changes maintain 100% backward compatibility:
 - Hover indicators enhance UX without breaking existing behavior
 - CSS custom properties include fallback values
 
+## Phase 6: Guides & Concepts Implementation (2026-07-11)
+
+Phase 6 has been successfully implemented, adding comprehensive how-to guides and conceptual documentation to the documentation site.
+
+### How-to Guides Created
+
+**Authentication Guide** (`guides/authentication.mdx`)
+
+- Comprehensive authentication patterns for Tabula Lens HTTP API
+- JWT authentication implementation examples
+- Session-based authentication patterns
+- OAuth 2.0 integration examples
+- Role-based access control (RBAC) implementation
+- Row-level security patterns
+- Multi-tenant authentication strategies
+- Token management best practices
+- Security best practices for authentication
+- Framework-specific examples (Next.js, Express)
+- Troubleshooting common authentication issues
+
+**Styling Customization Guide** (`guides/styling-customization.mdx`)
+
+- Complete CSS custom properties documentation
+- Design token usage and customization
+- Style object customization patterns
+- Class name override patterns
+- Component-level styling examples
+- Dark mode implementation details
+- Manual dark mode control
+- Custom theming examples
+- Responsive design patterns
+- Accessibility considerations
+- Best practices for styling
+- Troubleshooting styling issues
+
+**Deployment Guide** (`guides/deployment.mdx`)
+
+- Database deployment strategies (managed vs self-hosted)
+- Backend deployment options (Vercel, Railway, AWS EC2, Docker, Kubernetes)
+- Frontend deployment options (Vercel, Netlify, AWS S3, Docker)
+- CI/CD pipeline configuration with GitHub Actions
+- Monitoring and logging setup
+- Health check implementation
+- Security best practices for deployment
+- Performance optimization for production
+- Troubleshooting common deployment issues
+
+**Performance Optimization Guide** (`guides/performance-optimization.mdx`)
+
+- Database performance optimization (indexing, connection pooling, caching)
+- Backend API performance (compression, pagination, query batching)
+- Frontend performance (React.memo, data fetching optimization, virtual scrolling)
+- Bundle optimization strategies
+- Monitoring and profiling
+- Performance testing with Artillery
+- Performance benchmarks and metrics
+- Performance best practices
+- Performance checklist
+- Troubleshooting performance issues
+
+**Testing Guide** (`guides/testing.mdx`)
+
+- Testing setup for Node package (Vitest, Node environment)
+- Testing setup for React package (Vitest, jsdom, React Testing Library)
+- Unit testing examples for TabulaLens
+- Component testing examples for DatabaseViewer
+- Custom hooks testing
+- Sub-components testing
+- Utility functions testing
+- Integration testing examples
+- End-to-end testing patterns
+- Testing best practices
+- Coverage goals and monitoring
+- CI/CD testing configuration
+- Troubleshooting common testing issues
+
+### Conceptual Documentation Created
+
+**Enhanced Security Model** (`concepts/security.mdx`)
+
+- Added comprehensive security architecture documentation
+- Threat model analysis
+- Security layers (network, authentication, authorization, input validation, data protection, monitoring)
+- Advanced security features (row-level security, audit logging, rate limiting, IP whitelisting)
+- Security testing strategies
+- Security checklist
+- Incident response planning
+- Security best practices
+
+**Performance Characteristics** (`concepts/performance-characteristics.mdx`)
+
+- Database query performance metrics
+- API response performance metrics
+- Frontend rendering performance metrics
+- Performance factors (database, network, application)
+- Performance benchmarks with test results
+- Performance optimization impact analysis
+- Performance monitoring (KPIs, tools)
+- Performance tuning strategies (database, API, frontend)
+- Performance best practices
+
+**Caching Strategies** (`concepts/caching-strategies.mdx`)
+
+- Caching layers overview (application, database, CDN)
+- In-memory caching with NodeCache
+- Redis distributed caching
+- Cache-aside pattern implementation
+- Write-through and write-behind caching
+- Multi-level caching strategies
+- Cache invalidation strategies (time-based, event-based, manual, tag-based)
+- Caching best practices
+- Cache monitoring and metrics
+- Troubleshooting caching issues
+
+**Scalability Considerations** (`concepts/scalability.mdx`)
+
+- Vertical scaling strategies
+- Horizontal scaling strategies
+- Database scaling (read replicas, sharding, connection pooling)
+- Architecture patterns (microservices, event-driven, CQRS)
+- Performance optimization for scale
+- Auto-scaling configuration (Kubernetes, AWS)
+- Monitoring and scaling
+- Scaling checklist
+- Scaling best practices
+- Troubleshooting scaling issues
+
+**Architecture Decision Records** (`concepts/architecture-decisions.mdx`)
+
+- ADR-001: HTTP API as Universal Interface
+- ADR-002: PostgreSQL as Primary Database
+- ADR-003: Modular Component Architecture
+- ADR-004: CSS Custom Properties for Theming
+- ADR-005: Comprehensive Logging System
+- ADR-006: Framework Adapter Pattern
+- ADR-007: Manual API Documentation Over TypeDoc
+- ADR-008: Vitest as Testing Framework
+- ADR-009: Astro with Starlight for Documentation
+- ADR-010: Security-First Architecture
+- ADR-011: Design System Source of Truth
+- ADR-012: Error Handling with TabulaLensError
+- ADR template for future decisions
+- ADR contribution guidelines
+
+**Error Handling Patterns** (`concepts/error-handling.mdx`)
+
+- TabulaLensError class documentation
+- Error codes and status codes
+- Server-side error handling patterns
+- Client-side error handling patterns
+- Error catalog with causes and fixes:
+  - TABLE_NOT_FOUND (404)
+  - INVALID_QUERY (400)
+  - AUTHENTICATION_FAILED (401)
+  - DATABASE_ERROR (500)
+  - INTERNAL_ERROR (500)
+- Error handling best practices
+- Error handling patterns (try-catch-wrap, error boundary, fallback UI, error recovery)
+- Troubleshooting error handling issues
+
+### Verification
+
+**Documentation Site**
+
+- Build succeeds without errors
+- All 28 pages generated successfully
+- Type checking passes (0 errors, 0 warnings, 0 hints)
+- Linting passes
+- Search index built successfully
+
+**New Documentation Pages**
+
+- 5 how-to guides (authentication, styling, deployment, performance, testing)
+- 5 conceptual documentation pages (security enhancements, performance, caching, scalability, architecture decisions, error handling)
+- Total: 10 new comprehensive documentation pages
+
+### Files Created
+
+**How-to Guides:**
+
+- `apps/docs/src/content/docs/guides/authentication.mdx` - Comprehensive authentication guide
+- `apps/docs/src/content/docs/guides/styling-customization.mdx` - Complete styling customization guide
+- `apps/docs/src/content/docs/guides/deployment.mdx` - Full deployment guide
+- `apps/docs/src/content/docs/guides/performance-optimization.mdx` - Performance optimization guide
+- `apps/docs/src/content/docs/guides/testing.mdx` - Comprehensive testing guide
+
+**Conceptual Documentation:**
+
+- `apps/docs/src/content/docs/concepts/security.mdx` - Enhanced with advanced security features
+- `apps/docs/src/content/docs/concepts/performance-characteristics.mdx` - Performance characteristics documentation
+- `apps/docs/src/content/docs/concepts/caching-strategies.mdx` - Caching strategies guide
+- `apps/docs/src/content/docs/concepts/scalability.mdx` - Scalability considerations
+- `apps/docs/src/content/docs/concepts/architecture-decisions.mdx` - Architecture decision records
+- `apps/docs/src/content/docs/concepts/error-handling.mdx` - Error handling patterns documentation
+
+### Backward Compatibility
+
+All Phase 6 changes maintain 100% backward compatibility:
+
+- Documentation additions only (no code changes)
+- No breaking changes to any packages
+- All existing functionality preserved
+- Documentation site build process unchanged
+
 ## Phase 2: Design System Implementation (2026-07-10)
 
 The design system has been successfully documented and integrated into the documentation site.

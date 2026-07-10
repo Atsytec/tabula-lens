@@ -1,0 +1,871 @@
+---
+title: Testing Guide
+description: Learn how to test Tabula Lens applications with comprehensive testing strategies and examples.
+---
+
+# Testing Guide
+
+This guide covers testing strategies for Tabula Lens applications, including unit testing, integration testing, and end-to-end testing for both the Node and React packages.
+
+## Overview
+
+Tabula Lens uses Vitest as the testing framework with the following setup:
+
+- **@tabula-lens/node**: Node.js environment for backend testing
+- **@tabula-lens/react**: jsdom environment for React component testing
+- **React Testing Library**: For React component testing
+- **Jest-compatible API**: Familiar testing syntax
+
+## Testing Setup
+
+### Node Package Testing
+
+The Node package uses Vitest with a Node.js environment for backend testing.
+
+**vitest.config.ts**
+
+```typescript
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+  },
+});
+```
+
+**package.json Scripts**
+
+```json
+{
+  "scripts": {
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:watch": "vitest --watch"
+  }
+}
+```
+
+### React Package Testing
+
+The React package uses Vitest with jsdom environment for React component testing.
+
+**vitest.config.ts**
+
+```typescript
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+  },
+  resolve: {
+    alias: {
+      './styles/variables.css': './src/components/DatabaseViewer/styles/variables.css',
+      './styles/global.css': './src/components/DatabaseViewer/styles/global.css',
+    },
+  },
+});
+```
+
+**src/test/setup.ts**
+
+```typescript
+import '@testing-library/jest-dom';
+```
+
+**package.json Scripts**
+
+```json
+{
+  "scripts": {
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:watch": "vitest --watch"
+  }
+}
+```
+
+## Node Package Testing
+
+### Unit Testing TabulaLens
+
+```typescript
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { TabulaLens } from './TabulaLens';
+
+describe('TabulaLens', () => {
+  let tabulaLens: TabulaLens;
+  const mockDbUrl = 'postgresql://test:test@localhost:5432/test';
+
+  beforeEach(() => {
+    tabulaLens = new TabulaLens(mockDbUrl);
+  });
+
+  describe('query', () => {
+    it('should execute a basic query', async () => {
+      const result = await tabulaLens.query({
+        table: 'users',
+        page: 1,
+        limit: 10,
+      });
+
+      expect(result).toHaveProperty('data');
+      expect(result).toHaveProperty('total');
+      expect(Array.isArray(result.data)).toBe(true);
+    });
+
+    it('should handle pagination parameters', async () => {
+      const result = await tabulaLens.query({
+        table: 'users',
+        page: 2,
+        limit: 25,
+      });
+
+      expect(result.data).toBeDefined();
+      expect(result.data.length).toBeLessThanOrEqual(25);
+    });
+
+    it('should handle filter parameters', async () => {
+      const result = await tabulaLens.query({
+        table: 'users',
+        filter: 'john',
+        page: 1,
+        limit: 10,
+      });
+
+      expect(result.data).toBeDefined();
+    });
+
+    it('should handle sort parameters', async () => {
+      const result = await tabulaLens.query({
+        table: 'users',
+        sort: 'name',
+        order: 'asc',
+        page: 1,
+        limit: 10,
+      });
+
+      expect(result.data).toBeDefined();
+    });
+
+    it('should throw error for invalid table', async () => {
+      await expect(
+        tabulaLens.query({
+          table: 'nonexistent_table',
+          page: 1,
+          limit: 10,
+        })
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('error handling', () => {
+    it('should handle database connection errors', async () => {
+      const invalidTabulaLens = new TabulaLens('invalid-connection-string');
+      
+      await expect(
+        invalidTabulaLens.query({
+          table: 'users',
+          page: 1,
+          limit: 10,
+        })
+      ).rejects.toThrow();
+    });
+
+    it('should handle invalid query parameters', async () => {
+      await expect(
+        tabulaLens.query({
+          table: '',
+          page: -1,
+          limit: 0,
+        })
+      ).rejects.toThrow();
+    });
+  });
+});
+```
+
+### Testing Adapters
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { expressAdapter } from './adapters/express';
+
+describe('Express Adapter', () => {
+  it('should create Express middleware', () => {
+    const middleware = expressAdapter({
+      databaseUrl: 'postgresql://test:test@localhost:5432/test',
+    });
+
+    expect(typeof middleware).toBe('function');
+  });
+
+  it('should handle requests with authentication', async () => {
+    const middleware = expressAdapter({
+      databaseUrl: 'postgresql://test:test@localhost:5432/test',
+      authenticate: async (req) => {
+        // Mock authentication
+        return { userId: 'test-user' };
+      },
+    });
+
+    // Test middleware with mock request/response
+    const req = {
+      query: { table: 'users', page: 1, limit: 10 },
+      headers: { authorization: 'Bearer token' },
+    };
+    const res = {
+      json: vi.fn(),
+      status: vi.fn(() => res),
+    };
+
+    await middleware(req, res, () => {});
+
+    expect(res.json).toHaveBeenCalled();
+  });
+});
+```
+
+### Testing Logger
+
+```typescript
+import { describe, it, expect, vi } from 'vitest';
+import { Logger } from './logger';
+
+describe('Logger', () => {
+  it('should log info messages', () => {
+    const logger = new Logger('info');
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    logger.info('Test message');
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Test message')
+    );
+
+    consoleSpy.mockRestore();
+  });
+
+  it('should log error messages', () => {
+    const logger = new Logger('error');
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    logger.error('Error message');
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Error message')
+    );
+
+    consoleSpy.mockRestore();
+  });
+
+  it('should respect log level', () => {
+    const logger = new Logger('error');
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    logger.info('This should not be logged');
+
+    expect(consoleSpy).not.toHaveBeenCalled();
+
+    consoleSpy.mockRestore();
+  });
+});
+```
+
+## React Package Testing
+
+### Component Testing
+
+```typescript
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { DatabaseViewer } from './DatabaseViewer';
+
+describe('DatabaseViewer', () => {
+  it('should render loading state initially', () => {
+    render(
+      <DatabaseViewer
+        endpoint="/api/tabula-lens"
+        table="users"
+      />
+    );
+
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  });
+
+  it('should render data after successful fetch', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          data: [
+            { id: 1, name: 'John', email: 'john@example.com' },
+            { id: 2, name: 'Jane', email: 'jane@example.com' },
+          ],
+          total: 2,
+        }),
+      })
+    );
+
+    render(
+      <DatabaseViewer
+        endpoint="/api/tabula-lens"
+        table="users"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('John')).toBeInTheDocument();
+      expect(screen.getByText('Jane')).toBeInTheDocument();
+    });
+  });
+
+  it('should render error state on fetch failure', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        json: () => Promise.resolve({ error: 'Internal server error' }),
+      })
+    );
+
+    render(
+      <DatabaseViewer
+        endpoint="/api/tabula-lens"
+        table="users"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/error/i)).toBeInTheDocument();
+    });
+  });
+
+  it('should render empty state when no data', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          data: [],
+          total: 0,
+        }),
+      })
+    );
+
+    render(
+      <DatabaseViewer
+        endpoint="/api/tabula-lens"
+        table="users"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/no data/i)).toBeInTheDocument();
+    });
+  });
+});
+```
+
+### Testing Custom Hooks
+
+```typescript
+import { describe, it, expect, vi } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
+import { useDatabaseData } from './hooks/useDatabaseData';
+
+describe('useDatabaseData', () => {
+  it('should fetch data successfully', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          data: [{ id: 1, name: 'Test' }],
+          total: 1,
+        }),
+      })
+    );
+
+    const { result } = renderHook(() =>
+      useDatabaseData('/api/tabula-lens', { table: 'users' })
+    );
+
+    expect(result.current.loading).toBe(true);
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.data).toEqual([{ id: 1, name: 'Test' }]);
+    });
+  });
+
+  it('should handle errors', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+      })
+    );
+
+    const { result } = renderHook(() =>
+      useDatabaseData('/api/tabula-lens', { table: 'users' })
+    );
+
+    await waitFor(() => {
+      expect(result.current.error).toBeTruthy();
+    });
+  });
+
+  it('should refetch when refetch is called', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          data: [{ id: 1, name: 'Test' }],
+          total: 1,
+        }),
+      })
+    );
+
+    const { result } = renderHook(() =>
+      useDatabaseData('/api/tabula-lens', { table: 'users' })
+    );
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    result.current.refetch();
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+});
+```
+
+### Testing Sub-Components
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { LoadingState } from './components/LoadingState';
+import { ErrorState } from './components/ErrorState';
+import { EmptyState } from './components/EmptyState';
+
+describe('LoadingState', () => {
+  it('should render loading message', () => {
+    render(<LoadingState />);
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  });
+
+  it('should render custom loading message', () => {
+    render(<LoadingState message="Custom loading message" />);
+    expect(screen.getByText('Custom loading message')).toBeInTheDocument();
+  });
+});
+
+describe('ErrorState', () => {
+  it('should render error message', () => {
+    render(<ErrorState error={new Error('Test error')} />);
+    expect(screen.getByText(/test error/i)).toBeInTheDocument();
+  });
+
+  it('should call onRetry when retry button clicked', () => {
+    const onRetry = vi.fn();
+    render(<ErrorState error={new Error('Test error')} onRetry={onRetry} />);
+    
+    const retryButton = screen.getByText(/retry/i);
+    retryButton.click();
+    
+    expect(onRetry).toHaveBeenCalled();
+  });
+});
+
+describe('EmptyState', () => {
+  it('should render empty message', () => {
+    render(<EmptyState />);
+    expect(screen.getByText(/no data/i)).toBeInTheDocument();
+  });
+
+  it('should render custom empty message', () => {
+    render(<EmptyState message="Custom empty message" />);
+    expect(screen.getByText('Custom empty message')).toBeInTheDocument();
+  });
+});
+```
+
+### Testing Utility Functions
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { validatePagination, sanitizeColumnData, isQueryResult } from './utils/validationHelpers';
+
+describe('validatePagination', () => {
+  it('should validate correct pagination', () => {
+    expect(validatePagination({ page: 1, limit: 10 })).toBe(true);
+  });
+
+  it('should reject invalid page', () => {
+    expect(validatePagination({ page: -1, limit: 10 })).toBe(false);
+  });
+
+  it('should reject invalid limit', () => {
+    expect(validatePagination({ page: 1, limit: 0 })).toBe(false);
+  });
+
+  it('should reject limit greater than maximum', () => {
+    expect(validatePagination({ page: 1, limit: 1000 })).toBe(false);
+  });
+});
+
+describe('sanitizeColumnData', () => {
+  it('should sanitize string data', () => {
+    expect(sanitizeColumnData('test')).toBe('test');
+  });
+
+  it('should handle null values', () => {
+    expect(sanitizeColumnData(null)).toBe(null);
+  });
+
+  it('should handle undefined values', () => {
+    expect(sanitizeColumnData(undefined)).toBe(undefined);
+  });
+
+  it('should handle object data', () => {
+    const obj = { key: 'value' };
+    expect(sanitizeColumnData(obj)).toEqual(obj);
+  });
+});
+
+describe('isQueryResult', () => {
+  it('should identify valid query result', () => {
+    const result = { data: [], total: 0 };
+    expect(isQueryResult(result)).toBe(true);
+  });
+
+  it('should reject invalid query result', () => {
+    expect(isQueryResult({})).toBe(false);
+    expect(isQueryResult({ data: [] })).toBe(false);
+    expect(isQueryResult({ total: 0 })).toBe(false);
+  });
+});
+```
+
+## Integration Testing
+
+### API Integration Testing
+
+```typescript
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { TabulaLens } from '@tabula-lens/node';
+
+describe('API Integration Tests', () => {
+  let tabulaLens: TabulaLens;
+  const testDbUrl = process.env.TEST_DATABASE_URL;
+
+  beforeAll(() => {
+    tabulaLens = new TabulaLens(testDbUrl);
+  });
+
+  afterAll(async () => {
+    await tabulaLens.close();
+  });
+
+  it('should connect to database', async () => {
+    const result = await tabulaLens.query({
+      table: 'users',
+      page: 1,
+      limit: 1,
+    });
+
+    expect(result).toBeDefined();
+    expect(result.data).toBeDefined();
+  });
+
+  it('should handle pagination', async () => {
+    const page1 = await tabulaLens.query({
+      table: 'users',
+      page: 1,
+      limit: 10,
+    });
+
+    const page2 = await tabulaLens.query({
+      table: 'users',
+      page: 2,
+      limit: 10,
+    });
+
+    expect(page1.data).not.toEqual(page2.data);
+  });
+
+  it('should handle filtering', async () => {
+    const result = await tabulaLens.query({
+      table: 'users',
+      filter: 'admin',
+      page: 1,
+      limit: 10,
+    });
+
+    expect(result.data).toBeDefined();
+  });
+});
+```
+
+### End-to-End Testing
+
+```typescript
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { setup, $fetch } from '@nuxt/test-utils/e2e';
+
+describe('E2E Tests', async () => {
+  await setup({
+    rootDir: './',
+    server: true,
+    port: 3000,
+  });
+
+  it('should load the application', async () => {
+    const html = await $fetch('/');
+    expect(html).toContain('DatabaseViewer');
+  });
+
+  it('should fetch data from API', async () => {
+    const data = await $fetch('/api/tabula-lens?table=users&page=1&limit=10');
+    expect(data).toHaveProperty('data');
+    expect(data).toHaveProperty('total');
+  });
+
+  it('should handle authentication', async () => {
+    const response = await $fetch('/api/tabula-lens?table=users', {
+      headers: {
+        Authorization: 'Bearer valid-token',
+      },
+    });
+
+    expect(response).toHaveProperty('data');
+  });
+});
+```
+
+## Testing Best Practices
+
+### 1. Test Structure
+
+```typescript
+// ✅ Good: Clear test structure
+describe('Component', () => {
+  describe('when rendered', () => {
+    it('should display initial state', () => {
+      // Test initial state
+    });
+
+    describe('when user interacts', () => {
+      it('should update state', () => {
+        // Test interaction
+      });
+    });
+  });
+});
+
+// ❌ Avoid: Unclear structure
+describe('Component', () => {
+  it('should work', () => {
+    // Vague test
+  });
+});
+```
+
+### 2. Test Isolation
+
+```typescript
+// ✅ Good: Isolated tests
+describe('Component', () => {
+  beforeEach(() => {
+    // Reset state before each test
+    vi.clearAllMocks();
+  });
+
+  it('should work independently', () => {
+    // Test doesn't depend on other tests
+  });
+});
+
+// ❌ Avoid: Dependent tests
+describe('Component', () => {
+  it('should set up state', () => {
+    // Setup
+  });
+
+  it('should use state from previous test', () => {
+    // Depends on previous test
+  });
+});
+```
+
+### 3. Mock External Dependencies
+
+```typescript
+// ✅ Good: Mock external dependencies
+describe('Component', () => {
+  beforeEach(() => {
+    global.fetch = vi.fn();
+  });
+
+  it('should handle API response', async () => {
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ data: [] }),
+    });
+
+    // Test component
+  });
+});
+
+// ❌ Avoid: Real API calls in tests
+describe('Component', () => {
+  it('should call real API', async () => {
+    // Makes real API call - slow and unreliable
+  });
+});
+```
+
+### 4. Test User Behavior
+
+```typescript
+// ✅ Good: Test user behavior
+describe('Component', () => {
+  it('should display data when loaded', () => {
+    render(<Component />);
+    expect(screen.getByText('Data')).toBeInTheDocument();
+  });
+
+  it('should show error when API fails', () => {
+    // Test error state
+  });
+});
+
+// ❌ Avoid: Test implementation details
+describe('Component', () => {
+  it('should set useState to true', () => {
+    // Tests implementation, not behavior
+  });
+});
+```
+
+## Coverage
+
+### Running Coverage Tests
+
+```bash
+# Node package
+cd packages/node
+npm run test:coverage
+
+# React package
+cd packages/react
+npm run test:coverage
+```
+
+### Coverage Goals
+
+- **Lines**: > 80%
+- **Functions**: > 80%
+- **Branches**: > 75%
+- **Statements**: > 80%
+
+## Continuous Integration
+
+### GitHub Actions Configuration
+
+```yaml
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        package: [node, react]
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: packages/${{ matrix.package }}/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: packages/${{ matrix.package }}
+        run: npm ci
+      
+      - name: Run tests
+        working-directory: packages/${{ matrix.package }}
+        run: npm test
+      
+      - name: Run coverage
+        working-directory: packages/${{ matrix.package }}
+        run: npm run test:coverage
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: packages/${{ matrix.package }}/coverage/lcov.info
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Issue: Tests fail with "fetch is not defined"**
+
+```typescript
+// Solution: Mock fetch globally
+import { vi } from 'vitest';
+
+global.fetch = vi.fn();
+```
+
+**Issue: React component tests fail with "act warnings"**
+
+```typescript
+// Solution: Use waitFor for async operations
+import { waitFor } from '@testing-library/react';
+
+await waitFor(() => {
+  expect(screen.getByText('Data')).toBeInTheDocument();
+});
+```
+
+**Issue: Tests are slow**
+
+```typescript
+// Solution: Use vi.useFakeTimers() for timer-based tests
+vi.useFakeTimers();
+
+// Advance timers
+vi.advanceTimersByTime(1000);
+
+// Restore real timers
+vi.useRealTimers();
+```
+
+## Next Steps
+
+- Implement tests for your custom components and hooks
+- Set up continuous integration for automated testing
+- Configure coverage reporting
+- Review [React Testing Library documentation](https://testing-library.com/react) for best practices
+- Check [Vitest documentation](https://vitest.dev/) for advanced testing patterns
