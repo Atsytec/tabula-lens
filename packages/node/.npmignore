@@ -1,0 +1,41 @@
+# Source files
+src/
+*.ts
+*.test.ts
+
+# Development files
+tsconfig.json
+tsup.config.ts
+.eslintrc.*
+.prettierrc.*
+vitest.config.*
+
+# Build artifacts
+.turbo/
+node_modules/
+
+# Testing
+coverage/
+.nyc_output/
+
+# CI/CD
+.github/
+
+# Documentation (keep README.md and CHANGELOG.md)
+docs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log
+.env
+.env.*

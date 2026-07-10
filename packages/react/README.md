@@ -3,7 +3,7 @@
 [![npm version](https://badge.fury.io/js/%40tabula-lens%2Freact.svg)](https://www.npmjs.com/package/@tabula-lens/react)
 [![Downloads](https://img.shields.io/npm/dm/@tabula-lens/react)](https://www.npmjs.com/package/@tabula-lens/react)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-19+-61DAFB.svg)](https://reactjs.org/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 A powerful React component for viewing database data with built-in pagination, sorting, and filtering. Designed to work seamlessly with the `@tabula-lens/node` backend SDK for a secure, full-stack database viewing solution.
@@ -519,18 +519,25 @@ function App() {
 
 ## 📝 License
 
-Currently no license. All rights reserved.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## 🤝 Contributing
 
-Contributions will be allowed soon.
+Contributions are welcome! Please see our [contributing guidelines](https://github.com/Atsytec/tabula-lens/blob/main/CONTRIBUTING.md) for details.
+
+## 🔒 Security
+
+For security vulnerabilities, please see our [security policy](https://github.com/Atsytec/tabula-lens/blob/main/SECURITY.md).
+
+## 💬 Support
+
+Need help? Check our [support documentation](https://github.com/Atsytec/tabula-lens/blob/main/SUPPORT.md) or open an issue on GitHub.
 
 ## 🔗 Links
 
-<!-- - [Main Repository](https://github.com/yourusername/tabula-lens) -->
-<!-- - [React Package](https://www.npmjs.com/package/@tabula-lens/react) -->
-<!-- - [Documentation](https://tabula-lens.dev) -->
-<!-- - [Issues](https://github.com/yourusername/tabula-lens/issues) -->
+- [Main Repository](https://github.com/Atsytec/tabula-lens)
+- [React Package](https://www.npmjs.com/package/@tabula-lens/react)
+- [Issues](https://github.com/Atsytec/tabula-lens/issues)
 
 ## 🙏 Acknowledgments
 

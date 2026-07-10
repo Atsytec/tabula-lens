@@ -504,18 +504,25 @@ const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
 
 ## 📝 License
 
-Currently no license. All rights reserved.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## 🤝 Contributing
 
-Contributions will be allowed soon.
+Contributions are welcome! Please see our [contributing guidelines](https://github.com/Atsytec/tabula-lens/blob/main/CONTRIBUTING.md) for details.
+
+## 🔒 Security
+
+For security vulnerabilities, please see our [security policy](https://github.com/Atsytec/tabula-lens/blob/main/SECURITY.md).
+
+## 💬 Support
+
+Need help? Check our [support documentation](https://github.com/Atsytec/tabula-lens/blob/main/SUPPORT.md) or open an issue on GitHub.
 
 ## 🔗 Links
 
-<!-- - [Main Repository](https://github.com/yourusername/tabula-lens) -->
-<!-- - [Node Package](https://www.npmjs.com/package/@tabula-lens/node) -->
-<!-- - [Documentation](https://tabula-lens.dev) -->
-<!-- - [Issues](https://github.com/yourusername/tabula-lens/issues) -->
+- [Main Repository](https://github.com/Atsytec/tabula-lens)
+- [Node Package](https://www.npmjs.com/package/@tabula-lens/node)
+- [Issues](https://github.com/Atsytec/tabula-lens/issues)
 
 ## 🙏 Acknowledgments
 
