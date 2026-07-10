@@ -1,6 +1,12 @@
 # Tabula Lens
 
-A React component library for viewing database data with a secure, backend-agnostic architecture.
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build Status](https://github.com/Atsytec/tabula-lens/workflows/CI/badge.svg)](https://github.com/Atsytec/tabula-lens/actions)
+[![npm version](https://badge.fury.io/js/%40tabula-lens%2Freact.svg)](https://www.npmjs.com/package/@tabula-lens/react)
+[![npm version](https://badge.fury.io/js/%40tabula-lens%2Fnode.svg)](https://www.npmjs.com/package/@tabula-lens/node)
+[![Code of Conduct](https://img.shields.io/badge/Code%20of%20Conduct-2.0.0-4BAAAA.svg)](CODE_OF_CONDUCT.md)
+
+A component library for viewing database data with secure, backend-agnostic architecture.
 
 ## 🎯 Project Goal
 
@@ -110,8 +116,38 @@ pnpm format
 
 ## 📝 License
 
-Currently no license. All rights reserved.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see our contributing guidelines for details.
+Contributions are welcome! Please see our [contributing guidelines](CONTRIBUTING.md) for details.
+
+## 🌟 Community
+
+### Contributors
+
+We thank all the contributors who have helped make Tabula Lens better. See our [CONTRIBUTORS](CONTRIBUTORS) file for a full list.
+
+### Getting Involved
+
+- **Report bugs**: Open an issue using our [bug report template](.github/ISSUE_TEMPLATE/bug_report.yml)
+- **Suggest features**: Use our [feature request template](.github/ISSUE_TEMPLATE/feature_request.yml)
+- **Answer questions**: Help other users in GitHub issues
+- **Improve documentation**: Submit documentation updates via pull requests
+- **Write code**: Fix bugs or implement new features
+
+### Recognition
+
+Contributors are recognized in our [CONTRIBUTORS](CONTRIBUTORS) file and on GitHub. We value every contribution, whether it's code, documentation, testing, or community support.
+
+## 🔒 Security
+
+For security vulnerabilities, please see our [security policy](SECURITY.md).
+
+## 💬 Support
+
+Need help? Check our [support documentation](SUPPORT.md) or open an issue on GitHub.
+
+## 📜 Code of Conduct
+
+Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md).

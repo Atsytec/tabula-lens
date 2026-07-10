@@ -63,7 +63,7 @@
     "restify": "^11.1.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^1.0.0"
+    "vitest": "^3.2.6"
   },
   "peerDependencies": {
     "@hapi/hapi": "^21.0.0",
