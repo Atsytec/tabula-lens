@@ -1,12 +1,25 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
+	site: 'https://docs.tabula-lens.dev',
+	compressHTML: true,
+	build: {
+		format: 'directory',
+	},
+	image: {
+		service: {
+			entrypoint: 'astro/assets/services/sharp',
+		},
+	},
 	integrations: [
+		sitemap(),
 		starlight({
 			title: 'Tabula Lens',
+			description: 'Full-stack database viewer library for React and Node with PostgreSQL support',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/Atsytec/tabula-lens' }],
 			customCss: ['./src/styles/tlens-theme.css'],
 			// Versioning infrastructure for future major versions
@@ -18,6 +31,43 @@ export default defineConfig({
 			// 		link: '/v1/'
 			// 	}
 			// },
+			head: [
+				{
+					tag: 'meta',
+					attrs: {
+						name: 'og:type',
+						content: 'website',
+					},
+				},
+				{
+					tag: 'meta',
+					attrs: {
+						name: 'og:site_name',
+						content: 'Tabula Lens',
+					},
+				},
+				{
+					tag: 'meta',
+					attrs: {
+						name: 'twitter:card',
+						content: 'summary_large_image',
+					},
+				},
+				{
+					tag: 'meta',
+					attrs: {
+						name: 'twitter:site',
+						content: '@tabulalens',
+					},
+				},
+				{
+					tag: 'meta',
+					attrs: {
+						name: 'twitter:creator',
+						content: '@atsytec',
+					},
+				},
+			],
 			sidebar: [
 				{
 					label: 'Quick Start',
@@ -62,6 +112,12 @@ export default defineConfig({
 						{ label: 'Caching Strategies', slug: 'concepts/caching-strategies' },
 						{ label: 'Scalability', slug: 'concepts/scalability' },
 						{ label: 'Architecture Decision Records', slug: 'concepts/architecture-decisions' },
+					],
+				},
+				{
+					label: 'About',
+					items: [
+						{ label: 'Accessibility', slug: 'accessibility' },
 					],
 				},
 			],

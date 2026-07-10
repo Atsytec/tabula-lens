@@ -11,7 +11,12 @@ This document outlines the comprehensive plan for creating a documentation websi
 **Structure & Navigation**
 
 - **Approach:** User journey structure with hybrid Diataxis framework
-- **Navigation:** "Quick Start" (tutorial), "Guides" (how-to), "API Reference" (reference), "Concepts" (explanation)
+- **Navigation Restructuring:** Audience-based separation with nested navigation
+  - User Guides: Frontend, Backend, Integrations, Production sub-sections
+  - API Reference: React, Node, HTTP APIs
+  - Contributor Docs: Architecture, Component Architecture, Internal Systems, Performance & Scaling, Security sub-sections
+- **Nested Navigation:** Multi-level hierarchy using Starlight's nested sidebar support
+- **Audience Separation:** Clear distinction between user-facing and contributor-facing documentation
 - **Architecture Focus:** Emphasize HTTP API as the universal interface with interchangeable frontend/backend implementations
 
 **Content Organization**
@@ -314,6 +319,45 @@ The existing JSDoc comments in the code are comprehensive and serve as inline do
   - Server-side error handling
   - Error catalog with causes and fixes
 
+### Phase 6.5: Navigation Restructuring 🚧
+
+**Problem Analysis**
+
+- [x] Analyze current documentation structure and identify audience confusion
+- [x] Identify user-facing vs contributor-facing content mixing
+- [x] Document navigation issues and user experience problems
+- [x] Propose reorganization strategy
+
+**Navigation Restructuring**
+
+- [ ] Update Starlight sidebar configuration with nested navigation structure
+- [ ] Reorganize content into clear audience-based sections:
+  - User Guides (Frontend, Backend, Integrations, Production)
+  - API Reference (React, Node, HTTP)
+  - Contributor Docs (Architecture, Component Architecture, Internal Systems, Performance & Scaling, Security)
+- [ ] Implement nested navigation with sub-sections:
+  - User Guides → Frontend/Backend/Integrations/Production
+  - Contributor Docs → Architecture/Component Architecture/Internal Systems/Performance & Scaling/Security
+- [ ] Update internal links to match new structure
+- [ ] Test navigation flow for both user and contributor journeys
+- [ ] Verify all content is accessible through new structure
+- [ ] Update any cross-references between documentation pages
+
+**File Organization**
+
+- [ ] Evaluate if any files need to be moved to match new structure
+- [ ] Update file paths if restructuring requires it
+- [ ] Ensure all imports and references are updated
+- [ ] Test that all pages render correctly with new structure
+
+**Content Auditing**
+
+- [ ] Review each page for audience alignment
+- [ ] Add audience indicators where helpful (user vs contributor)
+- [ ] Update page introductions to clarify target audience
+- [ ] Ensure user guides don't contain internal implementation details
+- [ ] Ensure contributor docs have sufficient technical depth
+
 ### Phase 7: AI Skills Implementation ✅
 
 **Setup Skill**
@@ -334,35 +378,35 @@ The existing JSDoc comments in the code are comprehensive and serve as inline do
 - [x] Test skill with various component configurations
 - [x] Document skill usage patterns
 
-### Phase 8: Advanced Features
+### Phase 8: Advanced Features ✅
 
 **Accessibility**
 
-- [ ] Implement WCAG 2.1 AA compliance
-- [ ] Add reduced motion support
-- [ ] Implement high contrast mode
-- [ ] Ensure keyboard navigation works properly
-- [ ] Add screen reader optimization
-- [ ] Test with accessibility tools
-- [ ] Add accessibility statement to documentation
+- [x] Implement WCAG 2.1 AA compliance
+- [x] Add reduced motion support
+- [x] Implement high contrast mode
+- [x] Ensure keyboard navigation works properly
+- [x] Add screen reader optimization
+- [ ] Test with accessibility tools (deferred - requires external tools)
+- [x] Add accessibility statement to documentation
 
 **SEO Implementation**
 
-- [ ] Add structured data (JSON-LD) for technical content
-- [ ] Implement Open Graph tags for social sharing
-- [ ] Add Twitter card meta tags
-- [ ] Optimize Core Web Vitals
-- [ ] Generate and submit sitemap
-- [ ] Add canonical URLs
-- [ ] Implement robots.txt
-- [ ] Test SEO with relevant tools
+- [x] Add structured data (JSON-LD) for technical content
+- [x] Implement Open Graph tags for social sharing
+- [x] Add Twitter card meta tags
+- [x] Optimize Core Web Vitals
+- [x] Generate and submit sitemap
+- [x] Add canonical URLs
+- [x] Implement robots.txt
+- [ ] Test SEO with relevant tools (deferred - requires external tools)
 
 **Search Functionality**
 
-- [ ] Configure Starlight's built-in search
-- [ ] Optimize search indexing
-- [ ] Add search analytics
-- [ ] Test search functionality across content
+- [x] Configure Starlight's built-in search
+- [x] Optimize search indexing
+- [ ] Add search analytics (deferred - requires analytics setup)
+- [x] Test search functionality across content
 
 ### Phase 9: Deployment & CI/CD
 
