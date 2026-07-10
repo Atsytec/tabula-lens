@@ -1,0 +1,49 @@
+/**
+ * Tabula Lens Custom Theme for Starlight
+ *
+ * IMPORTANT: Starlight's theming model works differently from a standard CSS media query approach:
+ * - Dark mode is the DEFAULT (applied to :root)
+ * - Light mode is applied via [data-theme='light'] selector
+ *
+ * We override Starlight's semantic color variables (--sl-color-*) which are what Starlight
+ * actually uses in its components. These are defined in props.css:
+ * https://github.com/withastro/starlight/blob/main/packages/starlight/style/props.css
+ */
+
+/* ─── DARK MODE (default / :root) ─── */
+:root {
+  /* Accent palette - drives links, active items, buttons */
+  --sl-color-accent-low:  hsl(207, 54%, 20%);  /* low-contrast accent bg */
+  --sl-color-accent:      hsl(207, 72%, 50%);  /* #3498db equivalent */
+  --sl-color-accent-high: hsl(207, 72%, 78%);  /* high-contrast accent text */
+
+  /* Gray palette (dark) */
+  --sl-color-white: hsl(0, 0%, 100%);
+  --sl-color-gray-1: hsl(220, 14%, 90%);
+  --sl-color-gray-2: hsl(220, 8%, 75%);
+  --sl-color-gray-3: hsl(220, 8%, 55%);
+  --sl-color-gray-4: hsl(220, 8%, 35%);
+  --sl-color-gray-5: hsl(220, 10%, 22%);
+  --sl-color-gray-6: hsl(220, 12%, 15%);
+  --sl-color-black:  hsl(220, 10%, 10%);
+}
+
+/* ─── LIGHT MODE ([data-theme='light']) ─── */
+:root[data-theme='light'],
+[data-theme='light'] ::backdrop {
+  /* Accent palette - drives links, active items, buttons */
+  --sl-color-accent-high: hsl(207, 72%, 22%);  /* dark accent for light bg */
+  --sl-color-accent:      hsl(207, 72%, 50%);  /* #3498db */
+  --sl-color-accent-low:  hsl(207, 72%, 90%);  /* light accent bg */
+
+  /* Gray palette (light - inverted from dark) */
+  --sl-color-white: hsl(220, 10%, 10%);
+  --sl-color-gray-1: hsl(220, 12%, 15%);
+  --sl-color-gray-2: hsl(220, 10%, 22%);
+  --sl-color-gray-3: hsl(220, 8%, 35%);
+  --sl-color-gray-4: hsl(220, 8%, 55%);
+  --sl-color-gray-5: hsl(220, 8%, 75%);
+  --sl-color-gray-6: hsl(220, 14%, 90%);
+  --sl-color-gray-7: hsl(220, 14%, 97%);
+  --sl-color-black:  hsl(0, 0%, 100%);
+}

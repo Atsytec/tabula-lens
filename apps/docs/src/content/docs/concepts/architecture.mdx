@@ -5,111 +5,463 @@ description: Understand the architecture and design principles of Tabula Lens.
 
 # Architecture
 
-Tabula Lens is built with a security-first, backend-agnostic architecture that separates concerns between frontend and backend.
+Tabula Lens is built with a security-first, backend-agnostic architecture that separates concerns between frontend and backend through a stable HTTP API contract.
 
 ## Core Principles
 
 ### Security First
 
-Database credentials never leave the backend. Your connection strings stay secure on your server, not exposed to the browser.
+Database credentials never leave the backend. Your connection strings stay secure on your server, not exposed to the browser. This prevents credential leakage and ensures that database access is controlled through your backend authentication system.
 
 ### Backend Agnostic
 
-The HTTP API serves as a universal interface contract. Any backend can implement the API, and any frontend can consume it.
+The HTTP API serves as a universal interface contract. Any backend can implement the API, and any frontend can consume it. This decoupling allows you to choose the best tools for your specific use case.
 
 ### Interchangeable Components
 
-Frontend and backend implementations are interchangeable. Mix and match based on your needs.
+Frontend and backend implementations are interchangeable. You can mix and match based on your needs:
+- Use React with Express, or Vue with Fastify
+- Switch from Node.js to Python without changing your frontend
+- Implement custom backends in any language that supports HTTP
 
 ## System Architecture
 
 ```
-┌─────────────────┐     HTTP API     ┌─────────────────┐
-│   Frontend      │ ◄──────────────► │   Backend       │
-│                 │                  │                 │
-│  - React        │                  │  - Node.js      │
-│  - Vue          │                  │  - Express      │
-│  - Svelte       │                  │  - Fastify      │
-│  - Any framework│                  │  - Any framework│
-└─────────────────┘                  └─────────────────┘
-                                               │
-                                               │ Database Connection
-                                               │
-                                      ┌─────────────────┐
-                                      │   Database      │
-                                      │                 │
-                                      │  - PostgreSQL   │
-                                      │  - MySQL        │
-                                      │  - Any database │
-                                      └─────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        Frontend Layer                            │
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   React      │  │    Vue       │  │   Svelte     │          │
+│  │  Component   │  │  Component   │  │  Component   │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│         │                 │                 │                   │
+│         └─────────────────┴─────────────────┘                   │
+│                           │                                       │
+│                           │ HTTP API                              │
+│                           ▼                                       │
+└─────────────────────────────────────────────────────────────────┘
+                           │
+┌─────────────────────────────────────────────────────────────────┐
+│                        Backend Layer                             │
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   Express    │  │   Fastify    │  │    Next.js    │          │
+│  │   Adapter    │  │   Adapter    │  │   Adapter    │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│         │                 │                 │                   │
+│         └─────────────────┴─────────────────┘                   │
+│                           │                                       │
+│                    ┌──────┴──────┐                                 │
+│                    │ TabulaLens  │                                 │
+│                    │   Core      │                                 │
+│                    └──────┬──────┘                                 │
+│                           │                                       │
+│                           │ Database Connection                    │
+│                           ▼                                       │
+└─────────────────────────────────────────────────────────────────┘
+                           │
+┌─────────────────────────────────────────────────────────────────┐
+│                       Database Layer                              │
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │  PostgreSQL  │  │    MySQL     │  │   SQLite     │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ## Frontend Architecture
 
-The React component is built with a modular architecture:
+The React component is built with a modular, performance-optimized architecture:
 
-- **Main Component**: DatabaseViewer orchestrates all functionality
-- **Sub-components**: Reusable UI components (LoadingState, ErrorState, etc.)
-- **Custom Hooks**: Encapsulated logic (useTableState, useDatabaseData, etc.)
-- **Utilities**: Helper functions (fetchHelpers, validationHelpers, etc.)
+### Component Structure
 
-This modular design allows for:
-- Easy customization and extension
-- Better testing and maintenance
-- Performance optimization with React.memo
-- Clear separation of concerns
+```
+DatabaseViewer (Main Orchestrator)
+├── Sub-components
+│   ├── LoadingState - Loading indicator
+│   ├── ErrorState - Error display with retry
+│   ├── EmptyState - Empty results message
+│   ├── TableSelector - Table selection UI
+│   ├── FilterInput - Search/filter input
+│   ├── Pagination - Page navigation
+│   ├── DataTable - Data table rendering
+│   └── FilterColumnSelector - Column filter dropdown
+├── Custom Hooks
+│   ├── useLogger - Logging functionality
+│   ├── useTableState - Table state management
+│   ├── useDatabaseData - Data fetching logic
+│   └── buildQueryParams - Query parameter building
+├── Utilities
+│   ├── fetchHelpers - HTTP request utilities
+│   ├── validationHelpers - Input validation
+│   └── styleHelpers - Style merging utilities
+└── Styles
+    ├── defaultStyles - Default style definitions
+    ├── variables.css - CSS custom properties
+    └── global.css - Global styles and animations
+```
+
+### Performance Optimizations
+
+- **React.memo**: All sub-components use React.memo to prevent unnecessary re-renders
+- **Memoized callbacks**: Event handlers and render functions are memoized
+- **Efficient state management**: Custom hooks optimize state updates
+- **Lazy loading**: Components load data only when needed
+- **Debounced filtering**: Filter input is debounced to reduce API calls
+
+### Customization Points
+
+The architecture supports multiple customization levels:
+
+1. **CSS Custom Properties**: Theme colors, spacing, typography
+2. **Style Objects**: Component-level style overrides
+3. **Class Names**: Custom class name assignment
+4. **Custom Components**: Replace any sub-component
+5. **Custom Hooks**: Use your own data fetching logic
 
 ## Backend Architecture
 
-The Node backend provides:
+The Node backend provides a flexible, framework-agnostic foundation:
 
-- **Framework Adapters**: Support for 15+ Node.js frameworks
-- **Database Abstraction**: Unified database interface
-- **Security**: Credential management and authentication
-- **Logging**: Comprehensive request logging
-- **Error Handling**: Structured error responses
+### Framework Adapters
+
+Tabula Lens supports 15+ Node.js frameworks through adapter pattern:
+
+**Traditional Frameworks:**
+- Express (4.x & 5.x)
+- Fastify
+- Koa
+- Hapi
+- Restify
+
+**Modern Full-Stack Frameworks:**
+- Next.js
+- TanStack Start
+- Remix
+- SvelteKit
+
+**Edge Runtimes:**
+- Hono
+- Elysia
+- Fresh
+
+**Custom:**
+- Native adapter for custom implementations
+
+### Database Abstraction
+
+The database layer provides:
+
+- **Unified Interface**: Single API for all database operations
+- **Connection Pooling**: Efficient connection management
+- **Query Building**: Safe SQL query construction
+- **Transaction Support**: Database transaction management
+- **Error Handling**: Consistent error responses
+
+### Security Features
+
+- **Credential Management**: Secure storage of database credentials
+- **Authentication**: Token-based authentication support
+- **Input Validation**: Comprehensive input sanitization
+- **SQL Injection Prevention**: Parameterized queries
+- **Rate Limiting**: Built-in rate limiting support
+
+### Logging System
+
+Comprehensive logging for debugging and monitoring:
+
+- **Request Logging**: All HTTP requests logged with metadata
+- **Query Logging**: Database queries logged with execution time
+- **Error Logging**: Structured error logging with stack traces
+- **Performance Metrics**: Query performance tracking
+- **Custom Loggers**: Integration with custom logging systems
 
 ## HTTP API Contract
 
-The HTTP API is the stable interface that connects frontend and backend:
+The HTTP API is the stable interface that connects frontend and backend. This contract ensures that frontend and backend can evolve independently while maintaining compatibility.
 
-- **Single Endpoint**: All queries go through one endpoint
-- **Query Parameters**: Standardized parameter format
-- **Response Format**: Consistent JSON responses
-- **Error Handling**: Structured error codes and messages
+### API Endpoint
 
-This contract ensures:
-- Frontend and backend can evolve independently
-- Multiple implementations can coexist
-- Clear versioning and compatibility
-- Easy testing and debugging
+**Single Endpoint Pattern:**
+```
+GET /api/tabula-lens
+```
+
+All database queries go through a single endpoint, simplified through query parameters.
+
+### Request Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `path` | string | Yes | Table name to query |
+| `page` | number | No | Page number (default: 1) |
+| `pageSize` | number | No | Items per page (default: 10) |
+| `filter` | string | No | Filter string for search |
+| `sort` | string | No | Sort column |
+| `order` | string | No | Sort order (asc/desc) |
+
+### Request Headers
+
+| Header | Type | Required | Description |
+|--------|------|----------|-------------|
+| `Authorization` | string | No | Bearer token for authentication |
+| `X-API-Key` | string | No | API key for authentication |
+| `Content-Type` | string | Yes | Must be `application/json` |
+
+### Response Format
+
+**Success Response:**
+```json
+{
+  "data": [
+    { "id": 1, "name": "Alice", "email": "alice@example.com" },
+    { "id": 2, "name": "Bob", "email": "bob@example.com" }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 10,
+    "total": 100,
+    "totalPages": 10
+  },
+  "columns": [
+    { "name": "id", "type": "integer" },
+    { "name": "name", "type": "varchar" },
+    { "name": "email", "type": "varchar" }
+  ]
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": {
+    "message": "Table not found",
+    "code": "TABLE_NOT_FOUND",
+    "timestamp": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+### Error Codes
+
+| Code | Description |
+|------|-------------|
+| `TABLE_NOT_FOUND` | Specified table does not exist |
+| `INVALID_PARAMETER` | Invalid query parameter |
+| `AUTHENTICATION_FAILED` | Invalid or missing authentication |
+| `DATABASE_ERROR` | Database operation failed |
+| `RATE_LIMIT_EXCEEDED` | Too many requests |
+
+## Interchangeability Concept
+
+The interchangeability concept is central to Tabula Lens architecture. It means that:
+
+### Frontend Interchangeability
+
+You can use any frontend framework that can make HTTP requests:
+
+```javascript
+// React
+<DatabaseViewer endpoint="/api/tabula-lens" path="users" />
+
+// Vue (hypothetical)
+<DatabaseViewer endpoint="/api/tabula-lens" path="users" />
+
+// Vanilla JavaScript
+fetch('/api/tabula-lens?path=users')
+  .then(res => res.json())
+  .then(data => renderTable(data));
+```
+
+### Backend Interchangeability
+
+You can implement the backend in any language/framework:
+
+```javascript
+// Node.js/Express
+app.get('/api/tabula-lens', async (req, res) => {
+  const data = await tabulaLens.query(req.query);
+  res.json(data);
+});
+
+// Python/FastAPI (hypothetical)
+@app.get("/api/tabula-lens")
+async def query_database(params: dict):
+    data = await tabula_lens.query(params)
+    return JSONResponse(data)
+
+// Go (hypothetical)
+func queryHandler(w http.ResponseWriter, r *http.Request) {
+    data := tabulaLens.Query(r.URL.Query())
+    json.NewEncoder(w).Encode(data)
+}
+```
+
+### Benefits of Interchangeability
+
+1. **Technology Freedom**: Choose the best tools for your stack
+2. **Migration Path**: Migrate parts of your system independently
+3. **Team Specialization**: Different teams can work on different parts
+4. **Testing**: Test frontend and backend independently
+5. **Scalability**: Scale frontend and backend separately
 
 ## Data Flow
 
-1. **User Interaction**: User interacts with DatabaseViewer component
-2. **State Management**: Component state is managed by custom hooks
-3. **API Request**: HTTP request is made to backend endpoint
-4. **Backend Processing**: Backend processes query and fetches data
-5. **Database Query**: Database executes the query and returns results
-6. **Response**: Backend returns formatted JSON response
-7. **Display**: Frontend renders data in the table component
+```
+┌─────────────┐
+│   User      │
+└──────┬──────┘
+       │ 1. Interact with UI
+       ▼
+┌─────────────┐
+│ Frontend    │
+│ Component   │
+└──────┬──────┘
+       │ 2. Update state
+       ▼
+┌─────────────┐
+│ Custom Hook │
+│ useTable    │
+└──────┬──────┘
+       │ 3. Build query params
+       ▼
+┌─────────────┐
+│ HTTP Request│
+│ to Backend  │
+└──────┬──────┘
+       │ 4. API call
+       ▼
+┌─────────────┐
+│ Backend     │
+│ Adapter     │
+└──────┬──────┘
+       │ 5. Process request
+       ▼
+┌─────────────┐
+│ TabulaLens  │
+│ Core        │
+└──────┬──────┘
+       │ 6. Build SQL query
+       ▼
+┌─────────────┐
+│ Database    │
+│ Query       │
+└──────┬──────┘
+       │ 7. Execute query
+       ▼
+┌─────────────┐
+│ Database    │
+│ Results     │
+└──────┬──────┘
+       │ 8. Return data
+       ▼
+┌─────────────┐
+│ Backend     │
+│ Response    │
+└──────┬──────┘
+       │ 9. JSON response
+       ▼
+┌─────────────┐
+│ Frontend    │
+│ Render      │
+└──────┬──────┘
+       │ 10. Display data
+       ▼
+┌─────────────┐
+│   User      │
+│   View      │
+└─────────────┘
+```
 
 ## Security Model
 
-- **Credentials**: Database credentials stay on backend
-- **Authentication**: Token-based authentication via headers
-- **Authorization**: Backend enforces access control
-- **Validation**: Input validation on both frontend and backend
-- **Error Messages**: Generic error messages to prevent information leakage
+### Credential Security
+
+- **Backend Only**: Database credentials never leave the backend
+- **Environment Variables**: Credentials stored in environment variables
+- **No Frontend Exposure**: Connection strings never sent to browser
+- **Secure Storage**: Use secret management systems in production
+
+### Authentication & Authorization
+
+- **Token-Based**: Use JWT or API keys for authentication
+- **Header-Based**: Authentication tokens sent via HTTP headers
+- **Backend Enforcement**: All authorization logic on backend
+- **Role-Based Access**: Implement role-based access control
+
+### Input Validation
+
+- **Frontend Validation**: Client-side validation for UX
+- **Backend Validation**: Server-side validation for security
+- **SQL Injection Prevention**: Parameterized queries only
+- **Type Checking**: Strict type checking on all inputs
+
+### Error Handling
+
+- **Generic Messages**: Error messages don't expose sensitive information
+- **Structured Errors**: Consistent error format for debugging
+- **Logging**: Detailed error logging on backend only
+- **Status Codes**: Proper HTTP status codes for different error types
 
 ## Extensibility
 
-The architecture supports:
+The architecture supports multiple extension points:
 
-- **New Frontends**: Any framework that can make HTTP requests
-- **New Backends**: Any language/framework that can implement the HTTP API
-- **New Databases**: Any database with a Node.js driver
-- **Custom Components**: Extend or replace sub-components
-- **Custom Hooks**: Create custom data fetching logic
+### New Frontends
 
-Coming soon: Detailed architecture diagrams and integration patterns.
+Any framework that can make HTTP requests:
+- Web frameworks (React, Vue, Svelte, Angular)
+- Mobile frameworks (React Native, Flutter)
+- Desktop applications (Electron, Tauri)
+- Command-line tools
+
+### New Backends
+
+Any language/framework that can implement the HTTP API:
+- Different Node.js frameworks
+- Other languages (Python, Go, Rust, Java)
+- Serverless functions (AWS Lambda, Vercel Functions)
+- Edge computing platforms
+
+### New Databases
+
+Any database with a Node.js driver:
+- PostgreSQL (primary support)
+- MySQL
+- SQLite
+- MongoDB (with appropriate adapter)
+- Other SQL databases
+
+### Custom Components
+
+Extend or replace any part of the system:
+- Custom sub-components
+- Custom data fetching hooks
+- Custom styling systems
+- Custom authentication methods
+
+## Performance Considerations
+
+### Frontend Performance
+
+- **Code Splitting**: Load components on demand
+- **Memoization**: Prevent unnecessary re-renders
+- **Debouncing**: Reduce API call frequency
+- **Caching**: Cache responses when appropriate
+- **Lazy Loading**: Load data only when needed
+
+### Backend Performance
+
+- **Connection Pooling**: Reuse database connections
+- **Query Optimization**: Efficient SQL queries
+- **Caching**: Cache frequently accessed data
+- **Rate Limiting**: Prevent abuse
+- **Pagination**: Limit data transfer size
+
+### Database Performance
+
+- **Indexing**: Proper database indexes
+- **Query Planning**: Optimize query execution
+- **Connection Management**: Efficient connection handling
+- **Transaction Management**: Proper transaction boundaries

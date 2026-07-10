@@ -1,54 +1,26 @@
----
-title: Design System
-description: Learn about the Tabula Lens design system, design tokens, and styling options.
----
-
-# Design System
-
-Tabula Lens includes a comprehensive design system built on CSS custom properties to enable theming, dark mode support, and consistent styling across all components.
+# Tabula Lens Design System
 
 ## Overview
 
-The design system is implemented in the React package and serves as the source of truth for all design tokens. It uses CSS custom properties with the `--tlens-` prefix to ensure uniqueness and prevent conflicts with other libraries.
-
-## Design Principles
-
-### 1. High Contrast Data Readability
-
-The design system prioritizes high contrast for data readability, especially in table components. Text colors and background colors are carefully chosen to meet WCAG AA standards.
-
-### 2. Subtle Depth
-
-Subtle depth is achieved through:
-- Box shadows on dropdowns
-- Background color changes on hover states
-- Border color variations for different states
-
-### 3. Rounded Corners
-
-Consistent rounded corners (4px) are used throughout to create a modern, approachable feel while maintaining sharpness for data-heavy interfaces.
-
-### 4. Generous Whitespace
-
-Whitespace is used generously to improve readability and reduce cognitive load:
-- Consistent padding using spacing tokens
-- Gap properties for flex layouts
-- Margin spacing between related elements
+The Tabula Lens design system is built on CSS custom properties (CSS variables) to enable theming, dark mode support, and consistent styling across all components. The design system is currently implemented in the React package and serves as the source of truth for all design tokens.
 
 ## Design Tokens
 
 ### Colors
 
 #### Primary Colors
+
 - **Primary**: `#3498db` (light mode), `#5dade2` (dark mode)
 - **Primary Hover**: `#2980b9` (light mode), `#3498db` (dark mode)
 
 #### Text Colors
+
 - **Text**: `#333` (light mode), `#e0e0e0` (dark mode)
 - **Text Primary**: `#333` (light mode), `#e0e0e0` (dark mode)
 - **Text Secondary**: `#666` (light mode), `#b0b0b0` (dark mode)
 
 #### Background Colors
+
 - **Background White**: `#ffffff` (light mode), `#1e1e1e` (dark mode)
 - **Background Header**: `#f8f9fa` (light mode), `#2d2d2d` (dark mode)
 - **Background Hover**: `#f8f9fa` (light mode), `#3d3d3d` (dark mode)
@@ -57,10 +29,12 @@ Whitespace is used generously to improve readability and reduce cognitive load:
 - **Background Spinner Track**: `#f3f3f3` (light mode), `#2d2d2d` (dark mode)
 
 #### Border Colors
+
 - **Border**: `#ddd` (light mode), `#4d4d4d` (dark mode)
 - **Border Error**: `#fcc` (light mode), `#8b3a3a` (dark mode)
 
 #### Error Colors
+
 - **Error**: `#c33` (light mode), `#e74c3c` (dark mode)
 - **Error Hover**: `#a33` (light mode), `#c0392b` (dark mode)
 
@@ -90,6 +64,7 @@ The design system uses CSS custom properties with the `--tlens-` prefix to ensur
 All CSS custom properties follow the pattern: `--tlens-{category}-{property}`
 
 Categories:
+
 - `primary`: Primary action colors
 - `text`: Typography colors
 - `bg`: Background colors
@@ -144,6 +119,7 @@ const container = {
 ```
 
 This approach allows for:
+
 - Runtime theming without JavaScript
 - Consistent styling across components
 - Easy customization through CSS variable overrides
@@ -152,120 +128,58 @@ This approach allows for:
 ### Global Styles
 
 Global styles are defined in `global.css` and include:
+
 - Animations (spinner)
 - Interactive states (hover, focus)
 - Component-specific styles (table rows, pagination buttons)
 
-## Styling Options
+## Theming
 
-### 1. CSS Custom Properties
+### Custom Theming
 
-Use CSS custom properties for global theming:
+Users can customize the design system by overriding CSS custom properties in their application:
 
 ```css
 :root {
-  --tlens-primary: #3b82f6;
-  --tlens-primary-hover: #2563eb;
+  --tlens-primary: #your-color;
+  --tlens-text-primary: #your-color;
+  /* ... other overrides */
 }
 ```
 
-### 2. Style Objects
+### Brand Colors
 
-Customize component styles via props:
+The default brand colors use a blue palette:
 
-```jsx
-<DatabaseViewer 
-  endpoint="/api/tabula-lens"
-  styles={{
-    container: { padding: '20px', borderRadius: '8px' },
-    table: { border: '1px solid #e2e8f0' },
-    header: { backgroundColor: '#f8fafc' }
-  }}
-/>
-```
+- Primary: Blue (#3498db)
+- Accent: Error red (#c33)
+- Neutral: Grays for text and backgrounds
 
-### 3. Class Names
+## Design Principles
 
-Override with custom class names:
+### 1. High Contrast Data Readability
 
-```jsx
-<DatabaseViewer 
-  endpoint="/api/tabula-lens"
-  classNames={{
-    container: 'custom-database-viewer',
-    table: 'custom-table',
-    header: 'custom-header'
-  }}
-/>
-```
+The design system prioritizes high contrast for data readability, especially in table components. Text colors and background colors are carefully chosen to meet WCAG AA standards.
 
-### 4. Complete Customization
+### 2. Subtle Depth
 
-Combine all approaches:
+Subtle depth is achieved through:
 
-```jsx
-<DatabaseViewer 
-  endpoint="/api/tabula-lens"
-  styles={{
-    container: { padding: '24px' }
-  }}
-  classNames={{
-    container: 'my-custom-class'
-  }}
-/>
-```
+- Box shadows on dropdowns
+- Background color changes on hover states
+- Border color variations for different states
 
-```css
-.my-custom-class {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-```
+### 3. Rounded Corners
 
-## Component-Specific Styling
+Consistent rounded corners (4px) are used throughout to create a modern, approachable feel while maintaining sharpness for data-heavy interfaces.
 
-### Table Styles
+### 4. Generous Whitespace
 
-```css
-.tlens-table {
-  border-collapse: collapse;
-  width: 100%;
-}
+Whitespace is used generously to improve readability and reduce cognitive load:
 
-.tlens-table-header {
-  background-color: var(--tlens-bg-header);
-  font-weight: 600;
-}
-
-.tlens-table-row:hover {
-  background-color: var(--tlens-bg-hover);
-}
-```
-
-### Pagination Styles
-
-```css
-.tlens-pagination-button {
-  padding: var(--tlens-spacing-sm) var(--tlens-spacing-md);
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.tlens-pagination-button:hover {
-  background-color: var(--tlens-bg-hover);
-}
-```
-
-### Filter Styles
-
-```css
-.tlens-filter-input {
-  padding: var(--tlens-spacing-sm) var(--tlens-spacing-md);
-  border: 1px solid var(--tlens-border);
-  border-radius: 4px;
-}
-```
+- Consistent padding using spacing tokens
+- Gap properties for flex layouts
+- Margin spacing between related elements
 
 ## Accessibility
 
@@ -276,6 +190,7 @@ All color combinations meet WCAG 2.1 AA standards for contrast ratios. Text colo
 ### Focus States
 
 Focus states are clearly defined with:
+
 - 2px solid outlines
 - Outline offset for better visibility
 - Primary color for focus indicators
@@ -291,6 +206,7 @@ The design system uses responsive units (rem) for spacing and typography to ensu
 ## Performance
 
 CSS custom properties are performant and:
+
 - Do not require JavaScript for theming
 - Have minimal runtime overhead
 - Support browser-native optimizations
@@ -300,54 +216,33 @@ CSS custom properties are performant and:
 
 CSS custom properties are supported in all modern browsers. Fallback values ensure graceful degradation in older browsers.
 
-## Customization Examples
+## Future Enhancements
 
-### Brand Integration
+Planned enhancements to the design system include:
 
-Match your brand colors:
-
-```css
-:root {
-  --tlens-primary: #your-brand-color;
-  --tlens-primary-hover: #your-brand-hover;
-}
-```
-
-### Compact Layout
-
-Reduce spacing for dense data:
-
-```css
-:root {
-  --tlens-spacing-sm: 0.25rem;
-  --tlens-spacing-md: 0.5rem;
-  --tlens-font-size-base: 0.75rem;
-}
-```
-
-### Minimal Design
-
-Clean, minimal aesthetic:
-
-```css
-:root {
-  --tlens-border: transparent;
-  --tlens-bg-header: transparent;
-}
-```
+1. **Manual Dark Mode Toggle**: Allow users to manually switch between light and dark modes
+2. **Additional Color Themes**: Support for multiple color themes (e.g., green, purple)
+3. **Typography Scale**: Expanded typography scale with more font sizes
+4. **Spacing Scale**: More granular spacing options
+5. **Animation Library**: Reusable animation patterns
+6. **Component Variants**: Pre-built component style variants
 
 ## Implementation Files
 
 - **CSS Variables**: `packages/react/src/components/DatabaseViewer/styles/variables.css`
 - **Global Styles**: `packages/react/src/components/DatabaseViewer/styles/global.css`
 - **Default Styles**: `packages/react/src/components/DatabaseViewer/styles/defaultStyles.ts`
-- **Design System Documentation**: `DESIGN_SYSTEM.md`
 
 ## Design System Governance
 
 The React package CSS files serve as the source of truth for the design system. Any changes to design tokens should be made in these files first, then propagated to other consuming applications (such as the documentation site).
 
+### Decision: No Shared Styles Directory
+
+After evaluation, it was determined that a shared `styles/` directory is not needed. The React package CSS files are the authoritative source for design tokens, and other applications (like the documentation site) should reference and consume these design tokens rather than duplicate them.
+
 This approach:
+
 - Maintains a single source of truth
 - Reduces duplication
 - Ensures consistency across all Tabula Lens applications

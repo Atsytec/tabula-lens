@@ -1,0 +1,522 @@
+---
+title: Database Architecture
+description: Understand Tabula Lens database architecture, connection patterns, and PostgreSQL integration.
+---
+
+# Database Architecture
+
+Tabula Lens is designed to work seamlessly with PostgreSQL, providing a robust database layer that handles connections, queries, and data management efficiently and securely.
+
+## Database Support
+
+### Primary Support: PostgreSQL
+
+Tabula Lens is built primarily for PostgreSQL, leveraging its powerful features:
+
+- **Advanced Querying**: Complex queries with joins, aggregations, and subqueries
+- **Data Types**: Rich data type support including JSON, arrays, and custom types
+- **Performance**: Excellent performance with proper indexing and query optimization
+- **Reliability**: ACID compliance and robust transaction support
+- **Scalability**: Handles large datasets efficiently
+- **Extensions**: Support for PostgreSQL extensions (PostGIS, pgcrypto, etc.)
+
+### Future Database Support
+
+While PostgreSQL is the primary focus, the architecture is designed to support other databases:
+
+- **MySQL**: Planned support for MySQL/MariaDB
+- **SQLite**: Planned support for SQLite for smaller applications
+- **Custom Adapters**: Extensible architecture for custom database adapters
+
+## Connection Architecture
+
+### Connection String Format
+
+Tabula Lens uses standard PostgreSQL connection strings:
+
+```bash
+postgresql://[user[:password]@][host][:port][/database][?parameters]
+```
+
+**Example:**
+```bash
+DATABASE_URL=postgresql://alice:secret@localhost:5432/mydb
+```
+
+**Connection Parameters:**
+- `user`: Database username
+- `password`: Database password
+- `host`: Database host (default: localhost)
+- `port`: Database port (default: 5432)
+- `database`: Database name
+- `parameters`: Additional connection parameters
+
+### Connection Pooling
+
+TabulaLens implements efficient connection pooling:
+
+```typescript
+const tabulaLens = new TabulaLens(databaseUrl, {
+  maxConnections: 20,        // Maximum connections in pool
+  connectionTimeout: 30000,  // Connection timeout in ms
+  idleTimeout: 10000,        // Idle connection timeout
+});
+```
+
+**Benefits:**
+- **Performance**: Reuses connections instead of creating new ones
+- **Scalability**: Handles concurrent requests efficiently
+- **Resource Management**: Prevents connection exhaustion
+- **Automatic Cleanup**: Removes idle connections automatically
+
+### Connection Lifecycle
+
+```
+┌─────────────┐
+│ Application │
+└──────┬──────┘
+       │ 1. Request Connection
+       ▼
+┌─────────────┐
+│ Connection  │
+│    Pool     │
+└──────┬──────┘
+       │ 2. Get Available Connection
+       ▼
+┌─────────────┐
+│   Active    │
+│ Connection  │
+└──────┬──────┘
+       │ 3. Execute Query
+       ▼
+┌─────────────┐
+│   Database  │
+└──────┬──────┘
+       │ 4. Return Results
+       ▼
+┌─────────────┐
+│   Active    │
+│ Connection  │
+└──────┬──────┘
+       │ 5. Return to Pool
+       ▼
+┌─────────────┐
+│ Connection  │
+│    Pool     │
+└─────────────┘
+```
+
+## Query Architecture
+
+### Query Building Process
+
+TabulaLens builds SQL queries safely and efficiently:
+
+```
+┌─────────────┐
+│   User      │
+│  Request    │
+└──────┬──────┘
+       │ Query Parameters
+       ▼
+┌─────────────┐
+│   Input     │
+│ Validation  │
+└──────┬──────┘
+       │ Validated Parameters
+       ▼
+┌─────────────┐
+│   Query     │
+│   Builder   │
+└──────┬──────┘
+       │ SQL Query
+       ▼
+┌─────────────┐
+│ Parameter   │
+│  Binding    │
+└──────┬──────┘
+       │ Parameterized Query
+       ▼
+┌─────────────┐
+│   Database  │
+│   Driver    │
+└──────┬──────┘
+       │ Execute Query
+       ▼
+┌─────────────┐
+│   Database  │
+└──────┬──────┘
+       │ Results
+       ▼
+┌─────────────┐
+│   Result    │
+│ Formatting │
+└──────┬──────┘
+       │ Formatted Response
+       ▼
+┌─────────────┐
+│   User      │
+│  Response  │
+└─────────────┘
+```
+
+### Query Parameters
+
+TabulaLens accepts standardized query parameters:
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| `path` | string | Table name to query | `users` |
+| `page` | number | Page number (1-based) | `1` |
+| `pageSize` | number | Items per page | `10` |
+| `filter` | string | Search filter string | `John` |
+| `sort` | string | Column to sort by | `name` |
+| `order` | string | Sort direction | `asc` or `desc` |
+
+### Query Examples
+
+**Basic Query:**
+```sql
+SELECT * FROM users LIMIT 10 OFFSET 0;
+```
+
+**Filtered Query:**
+```sql
+SELECT * FROM users 
+WHERE name ILIKE '%John%' 
+ORDER BY name ASC 
+LIMIT 10 OFFSET 0;
+```
+
+**Paginated Query:**
+```sql
+SELECT * FROM users 
+ORDER BY created_at DESC 
+LIMIT 20 OFFSET 40;
+```
+
+### SQL Injection Prevention
+
+TabulaLens prevents SQL injection through:
+
+- **Parameterized Queries**: All user input is parameterized
+- **Input Validation**: Strict validation of all parameters
+- **Column Whitelisting**: Only allowed column names are accepted
+- **Type Checking**: Ensures correct data types
+
+```typescript
+// Safe: Parameterized query
+const query = 'SELECT * FROM users WHERE name = $1';
+const params = ['Alice'];
+
+// Never happens: Direct string interpolation
+// const query = `SELECT * FROM users WHERE name = '${userInput}'`;
+```
+
+## Data Types
+
+### Supported PostgreSQL Types
+
+TabulaLens supports all major PostgreSQL data types:
+
+#### Numeric Types
+
+- `integer` / `int4` - 32-bit integer
+- `bigint` / `int8` - 64-bit integer
+- `smallint` / `int2` - 16-bit integer
+- `decimal` / `numeric` - Exact numeric with precision
+- `real` / `float4` - 32-bit floating point
+- `double precision` / `float8` - 64-bit floating point
+
+#### String Types
+
+- `varchar(n)` - Variable-length string with limit
+- `text` - Variable-length string without limit
+- `char(n)` - Fixed-length string
+- `json` - JSON data
+- `jsonb` - Binary JSON data (optimized)
+
+#### Date/Time Types
+
+- `date` - Date (year, month, day)
+- `time` - Time of day
+- `timestamp` - Date and time
+- `timestamptz` - Date and time with timezone
+- `interval` - Time span
+
+#### Boolean Type
+
+- `boolean` / `bool` - True or false
+
+#### Binary Types
+
+- `bytea` - Binary data
+
+#### Array Types
+
+- `integer[]` - Array of integers
+- `text[]` - Array of strings
+- Custom array types
+
+#### Custom Types
+
+- `enum` - Enumeration types
+- `composite` - Custom composite types
+- `domain` - Custom domains
+
+### Type Mapping
+
+TabulaLens automatically maps PostgreSQL types to JavaScript types:
+
+| PostgreSQL Type | JavaScript Type |
+|-----------------|-----------------|
+| `integer` | `number` |
+| `bigint` | `string` (or `number` if in range) |
+| `varchar` | `string` |
+| `text` | `string` |
+| `boolean` | `boolean` |
+| `json` | `object` |
+| `jsonb` | `object` |
+| `date` | `string` (ISO format) |
+| `timestamp` | `string` (ISO format) |
+| `bytea` | `Buffer` |
+
+## Performance Optimization
+
+### Indexing
+
+Proper indexing is crucial for performance:
+
+```sql
+-- Create index on frequently queried columns
+CREATE INDEX idx_users_name ON users(name);
+CREATE INDEX idx_users_email ON users(email);
+
+-- Create composite index for multiple columns
+CREATE INDEX idx_users_name_email ON users(name, email);
+
+-- Create partial index for filtered queries
+CREATE INDEX idx_users_active ON users(created_at) WHERE active = true;
+```
+
+### Query Optimization Tips
+
+1. **Use Appropriate Indexes**: Index columns used in WHERE, JOIN, and ORDER BY clauses
+2. **Limit Result Sets**: Use pagination to avoid large result sets
+3. **Avoid SELECT ***: Specify only needed columns
+4. **Use EXPLAIN**: Analyze query execution plans
+5. **Optimize Joins**: Ensure join conditions are indexed
+6. **Use Connection Pooling**: Reuse database connections
+7. **Monitor Slow Queries**: Track and optimize slow queries
+
+### Connection Optimization
+
+```typescript
+const tabulaLens = new TabulaLens(databaseUrl, {
+  maxConnections: 20,        // Adjust based on your workload
+  connectionTimeout: 30000,  // Timeout for establishing connections
+  idleTimeout: 10000,        // Close idle connections
+  statementTimeout: 30000,   // Query execution timeout
+});
+```
+
+## Transaction Support
+
+TabulaLens supports database transactions for complex operations:
+
+```typescript
+async function transferFunds(fromId: number, toId: number, amount: number) {
+  const client = await tabulaLens.getClient();
+  
+  try {
+    await client.query('BEGIN');
+    
+    // Deduct from sender
+    await client.query(
+      'UPDATE accounts SET balance = balance - $1 WHERE id = $2',
+      [amount, fromId]
+    );
+    
+    // Add to recipient
+    await client.query(
+      'UPDATE accounts SET balance = balance + $1 WHERE id = $2',
+      [amount, toId]
+    );
+    
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+```
+
+### Transaction Best Practices
+
+1. **Keep Transactions Short**: Minimize time in transactions
+2. **Handle Errors Properly**: Always rollback on errors
+3. **Use Appropriate Isolation Levels**: Choose the right isolation level
+4. **Avoid Long-Running Transactions**: They can block other operations
+5. **Test Transaction Logic**: Ensure rollback works correctly
+
+## Security
+
+### Credential Security
+
+- **Environment Variables**: Store credentials in environment variables
+- **No Hardcoding**: Never hardcode credentials in code
+- **Secret Management**: Use secret management systems in production
+- **Limited Privileges**: Use database users with minimal required privileges
+
+### Network Security
+
+- **SSL/TLS**: Use encrypted connections
+- **Firewall Rules**: Restrict database access
+- **VPN**: Use VPN for remote database access
+- **Connection Limits**: Set connection limits per user
+
+### Data Security
+
+- **Input Validation**: Validate all inputs
+- **Parameterized Queries**: Prevent SQL injection
+- **Row-Level Security**: Implement row-level security in PostgreSQL
+- **Audit Logging**: Log database access and modifications
+
+## Monitoring and Observability
+
+### Connection Monitoring
+
+Monitor connection pool health:
+
+```typescript
+// Get connection pool statistics
+const poolStats = tabulaLens.getPoolStats();
+console.log({
+  totalCount: poolStats.totalCount,
+  idleCount: poolStats.idleCount,
+  waitingCount: poolStats.waitingCount
+});
+```
+
+### Query Monitoring
+
+Track query performance:
+
+```typescript
+const tabulaLens = new TabulaLens(databaseUrl, {
+  logger: {
+    info: (message) => {
+      if (message.queryTime > 1000) {
+        console.warn('Slow query:', message);
+      }
+    }
+  }
+});
+```
+
+### Health Checks
+
+Implement database health checks:
+
+```typescript
+async function healthCheck() {
+  try {
+    await tabulaLens.query({ path: 'users', pageSize: 1 });
+    return { status: 'healthy', database: 'connected' };
+  } catch (error) {
+    return { status: 'unhealthy', database: 'disconnected', error: error.message };
+  }
+}
+```
+
+## Backup and Recovery
+
+### Backup Strategies
+
+1. **Regular Backups**: Schedule regular database backups
+2. **Point-in-Time Recovery**: Enable WAL archiving for PITR
+3. **Offsite Backups**: Store backups in multiple locations
+4. **Backup Testing**: Regularly test backup restoration
+
+### Example Backup Script
+
+```bash
+# Full backup
+pg_dump -U username -h localhost -d mydb > backup.sql
+
+# Compressed backup
+pg_dump -U username -h localhost -d mydb | gzip > backup.sql.gz
+
+# Schema-only backup
+pg_dump -U username -h localhost -d mydb --schema-only > schema.sql
+```
+
+## Migration and Schema Management
+
+### Schema Migrations
+
+Use migration tools for schema changes:
+
+```bash
+# Using pgmigrate
+npx pgmigrate up
+
+# Using node-pg-migrate
+npx node-pg-migrate up
+```
+
+### Migration Best Practices
+
+1. **Version Control**: Store migrations in version control
+2. **Test Migrations**: Test migrations on staging first
+3. **Backward Compatibility**: Ensure migrations are backward compatible
+4. **Rollback Plans**: Always have rollback plans
+5. **Document Changes**: Document schema changes
+
+## Troubleshooting
+
+### Common Issues
+
+**Connection Issues:**
+- Check DATABASE_URL is correct
+- Verify PostgreSQL is running
+- Check network connectivity
+- Verify firewall rules
+
+**Performance Issues:**
+- Check for missing indexes
+- Analyze slow queries with EXPLAIN
+- Monitor connection pool usage
+- Check database server resources
+
+**Query Issues:**
+- Verify table and column names
+- Check data types match
+- Validate query parameters
+- Review error messages
+
+### Debug Mode
+
+Enable debug logging:
+
+```typescript
+const tabulaLens = new TabulaLens(databaseUrl, {
+  logLevel: 'debug',
+  logFormat: 'pretty'
+});
+```
+
+## Best Practices
+
+1. **Use Environment Variables**: Never hardcode credentials
+2. **Implement Connection Pooling**: Configure appropriate pool sizes
+3. **Use Indexes**: Index frequently queried columns
+4. **Monitor Performance**: Track query performance and connection usage
+5. **Handle Errors Gracefully**: Provide meaningful error messages
+6. **Use Transactions**: Use transactions for multi-step operations
+7. **Regular Backups**: Schedule regular database backups
+8. **Test Thoroughly**: Test database operations thoroughly
+9. **Document Schema**: Document your database schema
+10. **Security First**: Always prioritize security considerations

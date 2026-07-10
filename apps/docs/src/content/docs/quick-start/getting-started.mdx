@@ -1,62 +1,368 @@
 ---
 title: Getting Started
-description: Get up and running with Tabula Lens in minutes.
+description: Get up and running with Tabula Lens in minutes with this complete full-stack tutorial.
 ---
 
-Tabula Lens consists of two parts: a backend SDK for Node.js and a React component for the frontend. Here's how to get started.
+This tutorial will guide you through building a complete full-stack application using Tabula Lens with PostgreSQL, Node.js/Express, and React.
 
-## Backend Setup
+## Prerequisites
 
-First, install the backend SDK:
+Before you begin, ensure you have:
+
+- **Node.js 18+** installed
+- **PostgreSQL** installed and running
+- **npm** or **pnpm** package manager
+- Basic knowledge of React and Node.js
+
+## Project Overview
+
+We'll build a simple application that:
+- Connects to a PostgreSQL database
+- Exposes a secure API endpoint for database queries
+- Displays an interactive database viewer in the browser
+
+## Step 1: Set Up the Database
+
+First, create a PostgreSQL database for your project:
+
+```sql
+CREATE DATABASE tabula_lens_demo;
+```
+
+Create a sample table with some data:
+
+```sql
+-- Connect to your database
+\c tabula_lens_demo;
+
+-- Create a sample users table
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  role VARCHAR(50) DEFAULT 'user',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert sample data
+INSERT INTO users (name, email, role) VALUES
+  ('Alice Johnson', 'alice@example.com', 'admin'),
+  ('Bob Smith', 'bob@example.com', 'user'),
+  ('Charlie Brown', 'charlie@example.com', 'user'),
+  ('Diana Prince', 'diana@example.com', 'admin'),
+  ('Eve Davis', 'eve@example.com', 'user');
+```
+
+## Step 2: Create the Backend
+
+Create a new directory for your backend:
 
 ```bash
-npm install @tabula-lens/node
+mkdir tabula-lens-backend
+cd tabula-lens-backend
+npm init -y
 ```
 
-Then, create an API endpoint in your backend:
+Install dependencies:
 
-```javascript
-import TabulaLens from "@tabula-lens/node"
+```bash
+npm install @tabula-lens/node express cors dotenv
+npm install --save-dev typescript @types/node @types/express @types/cors ts-node nodemon
+```
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
+Initialize TypeScript:
 
-// Example with Express
+```bash
+npx tsc --init
+```
+
+Update your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  }
+}
+```
+
+Create a `.env` file:
+
+```bash
+DATABASE_URL=postgresql://username:password@localhost:5432/tabula_lens_demo
+PORT=3002
+```
+
+Create the server file `src/server.ts`:
+
+```typescript
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import TabulaLens from '@tabula-lens/node';
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 3002;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Initialize Tabula Lens
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+
+// API endpoint for database queries
 app.get('/api/tabula-lens', async (req, res) => {
-  const data = await tabulaLens.query(req.query)
-  res.json(data)
-})
+  try {
+    const data = await tabulaLens.query(req.query);
+    res.json(data);
+  } catch (error) {
+    console.error('Query error:', error);
+    res.status(500).json({ error: 'Failed to execute query' });
+  }
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
 ```
 
-## Frontend Setup
+Add scripts to `package.json`:
 
-Install the React component:
+```json
+{
+  "scripts": {
+    "dev": "nodemon src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  }
+}
+```
+
+Start the backend server:
+
+```bash
+npm run dev
+```
+
+You should see: `Server running on http://localhost:3002`
+
+Test the API:
+
+```bash
+curl "http://localhost:3002/api/tabula-lens?path=users"
+```
+
+## Step 3: Create the Frontend
+
+Create a new React application:
+
+```bash
+cd ..
+npm create vite@latest tabula-lens-frontend -- --template react
+cd tabula-lens-frontend
+npm install
+```
+
+Install Tabula Lens React component:
 
 ```bash
 npm install @tabula-lens/react
 ```
 
-Use the component in your React application:
+Update `src/App.jsx`:
 
 ```jsx
-import { DatabaseViewer } from '@tabula-lens/react'
+import { DatabaseViewer } from '@tabula-lens/react';
+import './App.css';
 
 function App() {
   return (
-    <DatabaseViewer 
-      endpoint="/api/tabula-lens"
-      authToken={userToken}
-    />
-  )
+    <div className="app">
+      <header>
+        <h1>Tabula Lens Demo</h1>
+        <p>Interactive database viewer</p>
+      </header>
+      <main>
+        <DatabaseViewer 
+          endpoint="http://localhost:3002/api/tabula-lens"
+          path="users"
+        />
+      </main>
+    </div>
+  );
+}
+
+export default App;
+```
+
+Update `src/App.css`:
+
+```css
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+header h1 {
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+header p {
+  color: #666;
 }
 ```
 
-## Requirements
+Start the frontend development server:
 
-- **Backend**: Node.js 18+, PostgreSQL database
-- **Frontend**: React 18+
+```bash
+npm run dev
+```
+
+Open your browser to `http://localhost:5173` (or the URL shown by Vite).
+
+## Step 4: Add Authentication (Optional)
+
+To secure your API, add authentication:
+
+### Backend Authentication
+
+Update `src/server.ts`:
+
+```typescript
+// Simple API key authentication middleware
+const authenticate = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  if (apiKey === process.env.API_KEY) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+};
+
+// Apply authentication to the API endpoint
+app.get('/api/tabula-lens', authenticate, async (req, res) => {
+  try {
+    const data = await tabulaLens.query(req.query);
+    res.json(data);
+  } catch (error) {
+    console.error('Query error:', error);
+    res.status(500).json({ error: 'Failed to execute query' });
+  }
+});
+```
+
+Add to `.env`:
+
+```bash
+API_KEY=your-secret-api-key
+```
+
+### Frontend Authentication
+
+Update `src/App.jsx`:
+
+```jsx
+<DatabaseViewer 
+  endpoint="http://localhost:3002/api/tabula-lens"
+  path="users"
+  getAuthHeaders={() => ({
+    'X-API-Key': 'your-secret-api-key'
+  })}
+/>
+```
+
+## Step 5: Customize the Viewer
+
+You can customize the DatabaseViewer with various options:
+
+```jsx
+<DatabaseViewer 
+  endpoint="http://localhost:3002/api/tabula-lens"
+  path="users"
+  // Enable table selector
+  tableSelector="dropdown"
+  // Add filtering
+  filterPosition="top"
+  // Add pagination
+  paginationPosition="bottom"
+  pageSize={10}
+  // Custom styling
+  styles={{
+    container: { padding: '1rem' }
+  }}
+/>
+```
+
+## Troubleshooting
+
+### Database Connection Issues
+
+**Problem**: `Connection refused` or `database does not exist`
+
+**Solution**:
+- Ensure PostgreSQL is running: `pg_isready`
+- Verify your `DATABASE_URL` is correct
+- Check that the database exists: `\l` in psql
+
+### CORS Errors
+
+**Problem**: Frontend can't connect to backend
+
+**Solution**:
+- Ensure CORS middleware is configured in Express
+- Check that the frontend URL is allowed
+- Verify both servers are running on correct ports
+
+### Empty Results
+
+**Problem**: No data displayed in the viewer
+
+**Solution**:
+- Verify the table name in the `path` prop
+- Check that the table has data: `SELECT COUNT(*) FROM users;`
+- Inspect browser console for errors
+- Check the Network tab for failed API requests
+
+### Authentication Failures
+
+**Problem**: 401 Unauthorized errors
+
+**Solution**:
+- Verify API key matches between frontend and backend
+- Check that the header name is correct (`X-API-Key`)
+- Ensure authentication middleware is properly configured
 
 ## Next Steps
 
-- Learn about [Frontend Implementation](/guides/frontend-implementation/)
-- Explore [Backend Implementation](/guides/backend-implementation/)
-- Understand the [Architecture](/concepts/architecture/)
+Now that you have a working Tabula Lens application:
+
+- Learn about [Frontend Implementation](/guides/frontend-implementation/) for advanced React patterns
+- Explore [Backend Implementation](/guides/backend-implementation/) for framework adapters
+- Understand the [Architecture](/concepts/architecture/) to learn about the HTTP API contract
+- Read about the [Design System](/concepts/design-system/) for customization options
+
+## Complete Example Code
+
+You can find the complete example code for this tutorial in the Tabula Lens repository under `examples/full-stack-demo/`.

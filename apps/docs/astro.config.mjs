@@ -8,6 +8,7 @@ export default defineConfig({
 		starlight({
 			title: 'Tabula Lens',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/Atsytec/tabula-lens' }],
+			customCss: ['./src/styles/tlens-theme.css'],
 			// Versioning infrastructure for future major versions
 			// Uncomment and configure when releasing v2.0.0
 			// versions: {
@@ -44,6 +45,8 @@ export default defineConfig({
 					label: 'Concepts',
 					items: [
 						{ label: 'Architecture', slug: 'concepts/architecture' },
+						{ label: 'Backend Architecture', slug: 'concepts/backend-architecture' },
+						{ label: 'Database Architecture', slug: 'concepts/database-architecture' },
 						{ label: 'Security Model', slug: 'concepts/security' },
 						{ label: 'Design System', slug: 'concepts/design-system' },
 					],

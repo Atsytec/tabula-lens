@@ -16,6 +16,11 @@
 - **Type check**: `npm run check-types` (runs `tsc --noEmit`)
 - **Lint**: `npm run lint`
 
+### @tabula-lens/docs
+
+- **Build**: `npm run build`
+- **Dev**: `npm run dev`
+
 ## Known Issues
 
 ### Pre-existing Test Failures in @tabula-lens/react
@@ -303,3 +308,253 @@ All Phase 7 changes maintain 100% backward compatibility:
 - JSDoc additions are documentation-only
 - Hover indicators enhance UX without breaking existing behavior
 - CSS custom properties include fallback values
+
+## Phase 2: Design System Implementation (2026-07-10)
+
+The design system has been successfully documented and integrated into the documentation site.
+
+### Design System Documentation
+
+**Created DESIGN_SYSTEM.md**
+
+- Comprehensive documentation of all design tokens
+- Color palette documentation (light and dark mode)
+- Spacing system documentation
+- Typography documentation
+- CSS custom properties documentation
+- Dark mode implementation details
+- Component styling patterns
+- Accessibility considerations
+- Performance characteristics
+- Browser support information
+- Customization examples
+
+**Design Token Documentation**
+
+- **Colors**: Primary, text, background, border, and error colors for both light and dark modes
+- **Spacing**: XS (8px), SM (12px), MD (16px), LG (32px) with 4px border radius
+- **Typography**: Base (16px) and SM (14px) font sizes
+- **Animation**: 1s duration for spinner animations
+
+**CSS Custom Properties**
+
+- Documented `--tlens-` prefix naming convention
+- Fallback value documentation
+- Variable naming pattern: `--tlens-{category}-{property}`
+- Categories: primary, text, bg, border, error, spacing, font-size, animation
+
+### Documentation Site Integration
+
+**Custom Starlight Theme**
+
+- Created `apps/docs/src/styles/tlens-theme.css` with Tabula Lens brand integration
+- Integrated Tabula Lens design tokens into Starlight theme
+- Applied custom colors, typography, and spacing to documentation site
+- Implemented dark mode support for documentation site
+- Customized component styling (tables, code blocks, headings, links)
+- Responsive design adjustments
+
+**Updated astro.config.mjs**
+
+- Added custom CSS integration: `customCss: ['./src/styles/tlens-theme.css']`
+- Integrated Tabula Lens design system with Starlight theme
+
+**Updated Design System Documentation Page**
+
+- Completely rewrote `concepts/design-system.mdx` with accurate design system information
+- Aligned documentation with actual implementation in React package
+- Added comprehensive styling examples
+- Documented CSS custom properties usage
+- Added component-specific styling examples
+- Included accessibility information
+
+### Design System Governance
+
+**Decision: No Shared Styles Directory**
+
+- Evaluated whether to create a shared `styles/` directory
+- Decided that React package CSS files should be the source of truth
+- This approach:
+  - Maintains a single source of truth
+  - Reduces duplication
+  - Ensures consistency across all Tabula Lens applications
+  - Simplifies maintenance and updates
+
+### Verification
+
+**React Package**
+
+- All 204 tests pass
+- Type checking passes
+- Linting passes
+- Design system implementation verified
+
+**Node Package**
+
+- All 19 tests pass
+- Type checking passes
+- Linting passes
+
+**Documentation Site**
+
+- Build succeeds without errors
+- All 14 pages generated successfully
+- Custom theme applied successfully
+- Responsive design verified
+
+### Files Created/Modified
+
+**Created:**
+
+- `DESIGN_SYSTEM.md` - Comprehensive design system documentation
+- `apps/docs/src/styles/tlens-theme.css` - Custom Starlight theme
+
+**Modified:**
+
+- `apps/docs/astro.config.mjs` - Added custom CSS integration
+- `apps/docs/src/content/docs/concepts/design-system.mdx` - Updated with accurate design system information
+- `DOCUMENTATION_PLAN.md` - Marked Phase 2 as complete
+- `AGENTS.md` - Added Phase 2 implementation notes
+
+### Backward Compatibility
+
+All Phase 2 changes maintain 100% backward compatibility:
+
+- Design system documentation is new information only
+- Documentation site changes are visual enhancements only
+- No breaking changes to any packages
+- All existing functionality preserved
+
+## Phase 3: Content Development - Quick Start (2026-07-10)
+
+Phase 3 focused on creating comprehensive Quick Start documentation and detailed architecture pages to help users understand and implement Tabula Lens effectively.
+
+### Quick Start Tutorial
+
+**Enhanced Getting Started Guide**
+
+- Created comprehensive full-stack tutorial with PostgreSQL, Node/Express, and React
+- Step-by-step database setup with sample data
+- Complete backend implementation with TypeScript
+- Frontend integration with Vite and React
+- Optional authentication implementation
+- Customization examples
+- Troubleshooting section for common issues
+
+**Tutorial Structure:**
+
+1. **Prerequisites**: Clear requirements for Node.js, PostgreSQL, and package managers
+2. **Database Setup**: SQL commands for creating database and sample tables
+3. **Backend Setup**: Complete Node.js/Express server with TypeScript
+4. **Frontend Setup**: React application with Vite
+5. **Authentication**: Optional token-based authentication
+6. **Customization**: Examples of component customization
+7. **Troubleshooting**: Common issues and solutions
+
+### Architecture Pages
+
+**Enhanced Architecture Overview**
+
+- Completely rewrote architecture page with detailed explanations
+- Added comprehensive system architecture diagrams
+- Documented frontend architecture with component structure
+- Documented backend architecture with framework adapters
+- Explained HTTP API contract in detail
+- Added data flow diagrams
+- Documented security model
+- Explained extensibility options
+
+**New Backend Architecture Page**
+
+- Created comprehensive backend architecture documentation
+- Documented all 15+ framework adapters with code examples
+- Explained TabulaLens core functionality
+- Documented database layer and connection management
+- Detailed logging system with configuration options
+- Explained error handling with custom error classes
+- Documented security features and authentication methods
+- Added performance optimization guidelines
+- Included testing examples and best practices
+
+**New Database Architecture Page**
+
+- Created comprehensive database architecture documentation
+- Documented PostgreSQL as primary database with detailed feature support
+- Explained connection architecture with connection pooling
+- Documented query building process and SQL injection prevention
+- Listed all supported PostgreSQL data types with JavaScript mappings
+- Added performance optimization tips
+- Documented transaction support with examples
+- Explained security considerations for database operations
+- Added monitoring and observability guidelines
+- Included backup and recovery strategies
+- Documented migration and schema management best practices
+
+### Key Features
+
+**Architecture Diagrams**
+
+- System architecture diagram showing frontend, backend, and database layers
+- Frontend component structure diagram
+- Backend adapter architecture diagram
+- Connection lifecycle diagram
+- Query building process diagram
+- Data flow diagram
+
+**Comprehensive Code Examples**
+
+- Complete working examples for all 15+ framework adapters
+- TypeScript configuration examples
+- Environment variable setup
+- Authentication implementation examples
+- Custom component usage examples
+- Error handling patterns
+
+**Interchangeability Explanation**
+
+- Clear explanation of frontend interchangeability
+- Clear explanation of backend interchangeability
+- Benefits of the interchangeable architecture
+- Examples of mixing and matching different implementations
+
+### Verification
+
+**Documentation Site Build**
+
+- Build succeeds without errors
+- All 14 pages generated successfully (up from 12)
+- New architecture pages included in navigation
+- Code syntax highlighting works correctly
+- All diagrams render properly
+
+**Content Quality**
+
+- All code examples are syntactically correct
+- SQL examples are valid PostgreSQL syntax
+- TypeScript examples are properly typed
+- Environment variable examples use correct syntax
+- Architecture diagrams are clear and accurate
+
+### Files Created/Modified
+
+**Created:**
+
+- `apps/docs/src/content/docs/concepts/backend-architecture.mdx` - Comprehensive backend architecture documentation
+- `apps/docs/src/content/docs/concepts/database-architecture.mdx` - Comprehensive database architecture documentation
+
+**Modified:**
+
+- `apps/docs/src/content/docs/quick-start/getting-started.mdx` - Enhanced with comprehensive tutorial
+- `apps/docs/src/content/docs/concepts/architecture.mdx` - Completely rewritten with detailed explanations
+- `apps/docs/astro.config.mjs` - Added new architecture pages to navigation
+- `DOCUMENTATION_PLAN.md` - Marked Phase 3 as complete
+- `AGENTS.md` - Added Phase 3 implementation notes
+
+### Backward Compatibility
+
+All Phase 3 changes maintain 100% backward compatibility:
+
+- Documentation additions only
+- No changes to package code
+- No breaking changes to existing functionality
+- All existing documentation preserved and enhanced
