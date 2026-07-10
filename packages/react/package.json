@@ -50,14 +50,14 @@
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.0.0",
-    "@types/node": "^20.0.0",
+    "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "jsdom": "^29.1.1",
     "tsup": "^8.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^1.0.0",
+    "typescript": "5.9.2",
+    "vitest": "^4.1.10",
     "vite": "^8.1.4"
   },
   "peerDependencies": {

@@ -53,8 +53,8 @@
   "devDependencies": {
     "@hapi/hapi": "^21.4.9",
     "@types/express": "^5.0.0",
-    "@types/koa": "^2.13.0",
-    "@types/node": "^20.0.0",
+    "@types/koa": "^3.0.3",
+    "@types/node": "^26.1.1",
     "@types/restify": "^8.5.0",
     "elysia": "^1.0.0",
     "fastify": "^5.10.0",
@@ -62,8 +62,8 @@
     "koa": "^3.2.1",
     "restify": "^11.1.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^3.2.6"
+    "typescript": "5.9.2",
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "@hapi/hapi": "^21.0.0",
