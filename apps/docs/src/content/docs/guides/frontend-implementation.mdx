@@ -5,70 +5,534 @@ description: Learn how to integrate Tabula Lens into your React application.
 
 # Frontend Implementation
 
-This guide covers how to integrate the Tabula Lens React component into your application.
+This guide covers how to integrate the Tabula Lens React component into your application with comprehensive documentation of the modular component architecture, configuration options, and advanced usage patterns.
 
 ## Installation
 
 ```bash
 npm install @tabula-lens/react
+# or
+pnpm add @tabula-lens/react
+# or
+yarn add @tabula-lens/react
+```
+
+### Peer Dependencies
+
+This package requires React 18+ and React DOM 18+:
+
+```bash
+npm install react react-dom
 ```
 
 ## Basic Usage
 
-```jsx
-import { DatabaseViewer } from '@tabula-lens/react'
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
 
 function App() {
-  return (
-    <DatabaseViewer 
-      endpoint="/api/tabula-lens"
-      authToken={userToken}
-    />
-  )
+  return <DatabaseViewer path="/api/tabula-lens" />;
 }
 ```
 
 ## Component Architecture
 
-The DatabaseViewer component is built with a modular architecture:
+The DatabaseViewer component is built with a modular architecture that promotes reusability, maintainability, and performance optimization.
 
-- **Main Component**: `DatabaseViewer` - The orchestrator component
-- **Sub-components**: LoadingState, ErrorState, EmptyState, TableSelector, FilterInput, Pagination, DataTable
-- **Custom Hooks**: useLogger, useTableState, useDatabaseData, buildQueryParams
-- **Utilities**: fetchHelpers, validationHelpers, styleHelpers
+### Main Component
+
+**DatabaseViewer** - The orchestrator component that manages state, data fetching, and coordinates all sub-components. It uses React.memo for performance optimization and provides a clean API for configuration.
+
+### Sub-components
+
+The component is composed of several specialized sub-components, each optimized with React.memo:
+
+- **LoadingState** - Displays loading state during data fetching
+- **ErrorState** - Displays error messages with retry functionality
+- **EmptyState** - Displays empty state when no data is available
+- **TableSelector** - Provides table selection UI (dropdown or sidebar modes)
+- **FilterInput** - Handles text-based filtering with debouncing
+- **Pagination** - Manages pagination controls and page size selection
+- **DataTable** - Renders the data table with sorting capabilities
+- **FilterColumnSelector** - Allows users to select which columns to filter
+
+### Custom Hooks
+
+The component uses several custom hooks for state management and data fetching:
+
+- **useLogger** - Provides logging functionality with configurable levels
+- **useTableState** - Manages table state (current table, sorting, filtering, pagination)
+- **useDatabaseData** - Handles data fetching with caching and error handling
+- **buildQueryParams** - Builds query parameters from table state
+
+### Utility Functions
+
+Utility functions provide reusable functionality:
+
+- **fetchHelpers** - Fetch-related utilities (createAuthenticatedHeaders, validateResponse)
+- **validationHelpers** - Validation utilities (validatePagination, sanitizeColumnData, isQueryResult)
+- **styleHelpers** - Style merging utilities (mergeClassName, mergeStyle)
+- **propValidation** - Runtime prop validation for development mode
 
 ## Configuration Options
 
-### Authentication
+### Core Props
 
-```jsx
-<DatabaseViewer 
-  endpoint="/api/tabula-lens"
-  getAuthHeaders={() => ({
-    'Authorization': `Bearer ${token}`
-  })}
-/>
+| Prop           | Type     | Default    | Description                       |
+| -------------- | -------- | ---------- | --------------------------------- |
+| `path`         | `string` | _required_ | API endpoint path for the backend |
+| `initialTable` | `string` | `'users'`  | Default table to load on mount    |
+
+### Table Selection Props
+
+| Prop                     | Type                                | Default          | Description                     |
+| ------------------------ | ----------------------------------- | ---------------- | ------------------------------- |
+| `tableSelector`          | `'dropdown' \| 'sidebar' \| 'none'` | `'none'`         | Table selector UI mode          |
+| `tableSelectorLabel`     | `string`                            | `'Select Table'` | Label for table selector        |
+| `tableSelectorComponent` | `React.FC`                          | `undefined`      | Custom table selector component |
+
+### Authentication Props
+
+| Prop             | Type                                    | Default     | Description                           |
+| ---------------- | --------------------------------------- | ----------- | ------------------------------------- |
+| `getAuthHeaders` | `() => Promise<Record<string, string>>` | `undefined` | Async function to get auth headers    |
+| `headers`        | `Record<string, string>`                | `undefined` | Static headers to include in requests |
+
+### Filtering Props
+
+| Prop                | Type                          | Default               | Description                         |
+| ------------------- | ----------------------------- | --------------------- | ----------------------------------- |
+| `showFilter`        | `boolean`                     | `true`                | Show/hide filter input              |
+| `filterPlaceholder` | `string`                      | `'Filter records...'` | Placeholder text for filter input   |
+| `filterPosition`    | `'top' \| 'bottom' \| 'both'` | `'top'`               | Position of filter input            |
+| `filterDebounceMs`  | `number`                      | `300`                 | Debounce time for filter input (ms) |
+| `filterComponent`   | `React.FC`                    | `undefined`           | Custom filter component             |
+
+### Pagination Props
+
+| Prop                   | Type                          | Default                 | Description                     |
+| ---------------------- | ----------------------------- | ----------------------- | ------------------------------- |
+| `showPagination`       | `boolean`                     | `true`                  | Show/hide pagination controls   |
+| `pageSize`             | `number`                      | `10`                    | Default page size               |
+| `pageSizeOptions`      | `number[]`                    | `[10, 20, 30, 50, 100]` | Available page size options     |
+| `showPageSizeSelector` | `boolean`                     | `true`                  | Show/hide page size selector    |
+| `paginationPosition`   | `'top' \| 'bottom' \| 'both'` | `'bottom'`              | Position of pagination controls |
+| `paginationComponent`  | `React.FC`                    | `undefined`             | Custom pagination component     |
+
+### Sorting Props
+
+| Prop              | Type                                               | Default     | Description                              |
+| ----------------- | -------------------------------------------------- | ----------- | ---------------------------------------- |
+| `enableSorting`   | `boolean`                                          | `true`      | Enable/disable column sorting            |
+| `sortableColumns` | `string[]`                                         | `undefined` | Array of column names that can be sorted |
+| `defaultSort`     | `{ column: string; direction: 'asc' \| 'desc' }`   | `undefined` | Default sort configuration               |
+| `multiSort`       | `boolean`                                          | `false`     | Enable multiple column sorting           |
+| `sortIcon`        | `React.FC<{ direction: 'asc' \| 'desc' \| null }>` | `undefined` | Custom sort icon component               |
+
+### Styling Props
+
+| Prop         | Type                  | Default     | Description                                       |
+| ------------ | --------------------- | ----------- | ------------------------------------------------- |
+| `className`  | `string`              | `undefined` | CSS class name for the container                  |
+| `classNames` | `ClassNames`          | `undefined` | Object with CSS class names for specific elements |
+| `style`      | `React.CSSProperties` | `undefined` | Inline styles for the container                   |
+| `styles`     | `Styles`              | `undefined` | Object with inline styles for specific elements   |
+
+### Custom Components Props
+
+| Prop               | Type                                            | Default     | Description                  |
+| ------------------ | ----------------------------------------------- | ----------- | ---------------------------- |
+| `loadingComponent` | `React.FC`                                      | `undefined` | Custom loading component     |
+| `errorComponent`   | `React.FC<{ error: Error; retry: () => void }>` | `undefined` | Custom error component       |
+| `emptyComponent`   | `React.FC`                                      | `undefined` | Custom empty state component |
+
+### Query Options Props
+
+| Prop              | Type           | Default     | Description                              |
+| ----------------- | -------------- | ----------- | ---------------------------------------- |
+| `refetchInterval` | `number`       | `undefined` | Auto-refetch interval in milliseconds    |
+| `refetchOnWindowFocus` | `boolean`  | `false`     | Refetch when window gains focus          |
+| `onError`         | `(error: Error) => void` | `undefined` | Error callback function                  |
+
+## Authentication Examples
+
+### Bearer Token Authentication
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  const getAuthHeaders = async () => {
+    const token = localStorage.getItem('authToken');
+    return { Authorization: `Bearer ${token}` };
+  };
+
+  return <DatabaseViewer path="/api/tabula-lens" getAuthHeaders={getAuthHeaders} />;
+}
 ```
 
-### Styling
+### API Key Authentication
 
-```jsx
-<DatabaseViewer 
-  endpoint="/api/tabula-lens"
-  styles={{
-    container: { padding: '20px' },
-    table: { border: '1px solid #ccc' }
-  }}
-/>
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  const getAuthHeaders = async () => {
+    return { 'X-API-Key': process.env.NEXT_PUBLIC_API_KEY };
+  };
+
+  return <DatabaseViewer path="/api/tabula-lens" getAuthHeaders={getAuthHeaders} />;
+}
 ```
 
-## Advanced Features
+### Static Headers
 
-- Custom component patterns
-- TanStack Query integration
-- TanStack Table integration
-- Performance optimization with React.memo
-- Advanced sorting with column validation
-- Filter column selector usage
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
 
-Coming soon: Detailed documentation for each feature.
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      headers={{
+        'X-Custom-Header': 'custom-value',
+        'X-Request-ID': 'unique-id'
+      }}
+    />
+  );
+}
+```
+
+## Styling Customization
+
+### CSS Custom Properties Integration
+
+The component uses CSS custom properties for theming. You can override these in your global CSS:
+
+```css
+:root {
+  --tlens-primary: #0ea5e9;
+  --tlens-primary-hover: #0284c7;
+  --tlens-text: #1e293b;
+  --tlens-text-secondary: #64748b;
+  --tlens-bg: #ffffff;
+  --tlens-bg-secondary: #f8fafc;
+  --tlens-border: #e2e8f0;
+  --tlens-border-hover: #cbd5e1;
+  --tlens-error: #ef4444;
+  --tlens-spacing-xs: 8px;
+  --tlens-spacing-sm: 12px;
+  --tlens-spacing-md: 16px;
+  --tlens-spacing-lg: 32px;
+  --tlens-font-size-base: 16px;
+  --tlens-font-size-sm: 14px;
+  --tlens-animation-duration: 1s;
+}
+```
+
+### Style Object Customization
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      styles={{
+        container: { 
+          padding: '24px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        },
+        table: { 
+          border: '1px solid #e2e8f0',
+          borderRadius: '4px'
+        },
+        header: {
+          backgroundColor: '#f8fafc',
+          fontWeight: '600'
+        },
+        row: {
+          '&:hover': {
+            backgroundColor: '#f1f5f9'
+          }
+        }
+      }}
+    />
+  );
+}
+```
+
+### Class Name Overrides
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      classNames={{
+        container: 'custom-container',
+        table: 'custom-table',
+        header: 'custom-header',
+        row: 'custom-row'
+      }}
+    />
+  );
+}
+```
+
+### Design System Tokens
+
+The component integrates with the Tabula Lens design system tokens for consistent styling:
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      styles={{
+        container: {
+          padding: 'var(--tlens-spacing-lg)',
+          borderRadius: '4px'
+        },
+        table: {
+          borderColor: 'var(--tlens-border)'
+        }
+      }}
+    />
+  );
+}
+```
+
+## Advanced Usage Examples
+
+### Custom Component Patterns
+
+You can replace any sub-component with your own implementation:
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function CustomLoadingState() {
+  return (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <span className="ml-4 text-gray-600">Loading data...</span>
+    </div>
+  );
+}
+
+function CustomErrorState({ error, retry }: { error: Error; retry: () => void }) {
+  return (
+    <div className="p-8 bg-red-50 border border-red-200 rounded-lg">
+      <h3 className="text-red-800 font-semibold mb-2">Error loading data</h3>
+      <p className="text-red-600 mb-4">{error.message}</p>
+      <button 
+        onClick={retry}
+        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      loadingComponent={CustomLoadingState}
+      errorComponent={CustomErrorState}
+    />
+  );
+}
+```
+
+### Performance Optimization with React.memo
+
+All sub-components use React.memo for performance optimization. You can further optimize by:
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+import { memo } from 'react';
+
+const MemoizedDatabaseViewer = memo(DatabaseViewer);
+
+function App() {
+  return <MemoizedDatabaseViewer path="/api/tabula-lens" />;
+}
+```
+
+### Advanced Sorting with Column Validation
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      enableSorting={true}
+      sortableColumns={['id', 'name', 'email', 'created_at']}
+      defaultSort={{ column: 'created_at', direction: 'desc' }}
+      multiSort={true}
+    />
+  );
+}
+```
+
+### Filter Column Selector Usage
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      showFilter={true}
+      defaultFilterColumns={['name', 'email']}
+      filterPosition="top"
+      filterDebounceMs={500}
+    />
+  );
+}
+```
+
+### Table Selector Modes
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      tableSelector="dropdown"
+      initialTable="users"
+      tableSelectorLabel="Choose a table"
+    />
+  );
+}
+```
+
+### Sidebar Table Selector
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      tableSelector="sidebar"
+      initialTable="users"
+    />
+  );
+}
+```
+
+## Prop Validation System
+
+The component includes runtime prop validation in development mode to help catch configuration errors early:
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  // This will trigger a validation error in development
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      pageSize={-1} // Invalid: must be positive
+      filterDebounceMs={-100} // Invalid: must be non-negative
+    />
+  );
+}
+```
+
+Validation checks for:
+- Required props (path)
+- Enum props (tableSelector, filterPosition, paginationPosition)
+- Numeric props (pageSize, filterDebounceMs, refetchInterval)
+- Array props (pageSizeOptions, sortableColumns, defaultFilterColumns)
+- Component props (custom components)
+- Callback props (getAuthHeaders, onError)
+- Object props (defaultSort, headers)
+
+## Exported Components and Utilities
+
+The package exports several components and utilities for advanced use cases:
+
+### Sub-components
+
+```tsx
+import {
+  LoadingState,
+  ErrorState,
+  EmptyState,
+  TableSelector,
+  FilterInput,
+  Pagination,
+  DataTable
+} from '@tabula-lens/react';
+```
+
+### Custom Hooks
+
+```tsx
+import {
+  useLogger,
+  useTableState,
+  useDatabaseData,
+  buildQueryParams
+} from '@tabula-lens/react';
+```
+
+### Utility Functions
+
+```tsx
+import {
+  isQueryResult,
+  validatePagination,
+  sanitizeColumnData,
+  createAuthenticatedHeaders,
+  validateResponse,
+  mergeClassName,
+  mergeStyle
+} from '@tabula-lens/react';
+```
+
+## TypeScript Support
+
+The package includes comprehensive TypeScript definitions. All props are fully typed:
+
+```tsx
+import { DatabaseViewer, DatabaseViewerProps } from '@tabula-lens/react';
+
+const props: DatabaseViewerProps = {
+  path: '/api/tabula-lens',
+  initialTable: 'users',
+  pageSize: 20,
+  enableSorting: true
+};
+
+function App() {
+  return <DatabaseViewer {...props} />;
+}
+```
+
+## Browser Support
+
+The component supports all modern browsers:
+- Chrome/Edge (latest)
+- Firefox (latest)
+- Safari (latest)
+- Mobile browsers (iOS Safari, Chrome Mobile)
+
+For older browser support, you may need to add appropriate polyfills.

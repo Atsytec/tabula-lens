@@ -1,0 +1,720 @@
+---
+title: Logging System
+description: Learn about the comprehensive logging system in Tabula Lens for monitoring, debugging, and observability.
+---
+
+# Logging System
+
+Tabula Lens includes a comprehensive logging system for both Node.js and React environments, providing monitoring, debugging, and observability capabilities. This guide covers the logging system configuration, usage patterns, and best practices.
+
+## Overview
+
+The logging system provides:
+
+- **Configurable log levels** (debug, info, warn, error, silent)
+- **Multiple log formats** (json, text, pretty)
+- **Request and query logging**
+- **Sensitive data masking**
+- **Custom logger integration**
+- **Environment-specific defaults**
+- **Structured logging with timestamps**
+- **Request ID tracking**
+
+## Node.js Logging
+
+### Basic Configuration
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+// Basic usage with default logging
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Custom log level
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+});
+
+// Production configuration
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+});
+```
+
+### Log Levels
+
+The logging system supports five log levels:
+
+| Level   | Description                          | Use Case                           |
+| ------- | ------------------------------------ | ---------------------------------- |
+| `debug` | Detailed debugging information       | Development and troubleshooting    |
+| `info`  | General informational messages       | Normal operation monitoring        |
+| `warn`  | Warning messages for potential issues | Non-critical issues and deprecations |
+| `error` | Error messages for failures          | Critical errors and exceptions     |
+| `silent` | Disable all logging                 | Production when logging is not needed |
+
+### Log Level Configuration
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+// Development - verbose logging
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'debug',
+  enableQueryLogging: true,
+  enableRequestLogging: true,
+});
+
+// Staging - moderate logging
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+  enableRequestLogging: true,
+});
+
+// Production - minimal logging
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+});
+```
+
+### Log Formats
+
+The logging system supports three log formats:
+
+#### JSON Format
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logFormat: 'json',
+});
+```
+
+**Output:**
+```json
+{
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "level": "info",
+  "message": "Processing request",
+  "requestId": "req_123456",
+  "table": "users",
+  "query": "SELECT * FROM users LIMIT 10"
+}
+```
+
+#### Text Format
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logFormat: 'text',
+});
+```
+
+**Output:**
+```
+[2024-01-15T10:30:00.000Z] INFO: Processing request (req_123456)
+```
+
+#### Pretty Format
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logFormat: 'pretty',
+});
+```
+
+**Output:**
+```
+📋 10:30:00 INFO  Processing request
+   Request ID: req_123456
+   Table: users
+   Query: SELECT * FROM users LIMIT 10
+```
+
+### Request Logging
+
+Enable request logging to track incoming requests:
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  enableRequestLogging: true,
+  logLevel: 'info',
+});
+```
+
+**Request Log Output:**
+```json
+{
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "level": "info",
+  "message": "Incoming request",
+  "requestId": "req_123456",
+  "method": "GET",
+  "path": "/api/tabula-lens",
+  "query": {
+    "table": "users",
+    "page": "1",
+    "limit": "10"
+  },
+  "headers": {
+    "user-agent": "Mozilla/5.0...",
+    "authorization": "Bearer ***"
+  }
+}
+```
+
+### Query Logging
+
+Enable query logging to track database queries:
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  enableQueryLogging: true,
+  logLevel: 'debug',
+});
+```
+
+**Query Log Output:**
+```json
+{
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "level": "debug",
+  "message": "Executing query",
+  "requestId": "req_123456",
+  "table": "users",
+  "query": "SELECT * FROM users WHERE email = $1 LIMIT 10",
+  "params": ["john@example.com"],
+  "duration": 45
+}
+```
+
+### Sensitive Data Masking
+
+Enable sensitive data masking to protect sensitive information:
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  sensitiveDataMasking: true,
+});
+```
+
+**Masked Output:**
+```json
+{
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "level": "info",
+  "message": "Incoming request",
+  "headers": {
+    "authorization": "Bearer ***",
+    "cookie": "***"
+  },
+  "query": {
+    "password": "***",
+    "api_key": "***"
+  }
+}
+```
+
+### Custom Logger Integration
+
+Integrate with your existing logging system:
+
+```typescript
+import winston from 'winston';
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'combined.log' }),
+    new winston.transports.File({ 
+      filename: 'error.log', 
+      level: 'error' 
+    }),
+  ],
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+### Environment-Specific Defaults
+
+Configure logging based on environment:
+
+```typescript
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: isDevelopment ? 'debug' : 'error',
+  logFormat: isProduction ? 'json' : 'pretty',
+  enableRequestLogging: isDevelopment,
+  enableQueryLogging: isDevelopment,
+  sensitiveDataMasking: isProduction,
+});
+```
+
+## React Logging
+
+### Basic Configuration
+
+```typescript
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      logLevel="info"
+    />
+  );
+}
+```
+
+### React Logger Hook
+
+Use the logger hook for custom logging:
+
+```typescript
+import { useLogger } from '@tabula-lens/react';
+
+function MyComponent() {
+  const logger = useLogger();
+  
+  useEffect(() => {
+    logger.info('Component mounted');
+    logger.debug('Debug information');
+    logger.warn('Warning message');
+    logger.error('Error occurred');
+  }, []);
+  
+  return <div>My Component</div>;
+}
+```
+
+### Browser Console Logging
+
+The React logger outputs to the browser console with styling:
+
+```typescript
+logger.info('Information message');
+// Console: ℹ️ [INFO] Information message
+
+logger.warn('Warning message');
+// Console: ⚠️ [WARN] Warning message
+
+logger.error('Error message');
+// Console: ❌ [ERROR] Error message
+```
+
+### Component Lifecycle Logging
+
+Log component lifecycle events:
+
+```typescript
+import { useLogger } from '@tabula-lens/react';
+
+function DataComponent() {
+  const logger = useLogger();
+  
+  useEffect(() => {
+    logger.info('DataComponent mounted');
+    return () => {
+      logger.info('DataComponent unmounted');
+    };
+  }, []);
+  
+  return <div>Data Component</div>;
+}
+```
+
+### Data Fetching Logging
+
+Log data fetching events:
+
+```typescript
+import { useDatabaseData } from '@tabula-lens/react';
+
+function DataViewer() {
+  const logger = useLogger();
+  const { data, loading, error } = useDatabaseData({
+    path: '/api/tabula-lens',
+    table: 'users',
+  });
+  
+  useEffect(() => {
+    if (loading) {
+      logger.info('Fetching data...');
+    }
+    if (data) {
+      logger.info(`Data fetched: ${data.rows.length} rows`);
+    }
+    if (error) {
+      logger.error(`Data fetch error: ${error.message}`);
+    }
+  }, [loading, data, error]);
+  
+  return <div>Data Viewer</div>;
+}
+```
+
+## Advanced Logging Patterns
+
+### Request ID Tracking
+
+Track requests with unique IDs:
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import { v4 as uuidv4 } from 'uuid';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  enableRequestLogging: true,
+});
+
+// In your request handler
+app.use((req, res, next) => {
+  req.id = uuidv4();
+  logger.info(`Request ${req.id} started`);
+  next();
+});
+```
+
+### Structured Logging
+
+Use structured logging for better analysis:
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logFormat: 'json',
+  logger: {
+    info: (msg) => {
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: 'info',
+        service: 'tabula-lens',
+        environment: process.env.NODE_ENV,
+        message: msg,
+      }));
+    },
+  },
+});
+```
+
+### Conditional Logging
+
+Implement conditional logging based on conditions:
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: process.env.VERBOSE === 'true' ? 'debug' : 'info',
+});
+
+// Or in custom logger
+const logger = {
+  debug: (msg) => {
+    if (process.env.VERBOSE === 'true') {
+      console.debug(msg);
+    }
+  },
+};
+```
+
+### Performance Logging
+
+Log performance metrics:
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  enableQueryLogging: true,
+  logger: {
+    debug: (msg) => {
+      if (msg.duration) {
+        console.log(`Query duration: ${msg.duration}ms`);
+      }
+      console.debug(msg);
+    },
+  },
+});
+```
+
+## Logging Best Practices
+
+### Development Environment
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'debug',
+  logFormat: 'pretty',
+  enableRequestLogging: true,
+  enableQueryLogging: true,
+  sensitiveDataMasking: false,
+});
+```
+
+### Staging Environment
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+  logFormat: 'json',
+  enableRequestLogging: true,
+  enableQueryLogging: false,
+  sensitiveDataMasking: true,
+});
+```
+
+### Production Environment
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  enableRequestLogging: false,
+  enableQueryLogging: false,
+  sensitiveDataMasking: true,
+});
+```
+
+### Log Level Guidelines
+
+- **Development**: Use `debug` level for detailed troubleshooting
+- **Staging**: Use `info` level for monitoring normal operations
+- **Production**: Use `error` level for critical issues only
+- **Testing**: Use `silent` level to avoid log pollution
+
+### Log Format Guidelines
+
+- **Development**: Use `pretty` format for human-readable logs
+- **Staging**: Use `text` format for balance between readability and parsing
+- **Production**: Use `json` format for log aggregation and analysis
+
+### Sensitive Data Guidelines
+
+- Always enable `sensitiveDataMasking` in production
+- Mask passwords, API keys, and tokens
+- Mask personal identifiable information (PII)
+- Be careful with query parameters that might contain sensitive data
+
+## Log Aggregation
+
+### ELK Stack Integration
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import winston from 'winston';
+import { ElasticsearchTransport } from 'winston-elasticsearch';
+
+const esTransport = new ElasticsearchTransport({
+  level: 'info',
+  clientOpts: { node: 'http://localhost:9200' },
+  index: 'tabula-lens-logs',
+});
+
+const logger = winston.createLogger({
+  transports: [esTransport],
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+### CloudWatch Integration
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import winston from 'winston';
+import WinstonCloudWatch from 'winston-cloudwatch';
+
+const cloudwatch = new WinstonCloudWatch({
+  logGroupName: '/aws/lambda/tabula-lens',
+  logStreamName: process.env.AWS_LAMBDA_FUNCTION_NAME,
+});
+
+const logger = winston.createLogger({
+  transports: [cloudwatch],
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+### Datadog Integration
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import winston from 'winston';
+import { DatadogTransport } from 'winston-datadog-logs';
+
+const datadogTransport = new DatadogTransport({
+  apiKey: process.env.DATADOG_API_KEY,
+  hostname: process.env.HOSTNAME,
+  service: 'tabula-lens',
+});
+
+const logger = winston.createLogger({
+  transports: [datadogTransport],
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+## Performance Considerations
+
+### Logging Overhead
+
+Logging can impact performance. Consider these guidelines:
+
+- **Disable query logging in production** for better performance
+- **Use appropriate log levels** to minimize log volume
+- **Use async logging** to avoid blocking operations
+- **Batch log writes** to reduce I/O operations
+
+### Async Logging
+
+Implement async logging for better performance:
+
+```typescript
+const logger = {
+  debug: async (msg) => {
+    await queueLogMessage('debug', msg);
+  },
+  info: async (msg) => {
+    await queueLogMessage('info', msg);
+  },
+};
+```
+
+### Log Sampling
+
+Sample logs in high-traffic scenarios:
+
+```typescript
+let logCounter = 0;
+
+const logger = {
+  debug: (msg) => {
+    logCounter++;
+    if (logCounter % 10 === 0) { // Log every 10th message
+      console.debug(msg);
+    }
+  },
+};
+```
+
+## Troubleshooting
+
+### Logging Not Working
+
+If logging is not working:
+
+```typescript
+// Verify log level
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'debug', // Set to debug to see all logs
+});
+
+// Verify logger configuration
+console.log('Logger configured:', tabulaLens.options.logger);
+```
+
+### Logs Too Verbose
+
+If logs are too verbose:
+
+```typescript
+// Reduce log level
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error', // Only log errors
+  enableRequestLogging: false,
+  enableQueryLogging: false,
+});
+```
+
+### Logs Not Appearing
+
+If logs are not appearing:
+
+```typescript
+// Check log format
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logFormat: 'pretty', // Use pretty format for visibility
+});
+
+// Check custom logger
+const logger = {
+  debug: (msg) => {
+    console.log('Custom logger:', msg); // Add prefix to verify
+  },
+};
+```
+
+## Security Considerations
+
+### Log Security
+
+- **Never log passwords** or sensitive credentials
+- **Always mask sensitive data** in production
+- **Secure log storage** with proper access controls
+- **Rotate log files** regularly
+- **Encrypt logs** if they contain sensitive information
+
+### Log Access Control
+
+```typescript
+// Implement log access control
+const logger = {
+  info: (msg) => {
+    if (hasLogAccess(currentUser)) {
+      console.info(msg);
+    }
+  },
+};
+```
+
+### Log Retention
+
+```typescript
+// Implement log retention
+const logger = winston.createLogger({
+  transports: [
+    new winston.transports.File({
+      filename: 'combined.log',
+      maxsize: 5242880, // 5MB
+      maxFiles: 5, // Keep 5 files
+    }),
+  ],
+});
+```
+
+The Tabula Lens logging system provides comprehensive monitoring and debugging capabilities while maintaining performance and security. Configure logging appropriately for your environment and use cases to get the most value from your logs.
