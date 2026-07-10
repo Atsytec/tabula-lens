@@ -1,6 +1,6 @@
 {
   "name": "@tabula-lens/node",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "type": "module",
   "description": "Node.js backend SDK for Tabula Lens",
@@ -13,6 +13,32 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "database",
+    "postgresql",
+    "backend",
+    "sdk",
+    "api",
+    "rest",
+    "express",
+    "fastify",
+    "koa",
+    "hapi",
+    "nextjs",
+    "remix",
+    "sveltekit",
+    "tanstack",
+    "hono",
+    "elysia",
+    "pagination",
+    "sorting",
+    "filtering"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

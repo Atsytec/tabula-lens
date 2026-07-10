@@ -1,6 +1,6 @@
 {
   "name": "@tabula-lens/react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "type": "module",
   "description": "React component for viewing database data",
@@ -13,6 +13,25 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "react",
+    "database",
+    "table",
+    "pagination",
+    "sorting",
+    "filtering",
+    "tanstack-table",
+    "tanstack-query",
+    "postgresql",
+    "database-viewer",
+    "data-grid",
+    "react-component"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -21,6 +40,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@base-ui/react": "^1.6.0",
     "@tanstack/react-query": "^5.0.0",
     "@tanstack/react-table": "^8.0.0",
     "react": "^18.0.0",
@@ -29,6 +49,7 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.0.0",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "@vitejs/plugin-react": "^4.0.0",

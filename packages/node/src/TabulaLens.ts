@@ -29,6 +29,7 @@ export interface QueryOptions {
   sort?: string;
   filter?: string;
   columns?: string[];
+  filterColumns?: string[];
 }
 
 export interface SortOption {
@@ -72,6 +73,7 @@ export class TabulaLens {
   private enableQueryLogging: boolean;
   private enableRequestLogging: boolean;
   private sensitiveDataMasking: boolean;
+  private columnCache: Map<string, string[]> = new Map();
 
   constructor(databaseUrl: string, options: TabulaLensOptions = {}) {
     this.db = knex({
@@ -99,7 +101,7 @@ export class TabulaLens {
   }
 
   async query(options: QueryOptions = {}): Promise<QueryResult> {
-    const { table = 'users', page = 1, limit = 10, sort, filter, columns } = options;
+    const { table = 'users', page = 1, limit = 10, sort, filter, columns, filterColumns } = options;
     const queryId = generateId();
     const startTime = Date.now();
 
@@ -128,22 +130,57 @@ export class TabulaLens {
 
       // Apply filtering
       if (filter) {
-        // Simple text filter - search across all string columns
-        query = query.where(function () {
-          this.where('name', 'ilike', `%${filter}%`)
-            .orWhere('email', 'ilike', `%${filter}%`)
-            .orWhere('description', 'ilike', `%${filter}%`);
-        });
+        let columnsToSearch: string[];
+
+        if (filterColumns && filterColumns.length > 0) {
+          // Validate that provided filter columns are actually filterable (text-based)
+          const filterableColumns = await this.getFilterableColumns(table);
+          const validFilterColumns = filterColumns.filter((col) => filterableColumns.includes(col));
+
+          if (validFilterColumns.length !== filterColumns.length) {
+            const invalidColumns = filterColumns.filter((col) => !filterableColumns.includes(col));
+            this.logger.warn('Some filter columns are not text-based and will be ignored', {
+              queryId,
+              table,
+              invalidColumns,
+              validColumns: validFilterColumns,
+            });
+          }
+
+          columnsToSearch = validFilterColumns;
+        } else {
+          columnsToSearch = await this.getFilterableColumns(table);
+        }
+
+        if (columnsToSearch.length > 0) {
+          query = query.where(function () {
+            columnsToSearch.forEach((column) => {
+              this.orWhere(column, 'ilike', `%${filter}%`);
+            });
+          });
+        }
       }
 
       // Get total count before pagination
+      let columnsToSearch: string[] = [];
+      if (filter) {
+        if (filterColumns && filterColumns.length > 0) {
+          // Validate that provided filter columns are actually filterable (text-based)
+          const filterableColumns = await this.getFilterableColumns(table);
+          const validFilterColumns = filterColumns.filter((col) => filterableColumns.includes(col));
+          columnsToSearch = validFilterColumns;
+        } else {
+          columnsToSearch = await this.getFilterableColumns(table);
+        }
+      }
+
       const countResult = await this.db(table)
         .modify(function (qb) {
-          if (filter) {
+          if (filter && columnsToSearch.length > 0) {
             qb.where(function () {
-              this.where('name', 'ilike', `%${filter}%`)
-                .orWhere('email', 'ilike', `%${filter}%`)
-                .orWhere('description', 'ilike', `%${filter}%`);
+              columnsToSearch.forEach((column) => {
+                this.orWhere(column, 'ilike', `%${filter}%`);
+              });
             });
           }
         })
@@ -152,14 +189,57 @@ export class TabulaLens {
 
       const total = countResult ? Number((countResult as { count: string | number }).count) : 0;
 
-      // Apply sorting
+      // Get table columns for sorting validation and fallback
+      const tableColumns = await this.getFilterableColumns(table);
+      const defaultSortColumn = tableColumns.length > 0 ? tableColumns[0] : null;
+
+      // Apply sorting with column validation
       if (sort) {
         const sortOptions = this.parseSort(sort);
+
+        let hasValidSortColumn = false;
         sortOptions.forEach(({ column, direction }) => {
-          query = query.orderBy(column, direction);
+          // Only apply sorting if column exists in table
+          if (tableColumns.includes(column)) {
+            query = query.orderBy(column, direction);
+            hasValidSortColumn = true;
+          } else {
+            this.logger.warn('Sort column does not exist in table, skipping', {
+              queryId,
+              table,
+              column,
+              availableColumns: tableColumns,
+            });
+          }
         });
+
+        // Fallback to first available column if no valid sort columns
+        if (!hasValidSortColumn) {
+          if (defaultSortColumn) {
+            this.logger.warn('No valid sort columns found, using first available column', {
+              queryId,
+              table,
+              requestedSort: sortOptions,
+              fallbackColumn: defaultSortColumn,
+            });
+            query = query.orderBy(defaultSortColumn, 'asc');
+          } else {
+            this.logger.warn('No columns available for sorting', {
+              queryId,
+              table,
+            });
+          }
+        }
       } else {
-        query = query.orderBy('id', 'asc');
+        // Use first available column as default sort when no sort specified
+        if (defaultSortColumn) {
+          query = query.orderBy(defaultSortColumn, 'asc');
+        } else {
+          this.logger.warn('No columns available for default sorting', {
+            queryId,
+            table,
+          });
+        }
       }
 
       // Apply pagination
@@ -325,6 +405,55 @@ export class TabulaLens {
     }
   }
 
+  /**
+   * Get filterable (text-based) columns for a table
+   * This is a public method that can be used by frontend components to validate filter column selection
+   */
+  async getFilterableColumns(table: string): Promise<string[]> {
+    const operationId = generateId();
+
+    this.logger.debug('Fetching filterable columns for table', { operationId, table });
+
+    try {
+      if (this.columnCache.has(table)) {
+        const cachedColumns = this.columnCache.get(table)!;
+        this.logger.debug('Using cached filterable columns', {
+          operationId,
+          table,
+          columnCount: cachedColumns.length,
+        });
+        return cachedColumns;
+      }
+
+      const columns = await this.getColumns(table);
+
+      const textTypes = ['character varying', 'varchar', 'text', 'char', 'character', 'uuid'];
+
+      const filterableColumns = columns
+        .filter((col) => textTypes.includes(col.type.toLowerCase()))
+        .map((col) => col.name);
+
+      this.columnCache.set(table, filterableColumns);
+
+      this.logger.debug('Filterable columns fetched and cached', {
+        operationId,
+        table,
+        columnCount: filterableColumns.length,
+        columns: filterableColumns,
+      });
+
+      return filterableColumns;
+    } catch (error) {
+      this.logger.error('Failed to fetch filterable columns', {
+        operationId,
+        table,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
+  }
+
   private parseSort(sortString: string): SortOption[] {
     return sortString.split(',').map((sort) => {
       const [column, direction] = sort.split(':');
@@ -420,6 +549,7 @@ export class TabulaLens {
           sort: query.sort,
           filter: query.filter,
           columns: query.columns ? query.columns.split(',') : undefined,
+          filterColumns: query.filterColumns ? query.filterColumns.split(',') : undefined,
         };
         const result = await this.query(options);
         const duration = Date.now() - startTime;

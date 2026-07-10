@@ -1,260 +1,147 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { useEffect, useMemo, useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ColumnDef } from '@tanstack/react-table';
+import type {
+  DatabaseViewerProps,
+  QueryResult,
+  ClassNames,
+  Styles,
+} from './components/DatabaseViewer/DatabaseViewer.types';
+import { mergeClassName, mergeStyle } from './components/DatabaseViewer/utils/styleHelpers';
+import { defaultStyles } from './components/DatabaseViewer/styles/defaultStyles';
+import { useLogger } from './components/DatabaseViewer/hooks/useLogger';
+import { useTableState } from './components/DatabaseViewer/hooks/useTableState';
+import { buildQueryParams } from './components/DatabaseViewer/hooks/buildQueryParams';
+import { useDatabaseData } from './components/DatabaseViewer/hooks/useDatabaseData';
+import { sanitizeColumnData } from './components/DatabaseViewer/utils/validationHelpers';
+import { validateProps } from './components/DatabaseViewer/utils/propValidation';
 import {
-  useReactTable,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  flexRender,
-  ColumnDef,
-  SortingState,
-  PaginationState,
-} from '@tanstack/react-table';
-import { Logger, createLogger, LogLevel, generateId } from './logger';
+  LoadingState,
+  ErrorState,
+  TableSelector,
+  FilterInput,
+  Pagination,
+  DataTable,
+  FilterColumnSelector,
+} from './components/DatabaseViewer/components';
 
-// Utility functions for style merging
-const mergeClassName = (base: string, custom?: string) => {
-  if (!custom) return base;
-  return `${base} ${custom}`;
-};
-
-const mergeStyle = (
-  base: React.CSSProperties,
-  custom?: React.CSSProperties
-): React.CSSProperties => {
-  if (!custom) return base;
-  return { ...base, ...custom };
-};
-
-// Inline styles for simplicity in bundling
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const styles = {
-  container: {
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    color: '#333',
-    maxWidth: '100%',
-    margin: 0,
-    padding: '1rem',
-  },
-  loading: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '2rem',
-    gap: '1rem',
-  },
-  spinner: {
-    width: '40px',
-    height: '40px',
-    border: '4px solid #f3f3f3',
-    borderTop: '4px solid #3498db',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-  },
-  error: {
-    padding: '1rem',
-    backgroundColor: '#fee',
-    border: '1px solid #fcc',
-    borderRadius: '4px',
-    color: '#c33',
-  },
-  retry: {
-    marginTop: '0.5rem',
-    padding: '0.5rem 1rem',
-    backgroundColor: '#c33',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  filter: {
-    marginBottom: '1rem',
-  },
-  filterInput: {
-    width: '100%',
-    padding: '0.5rem',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    fontSize: '1rem',
-  },
-  tableWrapper: {
-    overflowX: 'auto' as const,
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    marginBottom: '1rem',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse' as const,
-    backgroundColor: 'white',
-  },
-  th: {
-    padding: '0.75rem',
-    textAlign: 'left' as const,
-    borderBottom: '1px solid #ddd',
-    backgroundColor: '#f8f9fa',
-    fontWeight: 600,
-    position: 'sticky' as const,
-    top: 0,
-  },
-  td: {
-    padding: '0.75rem',
-    textAlign: 'left' as const,
-    borderBottom: '1px solid #ddd',
-  },
-  empty: {
-    textAlign: 'center' as const,
-    padding: '2rem',
-    color: '#666',
-  },
-  sortable: {
-    cursor: 'pointer',
-    userSelect: 'none' as const,
-  },
-  sorted: {
-    cursor: 'pointer',
-    userSelect: 'none' as const,
-    backgroundColor: '#e9ecef',
-  },
-  pagination: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    marginBottom: '1rem',
-    flexWrap: 'wrap' as const,
-  },
-  paginationButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#3498db',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  paginationInfo: {
-    padding: '0 1rem',
-    fontWeight: 500,
-  },
-  pageSize: {
-    padding: '0.5rem',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  info: {
-    textAlign: 'center' as const,
-    color: '#666',
-    fontSize: '0.875rem',
-  },
-};
-
-// Types matching the backend response
-interface QueryResult {
-  data: Record<string, unknown>[];
-  columns: string[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-// Style customization types
-interface ClassNames {
-  container?: string;
-  tableWrapper?: string;
-  table?: string;
-  header?: string;
-  cell?: string;
-  filter?: string;
-  filterInput?: string;
-  pagination?: string;
-  paginationButton?: string;
-  paginationInfo?: string;
-  pageSize?: string;
-  tableSelector?: string;
-  tableSelectorDropdown?: string;
-  tableSelectorSidebar?: string;
-  empty?: string;
-  loading?: string;
-  error?: string;
-  info?: string;
-}
-
-interface Styles {
-  container?: React.CSSProperties;
-  tableWrapper?: React.CSSProperties;
-  table?: React.CSSProperties;
-  th?: React.CSSProperties;
-  td?: React.CSSProperties;
-  header?: React.CSSProperties;
-  cell?: React.CSSProperties;
-  sortable?: React.CSSProperties;
-  sorted?: React.CSSProperties;
-  filter?: React.CSSProperties;
-  filterInput?: React.CSSProperties;
-  pagination?: React.CSSProperties;
-  paginationButton?: React.CSSProperties;
-  paginationInfo?: React.CSSProperties;
-  pageSize?: React.CSSProperties;
-  tableSelector?: React.CSSProperties;
-  tableSelectorDropdown?: React.CSSProperties;
-  tableSelectorSidebar?: React.CSSProperties;
-  empty?: React.CSSProperties;
-  loading?: React.CSSProperties;
-  spinner?: React.CSSProperties;
-  error?: React.CSSProperties;
-  retry?: React.CSSProperties;
-  info?: React.CSSProperties;
-}
-
-// Table selector types
-type TableSelectorMode = 'dropdown' | 'sidebar' | 'none';
-
-// Filter types
-type FilterPosition = 'top' | 'bottom' | 'both';
-
-// Pagination types
-type PaginationPosition = 'top' | 'bottom' | 'both';
-
-// DatabaseViewer props
-interface DatabaseViewerProps {
-  // Core props
-  path: string;
-  initialTable?: string;
-
-  // Table selection
-  tableSelector?: TableSelectorMode;
-  tableSelectorLabel?: string;
-  tableSelectorComponent?: React.FC<{
+/**
+ * Memoized component for rendering the table selector
+ */
+const TableSelectorRenderer = React.memo<{
+  mode: DatabaseViewerProps['tableSelector'];
+  tables: string[] | undefined;
+  selectedTable: string | undefined;
+  label: string;
+  onSelectTable: (table: string) => void;
+  customComponent?: React.FC<{
     tables: string[];
     selectedTable: string | undefined;
     onSelectTable: (table: string) => void;
   }>;
+  onTableChange: (table: string) => void;
+  pageSize: number;
+  classNames: ClassNames;
+  styles: Styles;
+  logger?: ReturnType<typeof useLogger>['logger'];
+  componentId: string;
+}>(
+  ({
+    mode,
+    tables,
+    selectedTable,
+    label,
+    onSelectTable,
+    customComponent,
+    onTableChange,
+    pageSize: _pageSize,
+    classNames,
+    styles,
+    logger,
+    componentId,
+  }) => {
+    return (
+      <TableSelector
+        mode={mode || 'dropdown'}
+        tables={tables as string[]}
+        selectedTable={selectedTable}
+        label={label}
+        onSelectTable={(table) => {
+          onSelectTable(table);
+          onTableChange(table);
+        }}
+        customComponent={customComponent}
+        classNames={classNames}
+        styles={styles}
+        logger={logger || undefined}
+        componentId={componentId}
+      />
+    );
+  }
+);
+TableSelectorRenderer.displayName = 'TableSelectorRenderer';
 
-  // Authentication
-  getAuthHeaders?: () => Promise<Record<string, string>>;
-  headers?: Record<string, string>;
+/**
+ * Memoized component for rendering the filter input
+ */
+const FilterRenderer = React.memo<{
+  showFilter: boolean;
+  filterPosition: DatabaseViewerProps['filterPosition'];
+  position: 'top' | 'bottom';
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  customComponent?: React.FC<{
+    value: string;
+    onChange: (value: string) => void;
+  }>;
+  classNames: ClassNames;
+  styles: Styles;
+}>(
+  ({
+    showFilter,
+    filterPosition,
+    position,
+    value,
+    onChange,
+    placeholder,
+    customComponent,
+    classNames,
+    styles,
+  }) => {
+    if (!showFilter || (filterPosition !== 'both' && filterPosition !== position)) return null;
 
-  // Filter customization
-  showFilter?: boolean;
-  filterPlaceholder?: string;
-  filterPosition?: FilterPosition;
-  filterDebounceMs?: number;
-  filterComponent?: React.FC<{ value: string; onChange: (value: string) => void }>;
+    return (
+      <FilterInput
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        customComponent={customComponent}
+        classNames={classNames}
+        styles={styles}
+      />
+    );
+  }
+);
+FilterRenderer.displayName = 'FilterRenderer';
 
-  // Pagination customization
-  showPagination?: boolean;
-  pageSize?: number;
-  pageSizeOptions?: number[];
-  showPageSizeSelector?: boolean;
-  paginationPosition?: PaginationPosition;
-  paginationComponent?: React.FC<{
+/**
+ * Memoized component for rendering pagination
+ */
+const PaginationRenderer = React.memo<{
+  showPagination: boolean;
+  paginationPosition: DatabaseViewerProps['paginationPosition'];
+  position: 'top' | 'bottom';
+  pageIndex: number;
+  pageCount: number;
+  pageSize: number;
+  canPreviousPage: boolean;
+  canNextPage: boolean;
+  pageSizeOptions: number[];
+  showPageSizeSelector: boolean;
+  onPageChange: (pageIndex: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  customComponent?: React.FC<{
     pageIndex: number;
     pageCount: number;
     pageSize: number;
@@ -266,708 +153,609 @@ interface DatabaseViewerProps {
     lastPage: () => void;
     setPageSize: (size: number) => void;
   }>;
-
-  // Sorting customization
-  enableSorting?: boolean;
-  sortableColumns?: string[];
-  defaultSort?: { column: string; direction: 'asc' | 'desc' };
-  multiSort?: boolean;
-  sortIcon?: React.FC<{ direction: 'asc' | 'desc' | null }>;
-
-  // UI customization
-  className?: string;
-  classNames?: ClassNames;
-  style?: React.CSSProperties;
-  styles?: Styles;
-
-  // Custom components
-  loadingComponent?: React.FC;
-  errorComponent?: React.FC<{ error: Error; retry: () => void }>;
-  emptyComponent?: React.FC;
-  onError?: (error: Error) => void;
-
-  // Query options
-  queryOptions?: {
-    staleTime?: number;
-    cacheTime?: number;
-    retry?: number | boolean;
-    retryDelay?: number;
-    refetchOnWindowFocus?: boolean;
-    refetchOnReconnect?: boolean;
-    refetchOnMount?: boolean;
-  };
-  refetchInterval?: number;
-
-  // Logging options
-  logger?: Logger;
-  enableLogging?: boolean;
-  logLevel?: LogLevel;
-  logFetchErrors?: boolean;
-  logQueryErrors?: boolean;
-  logPerformanceMetrics?: boolean;
-}
-
-// Create a default query client
-const defaultQueryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
-
-export const DatabaseViewer: React.FC<DatabaseViewerProps> = ({
-  path,
-  initialTable,
-  tableSelector = 'dropdown',
-  tableSelectorLabel = 'Select Table',
-  tableSelectorComponent,
-  getAuthHeaders,
-  headers,
-  showFilter = true,
-  filterPlaceholder = 'Filter records...',
-  filterPosition = 'top',
-  filterDebounceMs = 300,
-  filterComponent,
-  showPagination = true,
-  pageSize = 10,
-  pageSizeOptions = [10, 20, 30, 50, 100],
-  showPageSizeSelector = true,
-  paginationPosition = 'bottom',
-  paginationComponent,
-  enableSorting = true,
-  sortableColumns,
-  defaultSort,
-  multiSort = false,
-  sortIcon,
-  className,
-  classNames = {},
-  style,
-  styles = {},
-  loadingComponent,
-  errorComponent,
-  emptyComponent,
-  onError,
-  queryOptions = {},
-  refetchInterval,
-  logger: propLogger,
-  enableLogging = process.env.NODE_ENV === 'development',
-  logLevel,
-  logFetchErrors = true,
-  logQueryErrors = true,
-  logPerformanceMetrics = true,
-}) => {
-  const componentId = generateId();
-  const logger = propLogger || createLogger({ level: logLevel || 'silent' });
-
-  useEffect(() => {
-    if (enableLogging && logger) {
-      logger.info('DatabaseViewer mounted', { componentId, path, initialTable });
-    }
-    return () => {
-      if (enableLogging && logger) {
-        logger.info('DatabaseViewer unmounted', { componentId });
-      }
-    };
-  }, [componentId, path, initialTable, enableLogging, logger]);
-
-  const [selectedTable, setSelectedTable] = useState<string | undefined>(initialTable);
-  const [sorting, setSorting] = useState<SortingState>(
-    defaultSort ? [{ id: defaultSort.column, desc: defaultSort.direction === 'desc' }] : []
-  );
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
+  classNames: ClassNames;
+  styles: Styles;
+}>(
+  ({
+    showPagination,
+    paginationPosition,
+    position,
+    pageIndex,
+    pageCount,
     pageSize,
-  });
-  const [filter, setFilter] = useState('');
-  const [debouncedFilter, setDebouncedFilter] = useState('');
-
-  // Debounce filter
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedFilter(filter);
-    }, filterDebounceMs);
-    return () => clearTimeout(handler);
-  }, [filter, filterDebounceMs]);
-
-  // Build query parameters
-  const queryParams = new URLSearchParams();
-  if (selectedTable) {
-    queryParams.set('table', selectedTable);
-  }
-  queryParams.set('page', String(pagination.pageIndex + 1));
-  queryParams.set('limit', String(pagination.pageSize));
-  if (sorting.length > 0) {
-    queryParams.set('sort', sorting.map((s) => `${s.id}:${s.desc ? 'desc' : 'asc'}`).join(','));
-  }
-  if (debouncedFilter) {
-    queryParams.set('filter', debouncedFilter);
-  }
-
-  const url = `${path}/query?${queryParams.toString()}`;
-
-  // Fetch data with TanStack Query
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['databaseData', url],
-    enabled: !!selectedTable,
-    queryFn: async () => {
-      const fetchId = generateId();
-      const startTime = Date.now();
-
-      if (enableLogging && logger) {
-        logger.debug('Fetching data started', {
-          componentId,
-          fetchId,
-          url,
-          table: selectedTable || 'none',
-          page: pagination.pageIndex + 1,
-          limit: pagination.pageSize,
-        });
-      }
-
-      const requestHeaders: HeadersInit = {
-        'Content-Type': 'application/json',
-        ...headers,
-      };
-
-      // Add custom auth headers
-      if (getAuthHeaders) {
-        const authHeaders = await getAuthHeaders();
-        Object.assign(requestHeaders, authHeaders);
-      }
-
-      try {
-        const response = await fetch(url, {
-          headers: requestHeaders,
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          const errorDetails = {
-            status: response.status,
-            statusText: response.statusText,
-            url: response.url,
-            headers: Object.fromEntries(response.headers.entries()),
-          };
-
-          if (logFetchErrors && enableLogging && logger) {
-            logger.error('HTTP request failed', {
-              componentId,
-              fetchId,
-              ...errorDetails,
-            });
-          }
-
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType?.includes('application/json')) {
-          const text = await response.text();
-          if (logFetchErrors && enableLogging && logger) {
-            logger.error('Unexpected content type', {
-              componentId,
-              fetchId,
-              url,
-              expected: 'application/json',
-              received: contentType,
-              responseStart: text.substring(0, 100),
-            });
-          }
-          throw new Error(`Expected JSON, received ${contentType}`);
-        }
-
-        const data = await response.json();
-        const duration = Date.now() - startTime;
-
-        if (enableLogging && logger) {
-          logger.debug('Fetch completed successfully', {
-            componentId,
-            fetchId,
-            recordCount: data.data?.length || 0,
-            duration,
-          });
-
-          if (logPerformanceMetrics && duration > 2000) {
-            logger.warn('Slow network response', {
-              componentId,
-              fetchId,
-              url,
-              duration,
-              threshold: 2000,
-              recordCount: data.data?.length || 0,
-            });
-          }
-        }
-
-        return data as Promise<QueryResult>;
-      } catch (fetchError) {
-        const duration = Date.now() - startTime;
-        if (logFetchErrors && enableLogging && logger) {
-          logger.error('Data fetch failed', {
-            componentId,
-            fetchId,
-            error: fetchError instanceof Error ? fetchError.message : String(fetchError),
-            stack: fetchError instanceof Error ? fetchError.stack : undefined,
-            url,
-            table: selectedTable || 'none',
-            duration,
-          });
-        }
-        throw fetchError;
-      }
-    },
-    ...queryOptions,
-    refetchInterval,
-  });
-
-  // Fetch tables list
-  const { data: tablesData } = useQuery({
-    queryKey: ['tables', path],
-    queryFn: async () => {
-      const fetchId = generateId();
-      const startTime = Date.now();
-
-      if (enableLogging && logger) {
-        logger.debug('Fetching tables list started', {
-          componentId,
-          fetchId,
-          url: `${path}/tables`,
-        });
-      }
-
-      const requestHeaders: HeadersInit = {
-        'Content-Type': 'application/json',
-        ...headers,
-      };
-
-      if (getAuthHeaders) {
-        const authHeaders = await getAuthHeaders();
-        Object.assign(requestHeaders, authHeaders);
-      }
-
-      try {
-        const response = await fetch(`${path}/tables`, {
-          headers: requestHeaders,
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          if (logFetchErrors && enableLogging && logger) {
-            logger.error('Tables list fetch failed', {
-              componentId,
-              fetchId,
-              status: response.status,
-              statusText: response.statusText,
-              url: `${path}/tables`,
-            });
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const duration = Date.now() - startTime;
-
-        if (enableLogging && logger) {
-          logger.debug('Tables list fetch completed', {
-            componentId,
-            fetchId,
-            tableCount: data.length || 0,
-            duration,
-          });
-        }
-
-        return data as Promise<string[]>;
-      } catch (fetchError) {
-        const duration = Date.now() - startTime;
-        if (logFetchErrors && enableLogging && logger) {
-          logger.error('Tables list fetch failed', {
-            componentId,
-            fetchId,
-            error: fetchError instanceof Error ? fetchError.message : String(fetchError),
-            stack: fetchError instanceof Error ? fetchError.stack : undefined,
-            url: `${path}/tables`,
-            duration,
-          });
-        }
-        throw fetchError;
-      }
-    },
-    enabled: tableSelector !== 'none',
-  });
-
-  // Handle errors
-  useEffect(() => {
-    if (error) {
-      if (logQueryErrors && enableLogging && logger) {
-        logger.error('Query error state', {
-          componentId,
-          error: error.message,
-          stack: error.stack,
-          url,
-          table: selectedTable || 'none',
-          timestamp: new Date().toISOString(),
-        });
-      }
-
-      if (onError) {
-        onError(error as Error);
-      }
-    }
-  }, [error, onError, componentId, url, selectedTable, logQueryErrors, enableLogging, logger]);
-
-  // Define columns dynamically based on the data
-  const columns = React.useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
-    const queryResult = data as QueryResult | undefined;
-    if (!queryResult?.columns) return [];
-    return queryResult.columns.map((columnName: string) => ({
-      accessorKey: columnName,
-      header: columnName,
-      cell: (info: { getValue: () => unknown }) => String(info.getValue() ?? ''),
-      ...(enableSorting &&
-        (!sortableColumns || sortableColumns.includes(columnName)) && {
-          enableSorting: true,
-        }),
-    }));
-  }, [data, enableSorting, sortableColumns]);
-
-  // Create table instance
-  const table = useReactTable({
-    data: (data as QueryResult | undefined)?.data || [],
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    state: {
-      sorting,
-      pagination,
-    },
-    onSortingChange: setSorting,
-    onPaginationChange: setPagination,
-    pageCount: (data as QueryResult | undefined)?.pagination?.totalPages ?? 0,
-    manualPagination: true,
-    enableMultiSort: multiSort,
-  });
-
-  if (isLoading) {
-    if (loadingComponent) {
-      return React.createElement(loadingComponent);
-    }
-    return (
-      <div style={styles.loading} className={classNames.loading}>
-        <div style={styles.spinner} />
-        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-        <p>Loading data...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    if (errorComponent) {
-      return React.createElement(errorComponent, { error: error as Error, retry: () => refetch() });
-    }
-    return (
-      <div style={styles.error} className={classNames.error}>
-        <p>Error loading data: {(error as Error).message}</p>
-        <button onClick={() => refetch()} style={styles.retry}>
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  // Default sort icon component
-  const DefaultSortIcon: React.FC<{ direction: 'asc' | 'desc' | null }> = ({ direction }) => {
-    if (direction === 'asc') return <span> ↑</span>;
-    if (direction === 'desc') return <span> ↓</span>;
-    return null;
-  };
-
-  const SortIcon = sortIcon || DefaultSortIcon;
-
-  // Render table selector
-  const renderTableSelector = () => {
-    if (tableSelector === 'none' || !tablesData) return null;
-
-    if (tableSelectorComponent) {
-      return React.createElement(tableSelectorComponent, {
-        tables: tablesData as string[],
-        selectedTable,
-        onSelectTable: setSelectedTable,
-      });
-    }
-
-    if (tableSelector === 'dropdown') {
-      return (
-        <div style={styles.filter} className={classNames.tableSelectorDropdown}>
-          <label style={{ marginRight: '0.5rem', fontWeight: 500 }}>{tableSelectorLabel}:</label>
-          <select
-            value={selectedTable || ''}
-            onChange={(e) => {
-              if (enableLogging && logger) {
-                logger.debug('Table selection changed', {
-                  componentId,
-                  previousTable: selectedTable || 'none',
-                  newTable: e.target.value,
-                });
-              }
-              setSelectedTable(e.target.value);
-              setPagination({ pageIndex: 0, pageSize });
-            }}
-            style={styles.filterInput}
-          >
-            {(tablesData as string[]).map((table) => (
-              <option key={table} value={table}>
-                {table}
-              </option>
-            ))}
-          </select>
-        </div>
-      );
-    }
-
-    if (tableSelector === 'sidebar') {
-      return (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column' as const,
-            gap: '0.5rem',
-            padding: '1rem',
-            borderRight: '1px solid #ddd',
-            minWidth: '200px',
-          }}
-          className={classNames.tableSelectorSidebar}
-        >
-          <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>{tableSelectorLabel}</div>
-          {(tablesData as string[]).map((table) => (
-            <button
-              key={table}
-              onClick={() => {
-                setSelectedTable(table);
-                setPagination({ pageIndex: 0, pageSize });
-              }}
-              style={{
-                padding: '0.5rem',
-                textAlign: 'left',
-                backgroundColor: selectedTable === table ? '#e9ecef' : 'white',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              {table}
-            </button>
-          ))}
-        </div>
-      );
-    }
-
-    return null;
-  };
-
-  // Render filter
-  const renderFilter = (position: 'top' | 'bottom') => {
-    if (!showFilter || (filterPosition !== 'both' && filterPosition !== position)) return null;
-
-    if (filterComponent) {
-      return React.createElement(filterComponent, {
-        value: filter,
-        onChange: setFilter,
-      });
-    }
-
-    return (
-      <div style={styles.filter} className={classNames.filter}>
-        <input
-          type="text"
-          placeholder={filterPlaceholder}
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          style={styles.filterInput}
-          className={classNames.filterInput}
-        />
-      </div>
-    );
-  };
-
-  // Render pagination
-  const renderPagination = (position: 'top' | 'bottom') => {
+    canPreviousPage,
+    canNextPage,
+    pageSizeOptions,
+    showPageSizeSelector,
+    onPageChange,
+    onPageSizeChange,
+    customComponent,
+    classNames,
+    styles,
+  }) => {
     if (!showPagination || (paginationPosition !== 'both' && paginationPosition !== position))
       return null;
 
-    if (paginationComponent) {
-      return React.createElement(paginationComponent, {
-        pageIndex: table.getState().pagination.pageIndex,
-        pageCount: table.getPageCount(),
-        pageSize: table.getState().pagination.pageSize,
-        canPreviousPage: table.getCanPreviousPage(),
-        canNextPage: table.getCanNextPage(),
-        previousPage: () => table.previousPage(),
-        nextPage: () => table.nextPage(),
-        firstPage: () => table.setPageIndex(0),
-        lastPage: () => table.setPageIndex(table.getPageCount() - 1),
-        setPageSize: (size: number) => table.setPageSize(size),
-      });
+    return (
+      <Pagination
+        pageIndex={pageIndex}
+        pageCount={pageCount}
+        pageSize={pageSize}
+        canPreviousPage={canPreviousPage}
+        canNextPage={canNextPage}
+        pageSizeOptions={pageSizeOptions}
+        showPageSizeSelector={showPageSizeSelector}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        customComponent={customComponent}
+        classNames={classNames}
+        styles={styles}
+      />
+    );
+  }
+);
+PaginationRenderer.displayName = 'PaginationRenderer';
+
+/**
+ * Main DatabaseViewer component - displays database tables with filtering, sorting, and pagination
+ *
+ * @component
+ * @example
+ * ```tsx
+ * // Basic usage
+ * <DatabaseViewer path="/api/database" initialTable="users" />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With authentication
+ * <DatabaseViewer
+ *   path="/api/database"
+ *   initialTable="users"
+ *   getAuthHeaders={async () => ({
+ *     Authorization: `Bearer ${token}`,
+ *   })}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Custom styling
+ * <DatabaseViewer
+ *   path="/api/database"
+ *   initialTable="users"
+ *   className="my-custom-class"
+ *   styles={{
+ *     container: { padding: '2rem' },
+ *     header: { backgroundColor: '#f0f0f0' },
+ *   }}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom components
+ * <DatabaseViewer
+ *   path="/api/database"
+ *   initialTable="users"
+ *   loadingComponent={() => <div>Loading...</div>}
+ *   errorComponent={({ error, retry }) => (
+ *     <div>
+ *       <p>Error: {error.message}</p>
+ *       <button onClick={retry}>Retry</button>
+ *     </div>
+ *   )}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom sorting and filtering
+ * <DatabaseViewer
+ *   path="/api/database"
+ *   initialTable="users"
+ *   enableSorting={true}
+ *   sortableColumns={['name', 'email', 'created_at']}
+ *   defaultSort={{ column: 'name', direction: 'asc' }}
+ *   showFilter={true}
+ *   filterDebounceMs={500}
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom pagination
+ * <DatabaseViewer
+ *   path="/api/database"
+ *   initialTable="users"
+ *   pageSize={25}
+ *   pageSizeOptions={[10, 25, 50, 100]}
+ *   paginationPosition="both"
+ * />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With custom header and cell formatting
+ * <DatabaseViewer
+ *   path="/api/database"
+ *   initialTable="users"
+ *   formatHeader={(columnName) => {
+ *     // Convert snake_case to Title Case
+ *     return columnName.split('_').map(word =>
+ *       word.charAt(0).toUpperCase() + word.slice(1)
+ *     ).join(' ');
+ *   }}
+ *   formatCell={(value, column) => {
+ *     if (column === 'created_at' && typeof value === 'string') {
+ *       return new Date(value).toLocaleDateString();
+ *     }
+ *     return value;
+ *   }}
+ * />
+ * ```
+ */
+export const DatabaseViewer: React.FC<DatabaseViewerProps> = React.memo(
+  ({
+    path,
+    initialTable,
+    tableSelector = 'dropdown',
+    tableSelectorLabel = 'Select Table',
+    tableSelectorComponent,
+    getAuthHeaders,
+    headers,
+    showFilter = true,
+    filterPlaceholder = 'Filter records...',
+    filterPosition = 'top',
+    filterDebounceMs = 300,
+    filterComponent,
+    showPagination = true,
+    pageSize = 10,
+    pageSizeOptions = [10, 20, 30, 50, 100],
+    showPageSizeSelector = true,
+    paginationPosition = 'bottom',
+    paginationComponent,
+    enableSorting = true,
+    sortableColumns,
+    defaultSort,
+    multiSort = false,
+    sortIcon,
+    formatHeader,
+    formatCell,
+    className,
+    classNames = {},
+    style,
+    styles = {},
+    loadingComponent,
+    errorComponent,
+    emptyComponent,
+    onError,
+    queryOptions = {},
+    refetchInterval,
+    logger: propLogger,
+    enableLogging = process.env.NODE_ENV === 'development',
+    logLevel,
+    logFetchErrors = true,
+    logQueryErrors = true,
+    logPerformanceMetrics = true,
+    defaultFilterColumns,
+    showFilterColumnSelector = true,
+  }) => {
+    // Validate props at runtime for development
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        validateProps({
+          path,
+          initialTable,
+          tableSelector,
+          tableSelectorLabel,
+          tableSelectorComponent,
+          getAuthHeaders,
+          headers,
+          showFilter,
+          filterPlaceholder,
+          filterPosition,
+          filterDebounceMs,
+          filterComponent,
+          showPagination,
+          pageSize,
+          pageSizeOptions,
+          showPageSizeSelector,
+          paginationPosition,
+          paginationComponent,
+          enableSorting,
+          sortableColumns,
+          defaultSort,
+          multiSort,
+          sortIcon,
+          formatHeader,
+          formatCell,
+          className,
+          classNames,
+          style,
+          styles,
+          loadingComponent,
+          errorComponent,
+          emptyComponent,
+          onError,
+          queryOptions,
+          refetchInterval,
+          logger: propLogger,
+          enableLogging,
+          logLevel,
+          logFetchErrors,
+          logQueryErrors,
+          logPerformanceMetrics,
+          defaultFilterColumns,
+          showFilterColumnSelector,
+        });
+      } catch (error) {
+        // Log validation errors but don't prevent rendering
+        console.warn('[DatabaseViewer] Prop validation failed:', error);
+      }
     }
 
+    // Initialize logger with lifecycle logging
+    const { logger, componentId } = useLogger({
+      logger: propLogger,
+      enableLogging,
+      logLevel,
+    });
+
+    // Initialize table state
+    const tableState = useTableState({
+      initialTable,
+      pageSize,
+      defaultSort,
+      filterDebounceMs,
+    });
+
+    // State for filter column selection per table
+    const [selectedFilterColumns, setSelectedFilterColumns] = useState<Record<string, string[]>>(
+      {}
+    );
+
+    // Determine which columns to use for current query
+    const currentFilterColumns = useMemo(() => {
+      if (!tableState.selectedTable) return [];
+      return (
+        selectedFilterColumns[tableState.selectedTable] ||
+        defaultFilterColumns?.[tableState.selectedTable] ||
+        []
+      );
+    }, [tableState.selectedTable, selectedFilterColumns, defaultFilterColumns]);
+
+    // Handle filter column selection change
+    const handleFilterColumnChange = (columns: string[]) => {
+      if (tableState.selectedTable) {
+        setSelectedFilterColumns((prev) => ({
+          ...prev,
+          [tableState.selectedTable!]: columns,
+        }));
+      }
+    };
+
+    // Handle reset to default filter columns
+    const handleResetFilterColumns = () => {
+      if (tableState.selectedTable) {
+        setSelectedFilterColumns((prev) => {
+          const newState = { ...prev };
+          delete newState[tableState.selectedTable!];
+          return newState;
+        });
+      }
+    };
+
+    // Build query parameters
+    const queryParams = buildQueryParams({
+      selectedTable: tableState.selectedTable,
+      pagination: tableState.pagination,
+      sorting: tableState.sorting,
+      filter: tableState.debouncedFilter,
+      filterColumns: currentFilterColumns,
+    });
+
+    // Fetch data and tables
+    const { data, tables, isLoading, error, refetch } = useDatabaseData({
+      path,
+      selectedTable: tableState.selectedTable,
+      queryParams,
+      getAuthHeaders,
+      headers,
+      logger,
+      componentId,
+      logFetchErrors,
+      logPerformanceMetrics,
+      queryOptions,
+      refetchInterval,
+      tableSelectorMode: tableSelector,
+    });
+
+    // Get available columns from current query result
+    const availableColumns = useMemo(() => {
+      const queryResult = data as QueryResult | undefined;
+      return queryResult?.columns || [];
+    }, [data]);
+
+    // Handle errors
+    useEffect(() => {
+      if (error) {
+        if (logQueryErrors && logger) {
+          logger.error('Query error state', {
+            componentId,
+            error: error.message,
+            stack: error.stack,
+            table: tableState.selectedTable || 'none',
+            timestamp: new Date().toISOString(),
+          });
+        }
+
+        if (onError) {
+          onError(error);
+        }
+      }
+    }, [error, onError, componentId, tableState.selectedTable, logQueryErrors, logger]);
+
+    // Define columns dynamically based on the data
+    const columns = useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
+      const queryResult = data as QueryResult | undefined;
+      if (!queryResult?.columns) return [];
+      return queryResult.columns.map((columnName: string) => ({
+        accessorKey: columnName,
+        header: columnName,
+        cell: (info: { getValue: () => unknown }) => sanitizeColumnData(info.getValue()),
+        ...(enableSorting &&
+          (!sortableColumns || sortableColumns.includes(columnName)) && {
+            enableSorting: true,
+          }),
+      }));
+    }, [data, enableSorting, sortableColumns]);
+
+    // Memoize pagination calculations
+    const paginationData = useMemo(() => {
+      const queryResult = data as QueryResult | undefined;
+      const totalPages = queryResult?.pagination?.totalPages ?? 0;
+      return {
+        totalPages,
+        canPreviousPage: tableState.pagination.pageIndex > 0,
+        canNextPage: tableState.pagination.pageIndex < totalPages - 1,
+      };
+    }, [data, tableState.pagination.pageIndex]);
+
+    // Memoize container style
+    const containerStyle = useMemo(() => {
+      return mergeStyle(
+        defaultStyles.container || {},
+        tableSelector === 'sidebar'
+          ? { display: 'flex', flexDirection: 'row' as const }
+          : undefined,
+        style,
+        styles.container
+      );
+    }, [tableSelector, style, styles.container]);
+
+    // Handle table change with pagination, sorting, and filter reset
+    const handleTableChange = (_table: string) => {
+      tableState.setPagination({ pageIndex: 0, pageSize });
+      // Always reset sorting when switching tables to avoid using invalid column names
+      tableState.setSorting(
+        defaultSort ? [{ id: defaultSort.column, desc: defaultSort.direction === 'desc' }] : []
+      );
+      tableState.setFilter('');
+    };
+
+    if (isLoading) {
+      return (
+        <LoadingState
+          customComponent={loadingComponent}
+          className={classNames.loading}
+          classNames={classNames}
+          style={styles.loading}
+          styles={styles}
+        />
+      );
+    }
+
+    if (error) {
+      return (
+        <ErrorState
+          error={error as Error}
+          onRetry={() => refetch()}
+          customComponent={errorComponent}
+          className={classNames.error}
+          classNames={classNames}
+          style={styles.error}
+          styles={styles}
+        />
+      );
+    }
+
+    const queryResult = data as QueryResult | undefined;
+
     return (
-      <div style={styles.pagination} className={classNames.pagination}>
-        <button
-          onClick={() => table.setPageIndex(0)}
-          disabled={!table.getCanPreviousPage()}
-          style={styles.paginationButton}
-          className={classNames.paginationButton}
-        >
-          {'<<'}
-        </button>
-        <button
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-          style={styles.paginationButton}
-          className={classNames.paginationButton}
-        >
-          {'<'}
-        </button>
-        <span style={styles.paginationInfo} className={classNames.paginationInfo}>
-          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-        </span>
-        <button
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-          style={styles.paginationButton}
-          className={classNames.paginationButton}
-        >
-          {'>'}
-        </button>
-        <button
-          onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-          disabled={!table.getCanNextPage()}
-          style={styles.paginationButton}
-          className={classNames.paginationButton}
-        >
-          {'>>'}
-        </button>
-        {showPageSizeSelector && (
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => {
-              table.setPageSize(Number(e.target.value));
-            }}
-            style={styles.pageSize}
-            className={classNames.pageSize}
-          >
-            {pageSizeOptions.map((size) => (
-              <option key={size} value={size}>
-                Show {size}
-              </option>
-            ))}
-          </select>
+      <div style={containerStyle} className={mergeClassName('', className || '')}>
+        {/* Table Selector Sidebar */}
+        {tableSelector === 'sidebar' && (
+          <TableSelectorRenderer
+            mode={tableSelector}
+            tables={tables}
+            selectedTable={tableState.selectedTable}
+            label={tableSelectorLabel}
+            onSelectTable={tableState.setSelectedTable}
+            customComponent={tableSelectorComponent}
+            onTableChange={handleTableChange}
+            pageSize={pageSize}
+            classNames={classNames}
+            styles={styles}
+            logger={logger || undefined}
+            componentId={componentId}
+          />
         )}
+
+        {/* Main Content */}
+        <div style={{ flex: 1 }}>
+          {/* Table Selector Dropdown */}
+          {tableSelector === 'dropdown' && (
+            <TableSelectorRenderer
+              mode={tableSelector}
+              tables={tables}
+              selectedTable={tableState.selectedTable}
+              label={tableSelectorLabel}
+              onSelectTable={tableState.setSelectedTable}
+              customComponent={tableSelectorComponent}
+              onTableChange={handleTableChange}
+              pageSize={pageSize}
+              classNames={classNames}
+              styles={styles}
+              logger={logger || undefined}
+              componentId={componentId}
+            />
+          )}
+
+          {/* Top Filter */}
+          <FilterRenderer
+            showFilter={showFilter}
+            filterPosition={filterPosition}
+            position="top"
+            value={tableState.filter}
+            onChange={tableState.setFilter}
+            placeholder={filterPlaceholder}
+            customComponent={filterComponent}
+            classNames={classNames}
+            styles={styles}
+          />
+
+          {/* Filter Column Selector */}
+          {showFilterColumnSelector && availableColumns.length > 0 && (
+            <FilterColumnSelector
+              availableColumns={availableColumns}
+              selectedColumns={currentFilterColumns}
+              defaultColumns={defaultFilterColumns?.[tableState.selectedTable || ''] || []}
+              onSelectionChange={handleFilterColumnChange}
+              onResetToDefault={handleResetFilterColumns}
+              className={classNames.filterColumnSelector}
+              classNames={classNames}
+              styles={styles}
+            />
+          )}
+
+          {/* Top Pagination */}
+          <PaginationRenderer
+            showPagination={showPagination}
+            paginationPosition={paginationPosition}
+            position="top"
+            pageIndex={tableState.pagination.pageIndex}
+            pageCount={paginationData.totalPages}
+            pageSize={tableState.pagination.pageSize}
+            canPreviousPage={paginationData.canPreviousPage}
+            canNextPage={paginationData.canNextPage}
+            pageSizeOptions={pageSizeOptions}
+            showPageSizeSelector={showPageSizeSelector}
+            onPageChange={(pageIndex) =>
+              tableState.setPagination({ ...tableState.pagination, pageIndex })
+            }
+            onPageSizeChange={(newPageSize) =>
+              tableState.setPagination({ ...tableState.pagination, pageSize: newPageSize })
+            }
+            customComponent={paginationComponent}
+            classNames={classNames}
+            styles={styles}
+          />
+
+          {/* Table */}
+          <DataTable
+            data={queryResult?.data || []}
+            columns={columns}
+            sorting={tableState.sorting}
+            onSortingChange={tableState.setSorting}
+            pagination={tableState.pagination}
+            onPaginationChange={tableState.setPagination}
+            pageCount={paginationData.totalPages}
+            enableSorting={enableSorting}
+            multiSort={multiSort}
+            sortIcon={sortIcon}
+            formatHeader={formatHeader}
+            formatCell={formatCell}
+            classNames={classNames}
+            styles={styles}
+            emptyComponent={emptyComponent}
+            hasActiveFilter={tableState.debouncedFilter.length > 0}
+            onClearFilter={() => tableState.setFilter('')}
+          />
+
+          {/* Bottom Pagination */}
+          <PaginationRenderer
+            showPagination={showPagination}
+            paginationPosition={paginationPosition}
+            position="bottom"
+            pageIndex={tableState.pagination.pageIndex}
+            pageCount={paginationData.totalPages}
+            pageSize={tableState.pagination.pageSize}
+            canPreviousPage={paginationData.canPreviousPage}
+            canNextPage={paginationData.canNextPage}
+            pageSizeOptions={pageSizeOptions}
+            showPageSizeSelector={showPageSizeSelector}
+            onPageChange={(pageIndex) =>
+              tableState.setPagination({ ...tableState.pagination, pageIndex })
+            }
+            onPageSizeChange={(newPageSize) =>
+              tableState.setPagination({ ...tableState.pagination, pageSize: newPageSize })
+            }
+            customComponent={paginationComponent}
+            classNames={classNames}
+            styles={styles}
+          />
+
+          {/* Bottom Filter */}
+          <FilterRenderer
+            showFilter={showFilter}
+            filterPosition={filterPosition}
+            position="bottom"
+            value={tableState.filter}
+            onChange={tableState.setFilter}
+            placeholder={filterPlaceholder}
+            customComponent={filterComponent}
+            classNames={classNames}
+            styles={styles}
+          />
+
+          {/* Info */}
+          {queryResult?.pagination && (
+            <div style={mergeStyle(defaultStyles.info, styles.info)} className={classNames.info}>
+              Total records: {queryResult.pagination.total}
+            </div>
+          )}
+        </div>
       </div>
     );
-  };
-
-  // Main container style
-  const containerStyle = mergeStyle(
-    styles.container || {},
-    tableSelector === 'sidebar' ? { display: 'flex', flexDirection: 'row' as const } : {}
-  );
-  const finalContainerStyle = style ? { ...containerStyle, ...style } : containerStyle;
-
-  return (
-    <div style={finalContainerStyle} className={mergeClassName('', className || '')}>
-      {/* Table Selector Sidebar */}
-      {tableSelector === 'sidebar' && renderTableSelector()}
-
-      {/* Main Content */}
-      <div style={{ flex: 1 }}>
-        {/* Table Selector Dropdown */}
-        {tableSelector === 'dropdown' && renderTableSelector()}
-
-        {/* Top Filter */}
-        {renderFilter('top')}
-
-        {/* Top Pagination */}
-        {renderPagination('top')}
-
-        {/* Table */}
-        <div style={styles.tableWrapper} className={classNames.tableWrapper}>
-          <table style={styles.table} className={classNames.table}>
-            <thead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      onClick={header.column.getToggleSortingHandler()}
-                      style={mergeStyle(
-                        header.column.getIsSorted() ? styles.sorted || {} : styles.sortable || {},
-                        styles.header || {}
-                      )}
-                      className={classNames.header}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                      <SortIcon direction={header.column.getIsSorted() as 'asc' | 'desc' | null} />
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.length === 0 ? (
-                <tr>
-                  <td colSpan={columns.length} style={styles.empty} className={classNames.empty}>
-                    {emptyComponent ? React.createElement(emptyComponent) : 'No data available'}
-                  </td>
-                </tr>
-              ) : (
-                table.getRowModel().rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} style={styles.td} className={classNames.cell}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Bottom Pagination */}
-        {renderPagination('bottom')}
-
-        {/* Bottom Filter */}
-        {renderFilter('bottom')}
-
-        {/* Info */}
-        {data && (data as QueryResult).pagination && (
-          <div style={styles.info} className={classNames.info}>
-            Total records: {(data as QueryResult).pagination.total}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+  }
+);
+DatabaseViewer.displayName = 'DatabaseViewer';
 
 // Export a provider-wrapped version for easier usage
 export const DatabaseViewerWithProvider: React.FC<
   DatabaseViewerProps & { queryClient?: QueryClient }
-> = ({ queryClient = defaultQueryClient, ...props }) => {
+> = React.memo(({ queryClient, ...props }) => {
+  // Create a new QueryClient instance if not provided
+  // This prevents request data leakage in SSR contexts
+  const client = useMemo(
+    () =>
+      queryClient ||
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            retry: 1,
+          },
+        },
+      }),
+    [queryClient]
+  );
+
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={client}>
       <DatabaseViewer {...props} />
     </QueryClientProvider>
   );
-};
+});
+DatabaseViewerWithProvider.displayName = 'DatabaseViewerWithProvider';

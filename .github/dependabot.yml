@@ -1,0 +1,35 @@
+version: 2
+updates:
+  # Enable version updates for npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "viti-mg"
+    labels:
+      - "dependencies"
+      - "npm"
+    groups:
+      production-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "*eslint*"
+          - "*prettier*"
+          - "*typescript*"
+          - "*vitest*"
+          - "*@types/*"
+      dev-dependencies:
+        patterns:
+          - "*eslint*"
+          - "*prettier*"
+          - "*typescript*"
+          - "*vitest*"
+          - "*@types/*"
+    commit-message:
+      prefix: "chore"
+      include: "scope"

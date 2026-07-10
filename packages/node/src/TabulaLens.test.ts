@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { TabulaLens, QueryOptions, SortOption, FilterOption } from './TabulaLens';
 
 describe('TabulaLens', () => {
@@ -124,6 +124,270 @@ describe('TabulaLens', () => {
       };
 
       expect(filter.value).toBe(25);
+    });
+  });
+
+  describe('sorting validation', () => {
+    it('should parse sort options correctly', () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+      const sortString = 'name:asc,created_at:desc';
+
+      const parseSort = (
+        tabulaLens as unknown as { parseSort: (sortString: string) => SortOption[] }
+      ).parseSort.bind(tabulaLens);
+      const result = parseSort(sortString);
+
+      expect(result).toEqual([
+        { column: 'name', direction: 'asc' },
+        { column: 'created_at', direction: 'desc' },
+      ]);
+    });
+
+    it('should handle invalid sort format gracefully', () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+      const sortString = 'invalid::format';
+
+      const parseSort = (
+        tabulaLens as unknown as { parseSort: (sortString: string) => SortOption[] }
+      ).parseSort.bind(tabulaLens);
+      const result = parseSort(sortString);
+
+      // Should not throw and should return some default
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('should handle empty sort string', () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+      const sortString = '';
+
+      const parseSort = (
+        tabulaLens as unknown as { parseSort: (sortString: string) => SortOption[] }
+      ).parseSort.bind(tabulaLens);
+      const result = parseSort(sortString);
+
+      // Should handle empty string gracefully
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('should use first available column as fallback when no valid sort columns', async () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+
+      // Mock getFilterableColumns to return specific columns
+      const originalGetFilterableColumns = tabulaLens['getFilterableColumns'];
+      tabulaLens['getFilterableColumns'] = vi
+        .fn()
+        .mockResolvedValue(['email', 'name', 'created_at']);
+
+      // Mock the database query
+      const mockQuery = {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        modify: vi.fn().mockReturnThis(),
+        count: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ count: 0 }),
+        orderBy: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        offset: vi.fn().mockResolvedValue([]),
+      };
+
+      tabulaLens['db'] = vi.fn().mockReturnValue(mockQuery);
+
+      const options: QueryOptions = {
+        table: 'users',
+        sort: 'nonexistent:asc',
+      };
+
+      await tabulaLens.query(options);
+
+      // Should fall back to first available column ('email')
+      expect(mockQuery.orderBy).toHaveBeenCalledWith('email', 'asc');
+
+      // Restore original method
+      tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
+    });
+
+    it('should use first available column as default when no sort specified', async () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+
+      // Mock getFilterableColumns to return specific columns
+      const originalGetFilterableColumns = tabulaLens['getFilterableColumns'];
+      tabulaLens['getFilterableColumns'] = vi.fn().mockResolvedValue(['name', 'email', 'id']);
+
+      // Mock the database query
+      const mockQuery = {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        modify: vi.fn().mockReturnThis(),
+        count: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ count: 0 }),
+        orderBy: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        offset: vi.fn().mockResolvedValue([]),
+      };
+
+      tabulaLens['db'] = vi.fn().mockReturnValue(mockQuery);
+
+      const options: QueryOptions = {
+        table: 'users',
+        // No sort parameter
+      };
+
+      await tabulaLens.query(options);
+
+      // Should use first available column ('name') as default
+      expect(mockQuery.orderBy).toHaveBeenCalledWith('name', 'asc');
+
+      // Restore original method
+      tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
+    });
+
+    it('should handle tables with no columns gracefully', async () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+
+      // Mock getFilterableColumns to return empty array
+      const originalGetFilterableColumns = tabulaLens['getFilterableColumns'];
+      tabulaLens['getFilterableColumns'] = vi.fn().mockResolvedValue([]);
+
+      // Mock the database query
+      const mockQuery = {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        modify: vi.fn().mockReturnThis(),
+        count: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ count: 0 }),
+        orderBy: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        offset: vi.fn().mockResolvedValue([]),
+      };
+
+      tabulaLens['db'] = vi.fn().mockReturnValue(mockQuery);
+
+      const options: QueryOptions = {
+        table: 'users',
+        sort: 'name:asc',
+      };
+
+      // Should not throw error
+      const result = await tabulaLens.query(options);
+      expect(result).toBeDefined();
+
+      // Should not call orderBy since no columns available
+      expect(mockQuery.orderBy).not.toHaveBeenCalled();
+
+      // Restore original method
+      tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
+    });
+  });
+
+  describe('filtering validation', () => {
+    it('should filter out non-text columns from filterColumns parameter', async () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+
+      // Mock getFilterableColumns to return only text-based columns
+      const originalGetFilterableColumns = tabulaLens['getFilterableColumns'];
+      tabulaLens['getFilterableColumns'] = vi.fn().mockResolvedValue(['email', 'name']);
+
+      // Mock the database query
+      const mockQuery = {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        modify: vi.fn().mockReturnThis(),
+        count: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ count: 0 }),
+        orderBy: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        offset: vi.fn().mockResolvedValue([]),
+      };
+
+      tabulaLens['db'] = vi.fn().mockReturnValue(mockQuery);
+
+      const options: QueryOptions = {
+        table: 'users',
+        filter: 'test',
+        filterColumns: ['id', 'email', 'name'], // 'id' is not a text column
+      };
+
+      await tabulaLens.query(options);
+
+      // Should call getFilterableColumns to validate the provided filterColumns
+      expect(tabulaLens['getFilterableColumns']).toHaveBeenCalledWith('users');
+
+      // Restore original method
+      tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
+    });
+
+    it('should handle empty filterColumns gracefully', async () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+
+      // Mock getFilterableColumns to return text-based columns
+      const originalGetFilterableColumns = tabulaLens['getFilterableColumns'];
+      tabulaLens['getFilterableColumns'] = vi.fn().mockResolvedValue(['email', 'name']);
+
+      // Mock the database query
+      const mockQuery = {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        modify: vi.fn().mockReturnThis(),
+        count: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ count: 0 }),
+        orderBy: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        offset: vi.fn().mockResolvedValue([]),
+      };
+
+      tabulaLens['db'] = vi.fn().mockReturnValue(mockQuery);
+
+      const options: QueryOptions = {
+        table: 'users',
+        filter: 'test',
+        filterColumns: [], // Empty array
+      };
+
+      await tabulaLens.query(options);
+
+      // Should fall back to getFilterableColumns when filterColumns is empty
+      expect(tabulaLens['getFilterableColumns']).toHaveBeenCalledWith('users');
+
+      // Restore original method
+      tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
+    });
+
+    it('should use getFilterableColumns when filterColumns is not provided', async () => {
+      const tabulaLens = new TabulaLens('postgresql://test');
+
+      // Mock getFilterableColumns to return text-based columns
+      const originalGetFilterableColumns = tabulaLens['getFilterableColumns'];
+      tabulaLens['getFilterableColumns'] = vi.fn().mockResolvedValue(['email', 'name']);
+
+      // Mock the database query
+      const mockQuery = {
+        select: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        modify: vi.fn().mockReturnThis(),
+        count: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ count: 0 }),
+        orderBy: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        offset: vi.fn().mockResolvedValue([]),
+      };
+
+      tabulaLens['db'] = vi.fn().mockReturnValue(mockQuery);
+
+      const options: QueryOptions = {
+        table: 'users',
+        filter: 'test',
+        // No filterColumns provided
+      };
+
+      await tabulaLens.query(options);
+
+      // Should call getFilterableColumns when filterColumns is not provided
+      expect(tabulaLens['getFilterableColumns']).toHaveBeenCalledWith('users');
+
+      // Restore original method
+      tabulaLens['getFilterableColumns'] = originalGetFilterableColumns;
     });
   });
 });

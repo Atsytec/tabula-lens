@@ -2,10 +2,21 @@
 
 [![npm version](https://badge.fury.io/js/%40tabula-lens%2Fnode.svg)](https://www.npmjs.com/package/@tabula-lens/node)
 [![Downloads](https://img.shields.io/npm/dm/@tabula-lens/node)](https://www.npmjs.com/package/@tabula-lens/node)
-[![License](https://img.shields.io/npm/l/@tabula-lens/node)](https://github.com/yourusername/tabula-lens/blob/main/packages/node/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
 A secure, backend-agnostic Node.js SDK for database queries with framework adapters. Tabula Lens keeps your database credentials safe on the backend while providing a clean API for frontend data visualization.
+
+## 📑 Table of Contents
+
+- [Features](#-features)
+- [Installation](#-installation)
+- [Peer Dependencies](#-peer-dependencies)
+- [Quick Start](#-quick-start)
+- [API Reference](#-api-reference)
+- [Framework Adapters](#-framework-adapters)
+- [Configuration](#-configuration)
+- [Troubleshooting](#-troubleshooting)
+- [Security Considerations](#-security-considerations)
 
 ## 🎯 Features
 
@@ -27,7 +38,24 @@ pnpm add @tabula-lens/node
 yarn add @tabula-lens/node
 ```
 
-## 🚀 Quick Start
+## 🔗 Peer Dependencies
+
+This package requires framework-specific peer dependencies. Install the appropriate package for your framework:
+
+- **Express**: `npm install express@^4.18.0 || ^5.0.0`
+- **Fastify**: `npm install fastify@^4.0.0`
+- **Koa**: `npm install koa@^2.14.0`
+- **Hapi**: `npm install @hapi/hapi@^21.0.0`
+- **Restify**: `npm install restify@^11.0.0`
+- **Next.js**: No additional peer dependencies
+- **TanStack Start**: `npm install @tanstack/react-start@^1.0.0`
+- **Remix**: `npm install remix@^2.0.0`
+- **SvelteKit**: `npm install @sveltejs/kit@^2.0.0`
+- **Hono**: `npm install hono@^4.0.0`
+- **Elysia**: `npm install elysia@^1.0.0`
+- **Fresh**: No additional peer dependencies (Deno native)
+
+## �🚀 Quick Start
 
 ### Basic Setup
 
@@ -96,7 +124,7 @@ export { handler as GET, handler as POST, handler as PUT, handler as DELETE };
 #### Constructor
 
 ```typescript
-constructor(databaseUrl: string)
+constructor(databaseUrl: string, options?: TabulaLensOptions)
 ```
 
 Creates a new TabulaLens instance with a PostgreSQL database connection.
@@ -104,6 +132,43 @@ Creates a new TabulaLens instance with a PostgreSQL database connection.
 **Parameters:**
 
 - `databaseUrl` - PostgreSQL connection string (e.g., `postgresql://user:password@host:port/database`)
+- `options` - Optional configuration object
+
+**TabulaLensOptions:**
+
+```typescript
+interface TabulaLensOptions {
+  logger?: Logger;
+  logLevel?: 'error' | 'warn' | 'info' | 'debug' | 'silent';
+  enableQueryLogging?: boolean;
+  enableRequestLogging?: boolean;
+  sensitiveDataMasking?: boolean;
+  logFormat?: 'json' | 'text' | 'pretty';
+}
+```
+
+**Logging Configuration:**
+
+The package includes built-in logging with configurable levels:
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+// Basic usage with default logging
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Custom log level
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info', // 'error' | 'warn' | 'info' | 'debug' | 'silent'
+});
+
+// Production configuration
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+});
+```
 
 #### query()
 
@@ -163,14 +228,6 @@ async getTableMetadata(table: string): Promise<{
 ```
 
 Returns complete metadata for a table including name and columns.
-
-#### handle()
-
-```typescript
-async handle(request: RequestContext): Promise<ResponseContext>
-```
-
-Handles HTTP requests and returns appropriate responses. Used internally by adapters.
 
 #### close()
 
@@ -298,66 +355,7 @@ const server = http.createServer(async (req, res) => {
 });
 ```
 
-## 🌐 API Endpoints
-
-When using an adapter, the following endpoints are automatically available:
-
-### GET /tables
-
-Returns a list of all tables in the database.
-
-**Response:**
-
-```json
-["users", "posts", "comments", "products"]
-```
-
-### GET /tables/:tableName
-
-Returns metadata for a specific table.
-
-**Response:**
-
-```json
-{
-  "name": "users",
-  "columns": [
-    { "name": "id", "type": "integer" },
-    { "name": "name", "type": "character varying" },
-    { "name": "email", "type": "character varying" }
-  ]
-}
-```
-
-### GET /query
-
-Executes a database query with query parameters.
-
-**Query Parameters:**
-
-- `table` - Table name to query
-- `page` - Page number (default: 1)
-- `limit` - Records per page (default: 10)
-- `sort` - Sort string (e.g., `name:asc,email:desc`)
-- `filter` - Text filter for searching
-- `columns` - Comma-separated column names
-
-**Response:**
-
-```json
-{
-  "data": [{ "id": 1, "name": "John", "email": "john@example.com" }],
-  "columns": ["id", "name", "email"],
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "total": 100,
-    "totalPages": 10
-  }
-}
-```
-
-## 🔒 Security
+## 🔒 Security Considerations
 
 Tabula Lens is designed with security in mind:
 
@@ -376,8 +374,6 @@ import authMiddleware from './auth-middleware';
 
 app.use('/api/tabula-lens', authMiddleware, expressAdapter(tabulaLens));
 ```
-
-## 📝 Advanced Usage
 
 ### Custom Query Options
 
@@ -421,40 +417,104 @@ process.on('SIGTERM', async () => {
 });
 ```
 
-## 🧪 Testing
+## 🔧 Configuration
+
+### Production Configuration
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import { TabulaLens } from '@tabula-lens/node';
-
-describe('TabulaLens', () => {
-  it('should query data', async () => {
-    const tabulaLens = new TabulaLens('test-database-url');
-    const result = await tabulaLens.query({ table: 'users' });
-
-    expect(result.data).toBeInstanceOf(Array);
-    expect(result.columns).toBeInstanceOf(Array);
-    expect(result.pagination).toBeDefined();
-
-    await tabulaLens.close();
-  });
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableQueryLogging: false,
+  enableRequestLogging: true,
 });
 ```
 
+### Development Configuration
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'debug',
+  logFormat: 'pretty',
+  enableQueryLogging: true,
+  enableRequestLogging: true,
+});
+```
+
+## 🔧 Troubleshooting
+
+### Database Connection Issues
+
+**Problem**: "Connection refused" or "Connection timeout" errors
+
+**Solutions**:
+
+- Verify your `DATABASE_URL` is correct and accessible
+- Check that your database server is running
+- Ensure your firewall allows connections to the database
+- Verify the database user has necessary permissions
+
+### Query Performance Issues
+
+**Problem**: Slow query performance
+
+**Solutions**:
+
+- Use the `columns` parameter to select only needed columns
+- Add appropriate indexes to your database tables
+- Use pagination to limit result sets
+- Enable query logging to identify slow queries
+
+### Adapter Integration Issues
+
+**Problem**: Adapter not working with your framework
+
+**Solutions**:
+
+- Ensure you have installed the required peer dependencies
+- Check that your framework version matches the peer dependency requirements
+- Verify the adapter is being used correctly according to the framework's patterns
+- Check framework-specific logs for additional error details
+
+## 🔒 Security Considerations
+
+### Database Credentials
+
+- Never commit database credentials to version control
+- Use environment variables for sensitive data
+- Rotate database credentials regularly
+- Use read-only database users when possible
+
+### API Security
+
+- Always use HTTPS in production
+- Implement proper authentication/authorization
+- Validate and sanitize all user inputs
+- Use rate limiting to prevent abuse
+- Keep dependencies updated
+
+### Logging Security
+
+- Enable `sensitiveDataMasking` in production
+- Avoid logging sensitive data (passwords, tokens)
+- Use appropriate log levels (`error` in production)
+- Secure log files with appropriate file permissions
+
+## 📝 License
+
+Currently no license. All rights reserved.
+
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
-
-## 📄 License
-
-MIT License - see LICENSE file for details
+Contributions will be allowed soon.
 
 ## 🔗 Links
 
-- [Main Repository](https://github.com/yourusername/tabula-lens)
-- [React Package](https://www.npmjs.com/package/@tabula-lens/react)
-- [Documentation](https://tabula-lens.dev)
-- [Issues](https://github.com/yourusername/tabula-lens/issues)
+<!-- - [Main Repository](https://github.com/yourusername/tabula-lens) -->
+<!-- - [Node Package](https://www.npmjs.com/package/@tabula-lens/node) -->
+<!-- - [Documentation](https://tabula-lens.dev) -->
+<!-- - [Issues](https://github.com/yourusername/tabula-lens/issues) -->
 
 ## 🙏 Acknowledgments
 

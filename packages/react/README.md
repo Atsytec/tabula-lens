@@ -2,11 +2,22 @@
 
 [![npm version](https://badge.fury.io/js/%40tabula-lens%2Freact.svg)](https://www.npmjs.com/package/@tabula-lens/react)
 [![Downloads](https://img.shields.io/npm/dm/@tabula-lens/react)](https://www.npmjs.com/package/@tabula-lens/react)
-[![License](https://img.shields.io/npm/l/@tabula-lens/react)](https://github.com/yourusername/tabula-lens/blob/main/packages/react/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
 
 A powerful React component for viewing database data with built-in pagination, sorting, and filtering. Designed to work seamlessly with the `@tabula-lens/node` backend SDK for a secure, full-stack database viewing solution.
+
+## 📑 Table of Contents
+
+- [Features](#-features)
+- [Installation](#-installation)
+- [Peer Dependencies](#-peer-dependencies)
+- [Quick Start](#-quick-start)
+- [API Reference](#-api-reference)
+- [Usage Examples](#-usage-examples)
+- [Styling](#-styling)
+- [Troubleshooting](#-troubleshooting)
+- [Browser Support](#-browser-support)
 
 ## 🎯 Features
 
@@ -18,6 +29,8 @@ A powerful React component for viewing database data with built-in pagination, s
 - **Responsive**: Mobile-friendly design with responsive table layouts
 - **Performance**: Powered by TanStack Query for efficient data fetching and caching
 - **Zero Config**: Minimal setup required for basic usage
+- **Modular Architecture**: Component-based design with reusable sub-components, custom hooks, and utility functions
+- **Optimized**: React.memo implementation for performance optimization
 
 ## 📦 Installation
 
@@ -41,7 +54,7 @@ npm install react react-dom
 
 ### Basic Usage
 
-```jsx
+```tsx
 import { DatabaseViewer } from '@tabula-lens/react';
 
 function App() {
@@ -51,7 +64,7 @@ function App() {
 
 ### With Authentication
 
-```jsx
+```tsx
 import { DatabaseViewer } from '@tabula-lens/react';
 
 function App() {
@@ -66,7 +79,7 @@ function App() {
 
 ### With Table Selector
 
-```jsx
+```tsx
 import { DatabaseViewer } from '@tabula-lens/react';
 
 function App() {
@@ -163,11 +176,76 @@ The main component for displaying database data with a full-featured table inter
 | --------- | ------------------------ | ----------- | ------------------------------------ |
 | `onError` | `(error: Error) => void` | `undefined` | Callback function for error handling |
 
+#### Logging Props
+
+| Prop                    | Type                                     | Default                                  | Description             |
+| ----------------------- | ---------------------------------------- | ---------------------------------------- | ----------------------- |
+| `logger`                | `Logger`                                 | `undefined`                              | Custom logger instance  |
+| `enableLogging`         | `boolean`                                | `process.env.NODE_ENV === 'development'` | Enable/disable logging  |
+| `logLevel`              | `'debug' \| 'info' \| 'warn' \| 'error'` | `'info'`                                 | Logging level           |
+| `logFetchErrors`        | `boolean`                                | `true`                                   | Log fetch errors        |
+| `logQueryErrors`        | `boolean`                                | `true`                                   | Log query errors        |
+| `logPerformanceMetrics` | `boolean`                                | `true`                                   | Log performance metrics |
+
+**Logging Configuration:**
+
+The DatabaseViewer component includes a built-in logging system for debugging and monitoring:
+
+- **Default Log Levels** (based on environment):
+  - `production`: `'error'` - Only error messages
+  - `test`: `'silent'` - No logging
+  - `development`: `'debug'` - All log levels
+
+- **Log Level Hierarchy** (most to least verbose):
+  - `debug` - All messages including debug info
+  - `info` - Info, warnings, and errors
+  - `warn` - Warnings and errors only
+  - `error` - Errors only
+  - `silent` - No output
+
+**Logging Examples:**
+
+```tsx
+import { DatabaseViewer, createLogger } from '@tabula-lens/react';
+
+// Basic usage with default logging (enabled in development)
+<DatabaseViewer path="/api/tabula-lens" />
+
+// Explicitly enable logging
+<DatabaseViewer
+  path="/api/tabula-lens"
+  enableLogging={true}
+  logLevel="debug"
+/>
+
+// Disable logging
+<DatabaseViewer
+  path="/api/tabula-lens"
+  enableLogging={false}
+/>
+
+// Custom log level
+<DatabaseViewer
+  path="/api/tabula-lens"
+  enableLogging={true}
+  logLevel="info" // or 'error', 'warn', 'debug'
+/>
+
+// Disable specific logging types
+<DatabaseViewer
+  path="/api/tabula-lens"
+  enableLogging={true}
+  logFetchErrors={false}
+  logQueryErrors={false}
+  logPerformanceMetrics={false}
+/>
+```
+
 ## 🎨 Customization Examples
 
 ### Custom Styling
 
-```jsx
+```tsx
 import { DatabaseViewer } from '@tabula-lens/react';
 
 function App() {
@@ -192,7 +270,7 @@ function App() {
 
 ### Custom Components
 
-```jsx
+```tsx
 import { DatabaseViewer } from '@tabula-lens/react';
 
 const CustomLoading = () => (
@@ -223,7 +301,7 @@ function App() {
 
 ### Advanced Configuration
 
-```jsx
+```tsx
 import { DatabaseViewer } from '@tabula-lens/react';
 
 function App() {
@@ -262,130 +340,11 @@ function App() {
 }
 ```
 
-### Custom Table Selector
-
-```jsx
-import { DatabaseViewer } from '@tabula-lens/react';
-
-const CustomTableSelector = ({ tables, selectedTable, onSelectTable }) => (
-  <div className="flex gap-2 mb-4">
-    {tables.map((table) => (
-      <button
-        key={table}
-        onClick={() => onSelectTable(table)}
-        className={`px-4 py-2 rounded ${
-          selectedTable === table ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
-        }`}
-      >
-        {table}
-      </button>
-    ))}
-  </div>
-);
-
-function App() {
-  return <DatabaseViewer path="/api/tabula-lens" tableSelectorComponent={CustomTableSelector} />;
-}
-```
-
-### Custom Filter Component
-
-```jsx
-import { DatabaseViewer } from '@tabula-lens/react';
-
-const CustomFilter = ({ value, onChange }) => (
-  <div className="relative">
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder="🔍 Search..."
-      className="w-full pl-10 pr-4 py-2 border rounded-lg"
-    />
-    <span className="absolute left-3 top-2.5">🔍</span>
-  </div>
-);
-
-function App() {
-  return <DatabaseViewer path="/api/tabula-lens" filterComponent={CustomFilter} />;
-}
-```
-
-### Custom Pagination Component
-
-```jsx
-import { DatabaseViewer } from '@tabula-lens/react';
-
-const CustomPagination = ({
-  pageIndex,
-  pageCount,
-  pageSize,
-  canPreviousPage,
-  canNextPage,
-  previousPage,
-  nextPage,
-  firstPage,
-  lastPage,
-  setPageSize,
-}) => (
-  <div className="flex items-center justify-between">
-    <div className="flex items-center gap-2">
-      <button
-        onClick={firstPage}
-        disabled={!canPreviousPage}
-        className="px-3 py-1 rounded disabled:opacity-50"
-      >
-        ««
-      </button>
-      <button
-        onClick={previousPage}
-        disabled={!canPreviousPage}
-        className="px-3 py-1 rounded disabled:opacity-50"
-      >
-        «
-      </button>
-      <span>
-        Page {pageIndex + 1} of {pageCount}
-      </span>
-      <button
-        onClick={nextPage}
-        disabled={!canNextPage}
-        className="px-3 py-1 rounded disabled:opacity-50"
-      >
-        »
-      </button>
-      <button
-        onClick={lastPage}
-        disabled={!canNextPage}
-        className="px-3 py-1 rounded disabled:opacity-50"
-      >
-        »»
-      </button>
-    </div>
-    <select
-      value={pageSize}
-      onChange={(e) => setPageSize(Number(e.target.value))}
-      className="px-3 py-1 rounded"
-    >
-      {[10, 25, 50, 100].map((size) => (
-        <option key={size} value={size}>
-          {size} per page
-        </option>
-      ))}
-    </select>
-  </div>
-);
-
-function App() {
-  return <DatabaseViewer path="/api/tabula-lens" paginationComponent={CustomPagination} />;
-}
-```
-
-## 🔒 Authentication
+## Authentication
 
 ### Using Auth Headers
 
-```jsx
+```tsx
 import { DatabaseViewer } from '@tabula-lens/react';
 
 function App() {
@@ -400,7 +359,7 @@ function App() {
 
 ### Using Static Headers
 
-```jsx
+```tsx
 import { DatabaseViewer } from '@tabula-lens/react';
 
 function App() {
@@ -416,136 +375,96 @@ function App() {
 }
 ```
 
-## 🎯 Type Definitions
+## 🎨 Styling
 
-### ClassNames Interface
-
-```typescript
-interface ClassNames {
-  container?: string;
-  tableWrapper?: string;
-  table?: string;
-  header?: string;
-  cell?: string;
-  filter?: string;
-  filterInput?: string;
-  pagination?: string;
-  paginationButton?: string;
-  paginationInfo?: string;
-  pageSize?: string;
-  tableSelector?: string;
-  tableSelectorDropdown?: string;
-  tableSelectorSidebar?: string;
-  empty?: string;
-  loading?: string;
-  error?: string;
-  info?: string;
-}
-```
-
-### Styles Interface
-
-```typescript
-interface Styles {
-  container?: React.CSSProperties;
-  tableWrapper?: React.CSSProperties;
-  table?: React.CSSProperties;
-  th?: React.CSSProperties;
-  td?: React.CSSProperties;
-  header?: React.CSSProperties;
-  cell?: React.CSSProperties;
-  sortable?: React.CSSProperties;
-  sorted?: React.CSSProperties;
-  filter?: React.CSSProperties;
-  filterInput?: React.CSSProperties;
-  pagination?: React.CSSProperties;
-  paginationButton?: React.CSSProperties;
-  paginationInfo?: React.CSSProperties;
-  pageSize?: React.CSSProperties;
-  tableSelector?: React.CSSProperties;
-  tableSelectorDropdown?: React.CSSProperties;
-  tableSelectorSidebar?: React.CSSProperties;
-  empty?: React.CSSProperties;
-  loading?: React.CSSProperties;
-  spinner?: React.CSSProperties;
-  error?: React.CSSProperties;
-  retry?: React.CSSProperties;
-  info?: React.CSSProperties;
-}
-```
-
-### QueryOptions Interface
-
-```typescript
-interface QueryOptions {
-  staleTime?: number;
-  cacheTime?: number;
-  retry?: number | boolean;
-  retryDelay?: number;
-  refetchOnWindowFocus?: boolean;
-  refetchOnReconnect?: boolean;
-  refetchOnMount?: boolean;
-}
-```
-
-## 🧪 Testing
-
-```jsx
-import { render, screen } from '@testing-library/react';
 import { DatabaseViewer } from '@tabula-lens/react';
 
-describe('DatabaseViewer', () => {
-  it('renders loading state initially', () => {
-    render(<DatabaseViewer path="/api/tabula-lens" />);
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
-  });
+### Custom Components
 
-  it('renders table with data', async () => {
-    render(<DatabaseViewer path="/api/tabula-lens" />);
-    // Wait for data to load
-    const table = await screen.findByRole('table');
-    expect(table).toBeInTheDocument();
-  });
-});
-```
-
-## 🚀 Performance Optimization
-
-### Query Caching
-
-```jsx
+```tsx
 import { DatabaseViewer } from '@tabula-lens/react';
+
+const CustomLoading = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+  </div>
+);
+
+const CustomError = ({ error, retry }) => (
+  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+    <p className="text-red-800">Error: {error.message}</p>
+    <button onClick={retry} className="mt-2 px-4 py-2 bg-red-600 text-white rounded">
+      Retry
+    </button>
+  </div>
+);
 
 function App() {
   return (
     <DatabaseViewer
       path="/api/tabula-lens"
-      queryOptions={{
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        cacheTime: 10 * 60 * 1000, // 10 minutes
-        refetchOnWindowFocus: false,
-      }}
+      loadingComponent={CustomLoading}
+      errorComponent={CustomError}
     />
   );
 }
 ```
 
-### Auto-refresh
+## 🔧 Troubleshooting
 
-```jsx
-import { DatabaseViewer } from '@tabula-lens/react';
+### Data Not Loading
 
-function App() {
-  return (
-    <DatabaseViewer
-      path="/api/tabula-lens"
-      refetchInterval={30000} // Refresh every 30 seconds
-    />
-  );
-}
-```
+**Problem**: Component shows loading state indefinitely
 
-## 🎨 Styling with CSS
+**Solutions**:
+
+- Verify the `path` prop points to the correct API endpoint
+- Check that your backend is running and accessible
+- Ensure the backend returns valid JSON responses
+- Check browser console for network errors
+- Verify authentication headers are correctly configured
+
+### Table Not Displaying Data
+
+**Problem**: Table loads but shows no data
+
+**Solutions**:
+
+- Verify the table exists in your database
+- Check that the table has data
+- Ensure column names match between backend and frontend
+- Verify filtering isn't hiding all results
+- Check browser console for JavaScript errors
+
+### Styling Issues
+
+**Problem**: Component looks unstyled or broken
+
+**Solutions**:
+
+- Ensure you're not using CSS-in-JS libraries that conflict
+- Check that custom class names are correctly applied
+- Verify custom styles don't conflict with existing styles
+- Try removing custom styles to see if default styles work
+
+### Performance Issues
+
+**Problem**: Component is slow or unresponsive
+
+**Solutions**:
+
+- Reduce `pageSize` to show fewer rows per page
+- Use the `columns` parameter to select only needed columns
+- Enable query caching with appropriate `staleTime`
+- Disable features you don't need (filtering, sorting, etc.)
+- Consider server-side pagination for large datasets
+  }
+
+````
+
+## 🎨 Styling
+
+### CSS Classes
 
 ```css
 /* Custom table styling */
@@ -569,58 +488,48 @@ function App() {
   padding: 12px;
   border-bottom: 1px solid #e5e7eb;
 }
-```
+````
 
-## 🔄 Framework Integration
+### Inline Styles
 
-### Next.js
-
-```jsx
-// app/page.jsx
-'use client';
+```tsx
 import { DatabaseViewer } from '@tabula-lens/react';
 
-export default function Page() {
-  return <DatabaseViewer path="/api/tabula-lens" />;
+function App() {
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      style={{ maxWidth: '1200px', margin: '0 auto' }}
+      styles={{
+        table: { borderCollapse: 'separate', borderSpacing: '0' },
+        th: { backgroundColor: '#1a1a1a', color: 'white' },
+      }}
+    />
+  );
 }
 ```
 
-### TanStack Start
+## 🌐 Browser Support
 
-```jsx
-// routes/index.tsx
-import { DatabaseViewer } from '@tabula-lens/react';
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
 
-export default function Index() {
-  return <DatabaseViewer path="/api/tabula-lens" />;
-}
-```
+## 📝 License
 
-### Remix
-
-```jsx
-// app/routes/dashboard.tsx
-import { DatabaseViewer } from '@tabula-lens/react';
-
-export default function Dashboard() {
-  return <DatabaseViewer path="/api/tabula-lens" />;
-}
-```
+Currently no license. All rights reserved.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
-
-## 📄 License
-
-MIT License - see LICENSE file for details
+Contributions will be allowed soon.
 
 ## 🔗 Links
 
-- [Main Repository](https://github.com/yourusername/tabula-lens)
-- [Node Package](https://www.npmjs.com/package/@tabula-lens/node)
-- [Documentation](https://tabula-lens.dev)
-- [Issues](https://github.com/yourusername/tabula-lens/issues)
+<!-- - [Main Repository](https://github.com/yourusername/tabula-lens) -->
+<!-- - [React Package](https://www.npmjs.com/package/@tabula-lens/react) -->
+<!-- - [Documentation](https://tabula-lens.dev) -->
+<!-- - [Issues](https://github.com/yourusername/tabula-lens/issues) -->
 
 ## 🙏 Acknowledgments
 
