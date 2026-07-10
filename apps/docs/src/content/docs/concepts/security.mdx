@@ -1,0 +1,211 @@
+---
+title: Security Model
+description: Understand the security principles and practices of Tabula Lens.
+---
+
+# Security Model
+
+Tabula Lens is designed with security as a core principle. Learn about the security architecture and best practices.
+
+## Core Security Principles
+
+### Credential Isolation
+
+Database credentials never leave the backend server. This is the fundamental security principle of Tabula Lens.
+
+**Why this matters:**
+- Browser-based applications cannot safely store database credentials
+- Connection strings in frontend code are exposed to all users
+- Database credentials in browser storage are vulnerable to XSS attacks
+
+**How Tabula Lens solves this:**
+- Credentials stay on your backend server
+- Frontend only receives query results, never credentials
+- Backend enforces database access control
+
+### Authentication
+
+Authentication is handled at the HTTP API level using standard token-based authentication.
+
+**Implementation:**
+
+```javascript
+// Backend: Verify authentication
+app.get('/api/tabula-lens', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '')
+  const user = await verifyToken(token)
+  
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+  
+  const data = await tabulaLens.query(req.query)
+  res.json(data)
+})
+```
+
+```jsx
+// Frontend: Send authentication
+<DatabaseViewer 
+  endpoint="/api/tabula-lens"
+  getAuthHeaders={() => ({
+    'Authorization': `Bearer ${userToken}`
+  })}
+/>
+```
+
+### Authorization
+
+Authorization is enforced on the backend before database queries are executed.
+
+**Best practices:**
+- Implement row-level security in your database
+- Use database users with limited permissions
+- Enforce access control based on user roles
+- Validate table access permissions
+
+## Security Best Practices
+
+### Backend Security
+
+1. **Environment Variables**
+   ```bash
+   # Never commit credentials to version control
+   DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
+   JWT_SECRET="your-secret-key"
+   ```
+
+2. **Database Users**
+   ```sql
+   -- Use read-only users when possible
+   CREATE USER tabula_lens_readonly WITH PASSWORD 'secure-password';
+   GRANT SELECT ON ALL TABLES IN SCHEMA public TO tabula_lens_readonly;
+   ```
+
+3. **Connection Security**
+   ```javascript
+   // Use SSL in production
+   const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+     ssl: { rejectUnauthorized: true }
+   })
+   ```
+
+### Frontend Security
+
+1. **Token Storage**
+   ```javascript
+   // Store tokens securely (httpOnly cookies recommended)
+   // Avoid localStorage for sensitive tokens
+   ```
+
+2. **HTTPS Only**
+   ```javascript
+   // Always use HTTPS in production
+   const endpoint = 'https://api.example.com/api/tabula-lens'
+   ```
+
+3. **Input Validation**
+   ```javascript
+   // Validate all inputs on the backend
+   const { table, page, pageSize } = req.query
+   
+   if (!isValidTable(table)) {
+     return res.status(400).json({ error: 'Invalid table' })
+   }
+   ```
+
+## Common Security Pitfalls
+
+### ❌ Don't: Expose Database Credentials
+
+```javascript
+// NEVER do this
+const tabulaLens = new TabulaLens('postgresql://user:password@host/db')
+// This exposes credentials in frontend code
+```
+
+### ✅ Do: Use Backend Proxy
+
+```javascript
+// Backend: Secure credential storage
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
+
+// Frontend: Query through API
+<DatabaseViewer endpoint="/api/tabula-lens" />
+```
+
+### ❌ Don't: Bypass Authentication
+
+```javascript
+// NEVER do this
+app.get('/api/tabula-lens', async (req, res) => {
+  // No authentication check!
+  const data = await tabulaLens.query(req.query)
+  res.json(data)
+})
+```
+
+### ✅ Do: Always Authenticate
+
+```javascript
+// Always verify authentication
+app.get('/api/tabula-lens', async (req, res) => {
+  const user = await authenticate(req)
+  if (!user) return res.status(401).json({ error: 'Unauthorized' })
+  
+  const data = await tabulaLens.query(req.query)
+  res.json(data)
+})
+```
+
+## Error Handling
+
+Security-conscious error handling prevents information leakage:
+
+```javascript
+// Generic error messages
+try {
+  const data = await tabulaLens.query(req.query)
+  res.json(data)
+} catch (error) {
+  // Don't expose internal details
+  console.error('Database error:', error) // Log details server-side
+  res.status(500).json({ 
+    error: 'An error occurred while processing your request' 
+  })
+}
+```
+
+## Logging and Monitoring
+
+Implement security logging:
+
+```javascript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logging: true
+})
+
+// Log security events
+app.get('/api/tabula-lens', async (req, res) => {
+  const user = await authenticate(req)
+  if (!user) {
+    logger.warn('Unauthorized access attempt', { ip: req.ip })
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+  
+  logger.info('Database query', { user: user.id, table: req.query.table })
+  const data = await tabulaLens.query(req.query)
+  res.json(data)
+})
+```
+
+## Compliance Considerations
+
+Tabula Lens can help with compliance:
+
+- **GDPR**: Data stays on your servers, you control access
+- **SOC 2**: Implement proper access controls and logging
+- **HIPAA**: Use encryption and audit trails
+- **PCI DSS**: Never store credentials in frontend code
+
+Coming soon: Advanced security configurations and audit logging guides.

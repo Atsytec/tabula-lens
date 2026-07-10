@@ -1,0 +1,110 @@
+---
+title: HTTP API
+description: Complete HTTP API reference for Tabula Lens.
+---
+
+# HTTP API Reference
+
+The HTTP API is the universal interface contract that connects Tabula Lens frontends and backends.
+
+## Base Endpoint
+
+All API calls are made to a single endpoint configured in your backend:
+
+```
+GET /api/tabula-lens
+```
+
+## Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `table` | `string` | Yes | Table name to query |
+| `page` | `number` | No | Page number (default: 1) |
+| `pageSize` | `number` | No | Rows per page (default: 50) |
+| `filter` | `string` | No | Filter string for searching |
+| `sortColumn` | `string` | No | Column to sort by |
+| `sortDirection` | `'asc' \| 'desc'` | No | Sort direction (default: 'asc') |
+
+## Request Example
+
+```http
+GET /api/tabula-lens?table=users&page=1&pageSize=25&filter=status:active&sortColumn=created_at&sortDirection=desc
+Authorization: Bearer your-token-here
+```
+
+## Response Format
+
+### Success Response
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "created_at": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "meta": {
+    "table": "users",
+    "page": 1,
+    "pageSize": 25,
+    "totalPages": 10,
+    "totalRows": 250
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": {
+    "message": "Table not found",
+    "code": "TABLE_NOT_FOUND",
+    "details": {}
+  }
+}
+```
+
+## Authentication
+
+Authentication is handled via the `Authorization` header:
+
+```http
+Authorization: Bearer your-token-here
+```
+
+Or use custom headers via the `getAuthHeaders` prop in the React component.
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| `TABLE_NOT_FOUND` | Specified table does not exist |
+| `INVALID_QUERY` | Query parameters are invalid |
+| `AUTHENTICATION_FAILED` | Authentication failed |
+| `DATABASE_ERROR` | Database connection or query error |
+| `INTERNAL_ERROR` | Internal server error |
+
+## Interchangeability
+
+The HTTP API is designed to be implementation-agnostic:
+
+- **Frontend**: Any frontend can consume this API (React, Vue, Svelte, etc.)
+- **Backend**: Any backend can implement this API (Node, Python, Go, etc.)
+- **Database**: Any database can be supported (PostgreSQL, MySQL, etc.)
+
+This allows you to mix and match implementations while maintaining a stable interface contract.
+
+## Rate Limiting
+
+Rate limiting is implementation-specific and should be configured on your backend.
+
+## Caching
+
+Responses can be cached based on the query parameters. Implement caching strategies on your backend as needed.
+
+Coming soon: Advanced API features and optimization guides.

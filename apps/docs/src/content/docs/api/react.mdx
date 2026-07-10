@@ -1,0 +1,117 @@
+---
+title: React API
+description: Complete API reference for the @tabula-lens/react package.
+---
+
+# React API Reference
+
+Complete API reference for the `@tabula-lens/react` package.
+
+## DatabaseViewer Component
+
+The main component for displaying database data in your React application.
+
+### Props
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `endpoint` | `string` | Yes | The API endpoint to query for data |
+| `authToken` | `string` | No | Authentication token for API requests |
+| `getAuthHeaders` | `function` | No | Function to return auth headers |
+| `styles` | `object` | No | Custom styles for component |
+| `classNames` | `object` | No | Custom class names for component |
+| `pageSize` | `number` | No | Number of rows per page (default: 50) |
+| `tableSelector` | `'dropdown' \| 'sidebar'` | No | Table selector mode (default: 'dropdown') |
+| `filterPosition` | `'top' \| 'bottom'` | No | Filter input position (default: 'top') |
+| `paginationPosition` | `'top' \| 'bottom'` | No | Pagination position (default: 'bottom') |
+
+### Example
+
+```jsx
+<DatabaseViewer 
+  endpoint="/api/tabula-lens"
+  authToken={userToken}
+  pageSize={25}
+  tableSelector="sidebar"
+/>
+```
+
+## Sub-Components
+
+### LoadingState
+
+Component displayed while data is loading.
+
+### ErrorState
+
+Component displayed when an error occurs.
+
+### EmptyState
+
+Component displayed when no data is available.
+
+### TableSelector
+
+Component for selecting which table to view.
+
+### FilterInput
+
+Component for filtering table data.
+
+### Pagination
+
+Component for paginating through table data.
+
+### DataTable
+
+Component for rendering the data table.
+
+## Custom Hooks
+
+### useLogger
+
+Hook for logging functionality.
+
+### useTableState
+
+Hook for table state management.
+
+### useDatabaseData
+
+Hook for data fetching logic.
+
+### buildQueryParams
+
+Utility function for building query parameters.
+
+## Utility Functions
+
+### isQueryResult
+
+Type guard for query results.
+
+### validatePagination
+
+Pagination validation utility.
+
+### sanitizeColumnData
+
+Data sanitization utility.
+
+### createAuthenticatedHeaders
+
+Auth header creation utility.
+
+### validateResponse
+
+Response validation utility.
+
+### mergeClassName
+
+Class name merging utility.
+
+### mergeStyle
+
+Style merging utility.
+
+Coming soon: Detailed documentation for each API component and utility.

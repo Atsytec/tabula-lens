@@ -1,0 +1,115 @@
+---
+title: Architecture
+description: Understand the architecture and design principles of Tabula Lens.
+---
+
+# Architecture
+
+Tabula Lens is built with a security-first, backend-agnostic architecture that separates concerns between frontend and backend.
+
+## Core Principles
+
+### Security First
+
+Database credentials never leave the backend. Your connection strings stay secure on your server, not exposed to the browser.
+
+### Backend Agnostic
+
+The HTTP API serves as a universal interface contract. Any backend can implement the API, and any frontend can consume it.
+
+### Interchangeable Components
+
+Frontend and backend implementations are interchangeable. Mix and match based on your needs.
+
+## System Architecture
+
+```
+┌─────────────────┐     HTTP API     ┌─────────────────┐
+│   Frontend      │ ◄──────────────► │   Backend       │
+│                 │                  │                 │
+│  - React        │                  │  - Node.js      │
+│  - Vue          │                  │  - Express      │
+│  - Svelte       │                  │  - Fastify      │
+│  - Any framework│                  │  - Any framework│
+└─────────────────┘                  └─────────────────┘
+                                               │
+                                               │ Database Connection
+                                               │
+                                      ┌─────────────────┐
+                                      │   Database      │
+                                      │                 │
+                                      │  - PostgreSQL   │
+                                      │  - MySQL        │
+                                      │  - Any database │
+                                      └─────────────────┘
+```
+
+## Frontend Architecture
+
+The React component is built with a modular architecture:
+
+- **Main Component**: DatabaseViewer orchestrates all functionality
+- **Sub-components**: Reusable UI components (LoadingState, ErrorState, etc.)
+- **Custom Hooks**: Encapsulated logic (useTableState, useDatabaseData, etc.)
+- **Utilities**: Helper functions (fetchHelpers, validationHelpers, etc.)
+
+This modular design allows for:
+- Easy customization and extension
+- Better testing and maintenance
+- Performance optimization with React.memo
+- Clear separation of concerns
+
+## Backend Architecture
+
+The Node backend provides:
+
+- **Framework Adapters**: Support for 15+ Node.js frameworks
+- **Database Abstraction**: Unified database interface
+- **Security**: Credential management and authentication
+- **Logging**: Comprehensive request logging
+- **Error Handling**: Structured error responses
+
+## HTTP API Contract
+
+The HTTP API is the stable interface that connects frontend and backend:
+
+- **Single Endpoint**: All queries go through one endpoint
+- **Query Parameters**: Standardized parameter format
+- **Response Format**: Consistent JSON responses
+- **Error Handling**: Structured error codes and messages
+
+This contract ensures:
+- Frontend and backend can evolve independently
+- Multiple implementations can coexist
+- Clear versioning and compatibility
+- Easy testing and debugging
+
+## Data Flow
+
+1. **User Interaction**: User interacts with DatabaseViewer component
+2. **State Management**: Component state is managed by custom hooks
+3. **API Request**: HTTP request is made to backend endpoint
+4. **Backend Processing**: Backend processes query and fetches data
+5. **Database Query**: Database executes the query and returns results
+6. **Response**: Backend returns formatted JSON response
+7. **Display**: Frontend renders data in the table component
+
+## Security Model
+
+- **Credentials**: Database credentials stay on backend
+- **Authentication**: Token-based authentication via headers
+- **Authorization**: Backend enforces access control
+- **Validation**: Input validation on both frontend and backend
+- **Error Messages**: Generic error messages to prevent information leakage
+
+## Extensibility
+
+The architecture supports:
+
+- **New Frontends**: Any framework that can make HTTP requests
+- **New Backends**: Any language/framework that can implement the HTTP API
+- **New Databases**: Any database with a Node.js driver
+- **Custom Components**: Extend or replace sub-components
+- **Custom Hooks**: Create custom data fetching logic
+
+Coming soon: Detailed architecture diagrams and integration patterns.

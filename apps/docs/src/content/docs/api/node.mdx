@@ -1,0 +1,128 @@
+---
+title: Node API
+description: Complete API reference for the @tabula-lens/node package.
+---
+
+# Node API Reference
+
+Complete API reference for the `@tabula-lens/node` package.
+
+## TabulaLens Class
+
+The main class for backend database querying.
+
+### Constructor
+
+```typescript
+new TabulaLens(connectionString: string, options?: TabulaLensOptions)
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `connectionString` | `string` | Yes | PostgreSQL connection string |
+| `options` | `TabulaLensOptions` | No | Configuration options |
+
+#### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `logging` | `boolean` | `false` | Enable request logging |
+| `maxConnections` | `number` | `10` | Maximum database connections |
+
+### Methods
+
+#### query
+
+```typescript
+async query(params: QueryParams): Promise<QueryResult>
+```
+
+Executes a database query based on the provided parameters.
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `table` | `string` | Yes | Table name to query |
+| `page` | `number` | No | Page number (default: 1) |
+| `pageSize` | `number` | No | Rows per page (default: 50) |
+| `filter` | `string` | No | Filter string |
+| `sortColumn` | `string` | No | Column to sort by |
+| `sortDirection` | `'asc' \| 'desc'` | No | Sort direction |
+
+#### Returns
+
+`Promise<QueryResult>` - The query result containing data and metadata.
+
+### Example
+
+```javascript
+import TabulaLens from "@tabula-lens/node"
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logging: true,
+  maxConnections: 20
+})
+
+const result = await tabulaLens.query({
+  table: 'users',
+  page: 1,
+  pageSize: 25,
+  filter: 'status:active',
+  sortColumn: 'created_at',
+  sortDirection: 'desc'
+})
+```
+
+## Framework Adapters
+
+Tabula Lens provides adapters for 15+ Node.js frameworks:
+
+### Express Adapter
+
+```javascript
+import express from 'express'
+import TabulaLens from "@tabula-lens/node"
+
+const app = express()
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
+
+app.get('/api/tabula-lens', async (req, res) => {
+  const data = await tabulaLens.query(req.query)
+  res.json(data)
+})
+```
+
+### Fastify Adapter
+
+```javascript
+import Fastify from 'fastify'
+import TabulaLens from "@tabula-lens/node"
+
+const fastify = Fastify()
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
+
+fastify.get('/api/tabula-lens', async (request, reply) => {
+  const data = await tabulaLens.query(request.query)
+  return data
+})
+```
+
+## Supported Frameworks
+
+- Express (4.x & 5.x)
+- Fastify
+- Koa
+- Hapi
+- Restify
+- Next.js
+- TanStack Start
+- Remix
+- SvelteKit
+- Hono
+- Elysia
+- Fresh
+
+Coming soon: Detailed documentation for each framework adapter.

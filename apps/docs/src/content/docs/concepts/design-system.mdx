@@ -1,0 +1,284 @@
+---
+title: Design System
+description: Learn about the design system and styling options for Tabula Lens.
+---
+
+# Design System
+
+Tabula Lens includes a comprehensive design system for consistent, customizable styling across your application.
+
+## Design Principles
+
+### Data-First Design
+
+The design system prioritizes data readability and clarity:
+
+- **High Contrast**: Ensure text and data are easily readable
+- **Clear Hierarchy**: Visual distinction between headers, data, and controls
+- **Generous Whitespace**: Room for data to breathe
+- **Subtle Depth**: Minimal shadows and borders for structure
+
+### Modern & Professional
+
+Clean, contemporary design that fits modern applications:
+
+- **Rounded Corners**: 4-8px border radius for softness
+- **Neutral Palette**: Refined grays and blues for professionalism
+- **Warm Accents**: Subtle accent colors for interactive elements
+- **Smooth Transitions**: Polished micro-interactions
+
+## Color Palette
+
+### Primary Colors
+
+Blue-teal spectrum for primary actions and branding:
+
+```css
+--tlens-primary: #0ea5e9;
+--tlens-primary-hover: #0284c7;
+```
+
+### Neutral Colors
+
+Refined neutrals for structure and text:
+
+```css
+--tlens-text-primary: #0f172a;
+--tlens-text-secondary: #64748b;
+--tlens-bg-white: #ffffff;
+--tlens-bg-header: #f8fafc;
+--tlens-bg-hover: #f1f5f9;
+```
+
+### Functional Colors
+
+Semantic colors for states and feedback:
+
+```css
+--tlens-bg-error: #fef2f2;
+--tlens-border-error: #fecaca;
+--tlens-error: #dc2626;
+--tlens-error-hover: #b91c1c;
+```
+
+### Border Colors
+
+Subtle borders for structure:
+
+```css
+--tlens-border-default: #e2e8f0;
+```
+
+## Spacing System
+
+Consistent spacing tokens for layout:
+
+```css
+--tlens-spacing-xs: 0.25rem;  /* 4px */
+--tlens-spacing-sm: 0.5rem;   /* 8px */
+--tlens-spacing-md: 1rem;     /* 16px */
+--tlens-spacing-lg: 1.5rem;   /* 24px */
+```
+
+## Typography
+
+Clean, modern sans-serif typography:
+
+```css
+--tlens-font-size-base: 0.875rem;  /* 14px */
+--tlens-font-size-sm: 0.75rem;    /* 12px */
+```
+
+## Dark Mode
+
+Automatic dark mode support via CSS media queries:
+
+```css
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tlens-text-primary: #f8fafc;
+    --tlens-text-secondary: #94a3b8;
+    --tlens-bg-white: #1e293b;
+    --tlens-bg-header: #0f172a;
+    --tlens-bg-hover: #334155;
+  }
+}
+```
+
+## Styling Options
+
+### 1. CSS Custom Properties
+
+Use CSS custom properties for global theming:
+
+```css
+:root {
+  --tlens-primary: #3b82f6;
+  --tlens-primary-hover: #2563eb;
+}
+```
+
+### 2. Style Objects
+
+Customize component styles via props:
+
+```jsx
+<DatabaseViewer 
+  endpoint="/api/tabula-lens"
+  styles={{
+    container: { padding: '20px', borderRadius: '8px' },
+    table: { border: '1px solid #e2e8f0' },
+    header: { backgroundColor: '#f8fafc' }
+  }}
+/>
+```
+
+### 3. Class Names
+
+Override with custom class names:
+
+```jsx
+<DatabaseViewer 
+  endpoint="/api/tabula-lens"
+  classNames={{
+    container: 'custom-database-viewer',
+    table: 'custom-table',
+    header: 'custom-header'
+  }}
+/>
+```
+
+### 4. Complete Customization
+
+Combine all approaches:
+
+```jsx
+<DatabaseViewer 
+  endpoint="/api/tabula-lens"
+  styles={{
+    container: { padding: '24px' }
+  }}
+  classNames={{
+    container: 'my-custom-class'
+  }}
+/>
+```
+
+```css
+.my-custom-class {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+```
+
+## Component-Specific Styling
+
+### Table Styles
+
+```css
+.tlens-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tlens-table-header {
+  background-color: var(--tlens-bg-header);
+  font-weight: 600;
+}
+
+.tlens-table-row:hover {
+  background-color: var(--tlens-bg-hover);
+}
+```
+
+### Pagination Styles
+
+```css
+.tlens-pagination-button {
+  padding: var(--tlens-spacing-sm) var(--tlens-spacing-md);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.tlens-pagination-button:hover {
+  background-color: var(--tlens-bg-hover);
+}
+```
+
+### Filter Styles
+
+```css
+.tlens-filter-input {
+  padding: var(--tlens-spacing-sm) var(--tlens-spacing-md);
+  border: 1px solid var(--tlens-border-default);
+  border-radius: 4px;
+}
+```
+
+## Animation
+
+Subtle animations for polished interactions:
+
+```css
+--tlens-animation-duration: 0.2s;
+```
+
+Spinner animation for loading states:
+
+```css
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.tlens-spinner {
+  animation: spin 1s linear infinite;
+}
+```
+
+## Accessibility
+
+The design system includes accessibility considerations:
+
+- **Color Contrast**: WCAG AA compliant color combinations
+- **Focus States**: Clear focus indicators for keyboard navigation
+- **Reduced Motion**: Respects user's motion preferences
+- **Screen Readers**: Semantic HTML structure for assistive technologies
+
+## Customization Examples
+
+### Brand Integration
+
+Match your brand colors:
+
+```css
+:root {
+  --tlens-primary: #your-brand-color;
+  --tlens-primary-hover: #your-brand-hover;
+}
+```
+
+### Compact Layout
+
+Reduce spacing for dense data:
+
+```css
+:root {
+  --tlens-spacing-sm: 0.25rem;
+  --tlens-spacing-md: 0.5rem;
+  --tlens-font-size-base: 0.75rem;
+}
+```
+
+### Minimal Design
+
+Clean, minimal aesthetic:
+
+```css
+:root {
+  --tlens-border-default: transparent;
+  --tlens-bg-header: transparent;
+}
+```
+
+Coming soon: Advanced styling patterns and component library integration guides.

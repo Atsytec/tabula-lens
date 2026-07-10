@@ -1,0 +1,76 @@
+---
+title: Database Integration
+description: Learn how to connect Tabula Lens to your PostgreSQL database.
+---
+
+# Database Integration
+
+This guide covers how to connect Tabula Lens to your PostgreSQL database.
+
+## Supported Databases
+
+Currently, Tabula Lens supports PostgreSQL databases.
+
+## Database Connection
+
+Set your database connection string as an environment variable:
+
+```bash
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
+```
+
+## Connection Patterns
+
+### Local Development
+
+```javascript
+import TabulaLens from "@tabula-lens/node"
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
+```
+
+### Production
+
+```javascript
+import TabulaLens from "@tabula-lens/node"
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  // Production-specific options
+  logging: true,
+  maxConnections: 20
+})
+```
+
+## Connection Pooling
+
+Tabula Lens automatically manages connection pooling for optimal performance.
+
+## Security Best Practices
+
+- Use environment variables for connection strings
+- Never commit database credentials to version control
+- Use read-only database users when possible
+- Implement proper database user permissions
+- Use SSL connections in production
+
+## Troubleshooting
+
+### Connection Issues
+
+If you encounter connection issues:
+
+1. Verify your DATABASE_URL is correct
+2. Check database server is running
+3. Ensure network connectivity
+4. Verify database user permissions
+
+### Performance Issues
+
+For performance optimization:
+
+1. Use connection pooling
+2. Implement proper indexing
+3. Consider database server resources
+4. Monitor query performance
+
+Coming soon: Advanced database configuration and optimization guides.

@@ -1,0 +1,18 @@
+# Ignore node_modules in skill directories
+node_modules/
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore build artifacts
+dist/
+build/
+*.log

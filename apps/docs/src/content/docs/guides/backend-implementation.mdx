@@ -1,0 +1,87 @@
+---
+title: Backend Implementation
+description: Learn how to set up Tabula Lens on your Node.js backend.
+---
+
+# Backend Implementation
+
+This guide covers how to integrate Tabula Lens into your Node.js backend.
+
+## Installation
+
+```bash
+npm install @tabula-lens/node
+```
+
+## Basic Setup
+
+```javascript
+import TabulaLens from "@tabula-lens/node"
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
+```
+
+## Framework Adapters
+
+Tabula Lens supports 15+ Node.js frameworks:
+
+### Traditional Frameworks
+- Express (4.x & 5.x)
+- Fastify
+- Koa
+- Hapi
+- Restify
+
+### Modern Frameworks
+- Next.js
+- TanStack Start
+- Remix
+- SvelteKit
+
+### Edge Frameworks
+- Hono
+- Elysia
+- Fresh
+
+## Example: Express
+
+```javascript
+import express from 'express'
+import TabulaLens from "@tabula-lens/node"
+
+const app = express()
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
+
+app.get('/api/tabula-lens', async (req, res) => {
+  const data = await tabulaLens.query(req.query)
+  res.json(data)
+})
+
+app.listen(3000)
+```
+
+## Example: Fastify
+
+```javascript
+import Fastify from 'fastify'
+import TabulaLens from "@tabula-lens/node"
+
+const fastify = Fastify()
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
+
+fastify.get('/api/tabula-lens', async (request, reply) => {
+  const data = await tabulaLens.query(request.query)
+  return data
+})
+
+fastify.listen({ port: 3000 })
+```
+
+## Security Considerations
+
+- Database credentials never leave the backend
+- Connection strings stay secure
+- Always use environment variables for sensitive data
+- Implement proper authentication on your API endpoints
+
+Coming soon: Detailed documentation for each framework adapter.

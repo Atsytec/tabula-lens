@@ -1,0 +1,74 @@
+---
+title: Frontend Implementation
+description: Learn how to integrate Tabula Lens into your React application.
+---
+
+# Frontend Implementation
+
+This guide covers how to integrate the Tabula Lens React component into your application.
+
+## Installation
+
+```bash
+npm install @tabula-lens/react
+```
+
+## Basic Usage
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react'
+
+function App() {
+  return (
+    <DatabaseViewer 
+      endpoint="/api/tabula-lens"
+      authToken={userToken}
+    />
+  )
+}
+```
+
+## Component Architecture
+
+The DatabaseViewer component is built with a modular architecture:
+
+- **Main Component**: `DatabaseViewer` - The orchestrator component
+- **Sub-components**: LoadingState, ErrorState, EmptyState, TableSelector, FilterInput, Pagination, DataTable
+- **Custom Hooks**: useLogger, useTableState, useDatabaseData, buildQueryParams
+- **Utilities**: fetchHelpers, validationHelpers, styleHelpers
+
+## Configuration Options
+
+### Authentication
+
+```jsx
+<DatabaseViewer 
+  endpoint="/api/tabula-lens"
+  getAuthHeaders={() => ({
+    'Authorization': `Bearer ${token}`
+  })}
+/>
+```
+
+### Styling
+
+```jsx
+<DatabaseViewer 
+  endpoint="/api/tabula-lens"
+  styles={{
+    container: { padding: '20px' },
+    table: { border: '1px solid #ccc' }
+  }}
+/>
+```
+
+## Advanced Features
+
+- Custom component patterns
+- TanStack Query integration
+- TanStack Table integration
+- Performance optimization with React.memo
+- Advanced sorting with column validation
+- Filter column selector usage
+
+Coming soon: Detailed documentation for each feature.
