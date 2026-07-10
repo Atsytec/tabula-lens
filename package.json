@@ -1,5 +1,6 @@
 {
   "name": "tabula-lens",
+  "description": "A component library for viewing database data with secure, backend-agnostic architecture",
   "private": true,
   "scripts": {
     "build": "turbo run build",
