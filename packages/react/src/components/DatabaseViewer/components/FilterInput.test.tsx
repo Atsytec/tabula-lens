@@ -45,9 +45,11 @@ describe('FilterInput Accessibility', () => {
         margin: '-1px',
         overflow: 'hidden',
         clip: 'rect(0, 0, 0, 0)',
-        whiteSpace: 'nowrap',
         border: 0,
       });
+      // whiteSpace may be handled differently in React 19, so check it separately
+      const style = window.getComputedStyle(label);
+      expect(style.whiteSpace).toBe('nowrap');
     });
 
     it('should maintain label association with custom placeholder', () => {

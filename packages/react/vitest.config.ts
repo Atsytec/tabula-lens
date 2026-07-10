@@ -7,5 +7,12 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+  },
+  resolve: {
+    alias: {
+      './styles/variables.css': './src/components/DatabaseViewer/styles/variables.css',
+      './styles/global.css': './src/components/DatabaseViewer/styles/global.css',
+    },
   },
 });

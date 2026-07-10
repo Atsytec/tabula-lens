@@ -26,7 +26,3 @@ export { defaultStyles } from './styles/defaultStyles';
 
 // Hooks and utilities
 export * from './hooks';
-
-// CSS imports for theming
-import './styles/variables.css';
-import './styles/global.css';
