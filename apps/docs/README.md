@@ -1,16 +1,13 @@
-# Starlight Starter Kit: Basics
+# Tabula Lens Documentation
 
 [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-```
-pnpm create astro@latest -- --template starlight
-```
-
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Documentation site for Tabula Lens - a component library for viewing database data with secure, backend-agnostic architecture.
 
 ## 🚀 Project Structure
 
-Inside of your Astro + Starlight project, you'll see the following folders and files:
+Inside of this Astro + Starlight documentation site, you'll see the following folders and files:
 
 ```
 .
@@ -33,7 +30,7 @@ Static assets, like favicons, can be placed in the `public/` directory.
 
 ## 🧞 Commands
 
-All commands are run from the root of the project, from a terminal:
+All commands are run from the root of the monorepo, from a terminal:
 
 | Command                | Action                                           |
 | :--------------------- | :----------------------------------------------- |
@@ -43,6 +40,12 @@ All commands are run from the root of the project, from a terminal:
 | `pnpm preview`         | Preview your build locally, before deploying     |
 | `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `pnpm astro -- --help` | Get help using the Astro CLI                     |
+
+## 📚 Documentation
+
+- [Tabula Lens Main Repository](https://github.com/Atsytec/tabula-lens)
+- [@tabula-lens/node Package](https://www.npmjs.com/package/@tabula-lens/node)
+- [@tabula-lens/react Package](https://www.npmjs.com/package/@tabula-lens/react)
 
 ## 👀 Want to learn more?
 
