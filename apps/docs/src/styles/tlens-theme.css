@@ -123,7 +123,7 @@
 }
 
 /* Ensure text meets WCAG AA contrast ratios */
-code,
+/* code,
 pre {
   color: inherit;
   background-color: var(--sl-color-gray-2);
@@ -134,10 +134,10 @@ pre {
 pre code {
   background-color: transparent;
   padding: 0;
-}
+} */
 
 /* Improved link readability */
-a {
+/* a {
   text-decoration: none;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
@@ -146,20 +146,20 @@ a {
 a:hover {
   text-decoration: underline;
   text-decoration-thickness: 2px;
-}
+} */
 
 /* Better button contrast */
-button,
+/* button,
 [role='button'] {
   min-height: 44px;
   min-width: 44px;
-}
+} */
 
 /* Form accessibility improvements */
-input,
+/* input,
 textarea,
 select {
-  font-size: 16px; /* Prevent iOS zoom */
+  font-size: 16px;
   border: 2px solid var(--sl-color-gray-4);
   border-radius: 4px;
   padding: 8px 12px;
@@ -171,10 +171,10 @@ select:focus {
   outline: 3px solid var(--sl-color-accent);
   outline-offset: -1px;
   border-color: var(--sl-color-accent);
-}
+} */
 
 /* Table accessibility */
-table {
+/* table {
   border-collapse: collapse;
 }
 
@@ -188,7 +188,7 @@ td {
 th {
   background-color: var(--sl-color-gray-2);
   font-weight: bold;
-}
+} */
 
 /* Ensure sufficient color contrast for all text */
 @media (prefers-contrast: more) {
