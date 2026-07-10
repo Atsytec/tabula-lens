@@ -1,0 +1,39 @@
+---
+title: Component Architecture
+description: Detailed component architecture and design patterns.
+---
+
+# Component Architecture
+
+This section covers the detailed architecture of Tabula Lens components, particularly the React DatabaseViewer component.
+
+## Topics
+
+- **[React Component Architecture](./react-component-architecture/)** - Modular component architecture of DatabaseViewer
+
+## Component Design
+
+The DatabaseViewer component follows a modular, composable architecture:
+
+- **Main Orchestrator** - DatabaseViewer component that coordinates sub-components
+- **Custom Hooks** - Reusable hooks for state management, data fetching, and logging
+- **Sub-components** - Smaller, focused components for specific UI elements
+- **Utility Functions** - Helper functions for common operations
+
+## Performance Optimization
+
+The component architecture is optimized for performance:
+
+- React.memo on all sub-components to prevent unnecessary re-renders
+- Memoized render functions and calculations
+- Efficient state management with custom hooks
+- Optimized data fetching with caching strategies
+
+## Extensibility
+
+The modular architecture enables:
+
+- Custom component replacement for any sub-component
+- Custom hook usage for advanced use cases
+- Utility function reuse in custom implementations
+- Style customization at multiple levels

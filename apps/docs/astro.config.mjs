@@ -76,20 +76,47 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'Guides',
+					label: 'User Guides',
 					items: [
-						{ label: 'Frontend Implementation', slug: 'guides/frontend-implementation' },
-						{ label: 'React Component Architecture', slug: 'guides/react-component-architecture' },
-						{ label: 'TanStack Query Integration', slug: 'guides/tanstack-query-integration' },
-						{ label: 'TanStack Table Integration', slug: 'guides/tanstack-table-integration' },
-						{ label: 'Backend Implementation', slug: 'guides/backend-implementation' },
-						{ label: 'Database Integration', slug: 'guides/database-integration' },
-						{ label: 'Logging System', slug: 'guides/logging-system' },
-						{ label: 'Authentication', slug: 'guides/authentication' },
-						{ label: 'Styling Customization', slug: 'guides/styling-customization' },
-						{ label: 'Deployment', slug: 'guides/deployment' },
-						{ label: 'Performance Optimization', slug: 'guides/performance-optimization' },
-						{ label: 'Testing', slug: 'guides/testing' },
+						{
+							label: 'Overview',
+							slug: 'user-guides',
+						},
+						{
+							label: 'Frontend',
+							items: [
+								{ label: 'Overview', slug: 'user-guides/frontend' },
+								{ label: 'Frontend Implementation', slug: 'user-guides/frontend/frontend-implementation' },
+								{ label: 'TanStack Query Integration', slug: 'user-guides/frontend/tanstack-query-integration' },
+								{ label: 'TanStack Table Integration', slug: 'user-guides/frontend/tanstack-table-integration' },
+								{ label: 'Styling Customization', slug: 'user-guides/frontend/styling-customization' },
+							],
+						},
+						{
+							label: 'Backend',
+							items: [
+								{ label: 'Overview', slug: 'user-guides/backend' },
+								{ label: 'Backend Implementation', slug: 'user-guides/backend/backend-implementation' },
+								{ label: 'Database Integration', slug: 'user-guides/backend/database-integration' },
+								{ label: 'Logging System', slug: 'user-guides/backend/logging-system' },
+							],
+						},
+						{
+							label: 'Integrations',
+							items: [
+								{ label: 'Overview', slug: 'user-guides/integrations' },
+								{ label: 'Authentication', slug: 'user-guides/integrations/authentication' },
+							],
+						},
+						{
+							label: 'Production',
+							items: [
+								{ label: 'Overview', slug: 'user-guides/production' },
+								{ label: 'Deployment', slug: 'user-guides/production/deployment' },
+								{ label: 'Performance Optimization', slug: 'user-guides/production/performance-optimization' },
+								{ label: 'Testing', slug: 'user-guides/production/testing' },
+							],
+						},
 					],
 				},
 				{
@@ -101,17 +128,53 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'Concepts',
+					label: 'Contributor Docs',
 					items: [
-						{ label: 'Architecture', slug: 'concepts/architecture' },
-						{ label: 'Backend Architecture', slug: 'concepts/backend-architecture' },
-						{ label: 'Database Architecture', slug: 'concepts/database-architecture' },
-						{ label: 'Security Model', slug: 'concepts/security' },
-						{ label: 'Design System', slug: 'concepts/design-system' },
-						{ label: 'Performance Characteristics', slug: 'concepts/performance-characteristics' },
-						{ label: 'Caching Strategies', slug: 'concepts/caching-strategies' },
-						{ label: 'Scalability', slug: 'concepts/scalability' },
-						{ label: 'Architecture Decision Records', slug: 'concepts/architecture-decisions' },
+						{
+							label: 'Overview',
+							slug: 'contributor-docs',
+						},
+						{
+							label: 'Architecture',
+							items: [
+								{ label: 'Overview', slug: 'contributor-docs/architecture' },
+								{ label: 'Architecture Overview', slug: 'contributor-docs/architecture/architecture' },
+								{ label: 'Backend Architecture', slug: 'contributor-docs/architecture/backend-architecture' },
+								{ label: 'Database Architecture', slug: 'contributor-docs/architecture/database-architecture' },
+								{ label: 'Architecture Decision Records', slug: 'contributor-docs/architecture/architecture-decisions' },
+							],
+						},
+						{
+							label: 'Component Architecture',
+							items: [
+								{ label: 'Overview', slug: 'contributor-docs/component-architecture' },
+								{ label: 'React Component Architecture', slug: 'contributor-docs/component-architecture/react-component-architecture' },
+							],
+						},
+						{
+							label: 'Internal Systems',
+							items: [
+								{ label: 'Overview', slug: 'contributor-docs/internal-systems' },
+								{ label: 'Design System', slug: 'contributor-docs/internal-systems/design-system' },
+								{ label: 'Error Handling', slug: 'contributor-docs/internal-systems/error-handling' },
+							],
+						},
+						{
+							label: 'Performance & Scaling',
+							items: [
+								{ label: 'Overview', slug: 'contributor-docs/performance-scaling' },
+								{ label: 'Performance Characteristics', slug: 'contributor-docs/performance-scaling/performance-characteristics' },
+								{ label: 'Caching Strategies', slug: 'contributor-docs/performance-scaling/caching-strategies' },
+								{ label: 'Scalability', slug: 'contributor-docs/performance-scaling/scalability' },
+							],
+						},
+						{
+							label: 'Security',
+							items: [
+								{ label: 'Overview', slug: 'contributor-docs/security' },
+								{ label: 'Security Model', slug: 'contributor-docs/security/security' },
+							],
+						},
 					],
 				},
 			],

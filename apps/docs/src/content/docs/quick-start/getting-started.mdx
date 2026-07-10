@@ -83,7 +83,7 @@ const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 app.use(koaAdapter(tabulaLens));
 ```
 
-> **Note:** Tabula Lens supports Express, Fastify, Koa, Hapi, Restify, Hono, Elysia, Next.js, Remix, SvelteKit, TanStack Start, and Fresh. See the [Backend Architecture](/concepts/backend-architecture/) page for the full list.
+> **Note:** Tabula Lens supports Express, Fastify, Koa, Hapi, Restify, Hono, Elysia, Next.js, Remix, SvelteKit, TanStack Start, and Fresh. See the [Backend Architecture](/contributor-docs/architecture/backend-architecture/) page for the full list.
 
 ## Step 3: Install Frontend Package
 
@@ -172,7 +172,7 @@ You can customize the `DatabaseViewer` component with various options:
 />
 ```
 
-See the [Frontend Implementation](/guides/frontend-implementation/) guide for more customization options.
+See the [Frontend Implementation](/user-guides/frontend/frontend-implementation/) guide for more customization options.
 
 ## Troubleshooting
 
@@ -219,14 +219,14 @@ See the [Frontend Implementation](/guides/frontend-implementation/) guide for mo
 
 ### Framework-Specific Issues
 
-If you're using a framework not shown in the examples, check the [Backend Architecture](/concepts/backend-architecture/) and [Frontend Architecture](/concepts/frontend-architecture/) pages for framework-specific guidance.
+If you're using a framework not shown in the examples, check the [Backend Architecture](/contributor-docs/architecture/backend-architecture/) and [Frontend Architecture](/contributor-docs/architecture/architecture/) pages for framework-specific guidance.
 
 ## Next Steps
 
 Now that you've integrated Tabula Lens into your application:
 
-- Learn about [Frontend Implementation](/guides/frontend-implementation/) for advanced patterns and customization
-- Explore [Backend Implementation](/guides/backend-implementation/) for framework-specific configurations
-- Understand the [Architecture](/concepts/architecture/) to learn about the HTTP API contract and interchangeability
-- Read about the [Design System](/concepts/design-system/) for styling and theming options
-- Check the [Backend Architecture](/concepts/backend-architecture/) for the full list of supported frameworks
+- Learn about [Frontend Implementation](/user-guides/frontend/frontend-implementation/) for advanced patterns and customization
+- Explore [Backend Implementation](/user-guides/backend/backend-implementation/) for framework-specific configurations
+- Understand the [Architecture](/contributor-docs/architecture/architecture/) to learn about the HTTP API contract and interchangeability
+- Read about the [Design System](/contributor-docs/internal-systems/design-system/) for styling and theming options
+- Check the [Backend Architecture](/contributor-docs/architecture/backend-architecture/) for the full list of supported frameworks
