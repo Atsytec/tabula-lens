@@ -20,8 +20,8 @@ The HTTP API serves as a universal interface contract. Any backend can implement
 ### Interchangeable Components
 
 Frontend and backend implementations are interchangeable. You can mix and match based on your needs:
-- Use React with Express, or Vue with Fastify
-- Switch from Node.js to Python without changing your frontend
+- Use React with Express, Fastify, Koa, or any supported backend
+- Switch from one backend framework to another without changing your frontend
 - Implement custom backends in any language that supports HTTP
 
 ## System Architecture
@@ -30,12 +30,9 @@ Frontend and backend implementations are interchangeable. You can mix and match 
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Frontend Layer                            │
 │                                                                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │   React      │  │    Vue       │  │   Svelte     │          │
-│  │  Component   │  │  Component   │  │  Component   │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-│         │                 │                 │                   │
-│         └─────────────────┴─────────────────┘                   │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │                     React Component                        │  │
+│  └──────────────────────────────────────────────────────────┘  │
 │                           │                                       │
 │                           │ HTTP API                              │
 │                           ▼                                       │
@@ -265,9 +262,6 @@ You can use any frontend framework that can make HTTP requests:
 // React
 <DatabaseViewer endpoint="/api/tabula-lens" path="users" />
 
-// Vue (hypothetical)
-<DatabaseViewer endpoint="/api/tabula-lens" path="users" />
-
 // Vanilla JavaScript
 fetch('/api/tabula-lens?path=users')
   .then(res => res.json())
@@ -411,7 +405,8 @@ The architecture supports multiple extension points:
 ### New Frontends
 
 Any framework that can make HTTP requests:
-- Web frameworks (React, Vue, Svelte, Angular)
+- React (currently supported)
+- Other web frameworks (Vue, Svelte, Angular) - can be implemented by consuming the HTTP API
 - Mobile frameworks (React Native, Flutter)
 - Desktop applications (Electron, Tauri)
 - Command-line tools
@@ -419,8 +414,8 @@ Any framework that can make HTTP requests:
 ### New Backends
 
 Any language/framework that can implement the HTTP API:
-- Different Node.js frameworks
-- Other languages (Python, Go, Rust, Java)
+- Different Node.js frameworks (Express, Fastify, Koa, Hono, etc. - currently supported)
+- Other languages (Python, Go, Rust, Java) - can be implemented by following the HTTP API contract
 - Serverless functions (AWS Lambda, Vercel Functions)
 - Edge computing platforms
 
