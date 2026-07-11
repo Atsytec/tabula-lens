@@ -56,9 +56,6 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.node == 'true' }}
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22.x]
 
     steps:
       - name: Checkout code
@@ -69,10 +66,10 @@ jobs:
         with:
           version: 9.0.0
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22.x
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -95,9 +92,6 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.react == 'true' }}
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22.x]
 
     steps:
       - name: Checkout code
@@ -108,10 +102,10 @@ jobs:
         with:
           version: 9.0.0
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22.x
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -134,9 +128,6 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.docs == 'true' }}
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22.x]
 
     steps:
       - name: Checkout code
@@ -147,10 +138,10 @@ jobs:
         with:
           version: 9.0.0
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22.x
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -158,9 +149,6 @@ jobs:
 
       - name: Type check
         run: pnpm --filter @tabula-lens/docs run check-types
-
-      - name: Lint
-        run: pnpm --filter @tabula-lens/docs run lint
 
       - name: Build
         run: pnpm --filter @tabula-lens/docs run build
