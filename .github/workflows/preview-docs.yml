@@ -1,0 +1,62 @@
+name: Preview Documentation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/docs/**'
+      - '.github/workflows/preview-docs.yml'
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Set explicit permissions for security
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  preview-docs:
+    name: Preview Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check documentation
+        run: pnpm --filter @tabula-lens/docs run check-types
+
+      - name: Lint documentation
+        run: pnpm --filter @tabula-lens/docs run lint
+
+      - name: Build documentation
+        run: pnpm --filter @tabula-lens/docs run build
+
+      - name: Comment PR with preview link
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📚 Documentation preview build completed successfully!\n\nThe documentation changes in this PR have been built and validated. Once this PR is merged and packages are published, the documentation will be automatically deployed to [docs.tabula-lens.dev](https://docs.tabula-lens.dev).'
+            })

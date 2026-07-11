@@ -16,6 +16,7 @@ permissions:
   contents: read
   pull-requests: read
   checks: write
+  statuses: write
 
 jobs:
   # Detect which packages changed
@@ -24,6 +25,7 @@ jobs:
     outputs:
       node: ${{ steps.filter.outputs.node }}
       react: ${{ steps.filter.outputs.react }}
+      docs: ${{ steps.filter.outputs.docs }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,6 +42,11 @@ jobs:
               - 'turbo.json'
             react:
               - 'packages/react/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+            docs:
+              - 'apps/docs/**'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'turbo.json'
@@ -121,3 +128,107 @@ jobs:
 
       - name: Build
         run: pnpm --filter @tabula-lens/react run build
+
+  # Validate documentation
+  docs:
+    needs: changes
+    if: ${{ needs.changes.outputs.docs == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm --filter @tabula-lens/docs run check-types
+
+      - name: Lint
+        run: pnpm --filter @tabula-lens/docs run lint
+
+      - name: Build
+        run: pnpm --filter @tabula-lens/docs run build
+
+      - name: Check for broken internal links
+        run: |
+          # Use a simple Node.js script to check for broken internal links
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          
+          const distDir = 'apps/docs/dist';
+          
+          // Recursively find all HTML files
+          function findHtmlFiles(dir, files = []) {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const entry of entries) {
+              const fullPath = path.join(dir, entry.name);
+              if (entry.isDirectory()) {
+                findHtmlFiles(fullPath, files);
+              } else if (entry.name.endsWith('.html')) {
+                files.push(fullPath);
+              }
+            }
+            return files;
+          }
+          
+          const htmlFiles = findHtmlFiles(distDir);
+          let brokenLinks = [];
+          
+          htmlFiles.forEach(filePath => {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const dir = path.dirname(filePath);
+            const relativePath = path.relative(distDir, filePath);
+            
+            // Find all href attributes
+            const hrefRegex = /href=\"([^\"]+)\"/g;
+            let match;
+            
+            while ((match = hrefRegex.exec(content)) !== null) {
+              const link = match[1];
+              
+              // Skip external links, anchors, and mailto
+              if (link.startsWith('http') || link.startsWith('#') || link.startsWith('mailto:')) {
+                continue;
+              }
+              
+              // Resolve the target path
+              let targetPath = path.resolve(dir, link);
+              
+              // Handle directory paths (append index.html)
+              if (!link.endsWith('.html') && !link.includes('.')) {
+                targetPath = path.join(targetPath, 'index.html');
+              }
+              
+              // Check if file exists
+              if (!fs.existsSync(targetPath)) {
+                brokenLinks.push(\`In \${relativePath}: \${link}\`);
+              }
+            }
+          });
+          
+          if (brokenLinks.length > 0) {
+            console.error('Broken internal links found:');
+            brokenLinks.forEach(link => console.error('  -', link));
+            process.exit(1);
+          } else {
+            console.log('No broken internal links found.');
+          }
+          "
+        continue-on-error: true

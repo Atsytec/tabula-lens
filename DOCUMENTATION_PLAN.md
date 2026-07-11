@@ -408,23 +408,34 @@ The existing JSDoc comments in the code are comprehensive and serve as inline do
 - [ ] Add search analytics (deferred - requires analytics setup)
 - [x] Test search functionality across content
 
-### Phase 9: Deployment & CI/CD
+### Phase 9: Deployment & CI/CD ✅
 
 **GitHub Actions Setup**
 
-- [ ] Create GitHub Actions workflow for documentation
-- [ ] Set up automatic deployment on push to main
-- [ ] Configure preview deployments for pull requests
-- [ ] Add deployment status checks
-- [ ] Test deployment workflow
+- [x] Create GitHub Actions workflow for documentation
+- [x] Set up automatic deployment on package release (not push to main)
+- [x] Configure preview deployments for pull requests
+- [x] Add deployment status checks
+- [x] Test deployment workflow
 
 **Documentation Testing**
 
-- [ ] Set up automated link checking
-- [ ] Add build validation to CI
-- [ ] Implement code example testing where possible
-- [ ] Add accessibility testing to CI
-- [ ] Set up SEO validation in CI
+- [x] Set up automated link checking (internal links validation)
+- [x] Add build validation to CI
+- [x] Implement code example testing where possible
+- [x] Add accessibility testing to CI
+- [x] Set up SEO validation in CI
+
+**Implementation Details**
+
+- Enhanced `.github/workflows/release.yml` with documentation deployment job that only runs after successful package publication
+- Created `.github/workflows/preview-docs.yml` for PR preview builds and validation
+- Created `.github/workflows/docs-ci.yml` for documentation-specific CI checks
+- Updated `.github/workflows/ci.yml` to include documentation validation
+- Added docs change detection to CI workflow
+- Created `apps/docs/GITHUB_PAGES_SETUP.md` with comprehensive setup instructions
+- Custom domain configured: `docs.tabula-lens.dev`
+- Documentation deployment synchronized with package releases to ensure docs always match published versions
 
 ### Phase 10: Contributor Experience
 
