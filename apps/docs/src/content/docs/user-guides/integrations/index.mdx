@@ -1,31 +1,36 @@
 ---
 title: Integration Guides
-description: Guides for integrating Tabula Lens with other systems and services.
+description: Guides for integrating Tabula Lens with authentication providers, databases, and developer tools.
 ---
 
 # Integration Guides
 
-These guides cover integrating Tabula Lens with other systems, services, and authentication providers.
+These guides cover integrating Tabula Lens with authentication providers, hosted databases, ORMs, and developer tooling.
 
-## Guides
+## Authentication
 
-- **[Authentication](./authentication/)** - Implementing authentication and authorization with Tabula Lens
+Secure your Tabula Lens endpoint using your existing auth system.
 
-## Authentication Patterns
+- **[Authentication Overview](./authentication)** — JWT, session, and OAuth patterns
+- **[Auth.js](./authjs)** — NextAuth v5 for Next.js and Express
+- **[Auth0](./auth0)** — Auth0 JWT validation
+- **[Better Auth](./better-auth)** — Framework-agnostic TypeScript auth
+- **[Clerk](./clerk)** — Clerk user management and session tokens
+- **[Firebase Auth](./firebase-auth)** — Firebase Authentication JWTs
+- **[Kinde](./kinde)** — Kinde authentication tokens
+- **[Lucia Auth](./lucia)** — Lucia session-based authentication
+- **[Supabase Auth](./supabase-auth)** — Supabase user sessions and JWTs
 
-Tabula Lens supports multiple authentication patterns:
+## Databases
 
-- **JWT Authentication** - Token-based authentication with JSON Web Tokens
-- **Session-based Authentication** - Traditional session management
-- **OAuth 2.0** - Integration with OAuth providers (Google, GitHub, etc.)
-- **Role-based Access Control (RBAC)** - Fine-grained permissions
-- **Row-level Security** - Database-level row access control
+Connect Tabula Lens to a hosted PostgreSQL provider.
 
-## Integration Examples
+- **[Neon](./neon)** — Serverless PostgreSQL with branching and autoscaling
+- **[Supabase Database](./supabase)** — Supabase-hosted PostgreSQL with connection pooling
 
-The authentication guide includes examples for:
+## Developer Tools
 
-- Next.js authentication
-- Express.js authentication
-- Custom authentication implementations
-- Multi-tenant authentication strategies
+Integrate Tabula Lens with the tools already in your stack.
+
+- **[ORM Coexistence](./orm-coexistence)** — Using Tabula Lens alongside Prisma or Drizzle
+- **[Sentry](./sentry)** — Error tracking and Knex query monitoring

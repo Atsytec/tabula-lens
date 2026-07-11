@@ -1,0 +1,183 @@
+---
+title: Kinde Integration
+description: Integrate Kinde authentication with Tabula Lens to secure your database endpoints.
+---
+
+# Kinde Integration
+
+[Kinde](https://kinde.com) is a modern authentication and user management platform with built-in support for Next.js and Express. This guide shows how to protect your Tabula Lens endpoints using Kinde's session helpers and pass access tokens to the `DatabaseViewer` component.
+
+## Prerequisites
+
+Install the appropriate Kinde package for your framework:
+
+```bash
+# Next.js
+npm install @kinde-oss/kinde-auth-nextjs
+
+# Express
+npm install @kinde-oss/kinde-node-express
+
+# React (client-side, if using a standalone React app)
+npm install @kinde-oss/kinde-auth-react
+```
+
+Add the following environment variables from your Kinde application settings:
+
+```bash
+KINDE_CLIENT_ID=your_client_id
+KINDE_CLIENT_SECRET=your_client_secret
+KINDE_ISSUER_URL=https://your-subdomain.kinde.com
+KINDE_SITE_URL=http://localhost:3000
+KINDE_POST_LOGOUT_REDIRECT_URL=http://localhost:3000
+KINDE_POST_LOGIN_REDIRECT_URL=http://localhost:3000/dashboard
+```
+
+## Backend Setup
+
+### Next.js App Router
+
+First, mount Kinde's auth callback handler. The default route for this is `/api/auth/[...kindeAuth]`:
+
+```typescript
+// app/api/auth/[...kindeAuth]/route.ts
+import { handleAuth } from '@kinde-oss/kinde-auth-nextjs/server';
+
+export const GET = handleAuth();
+```
+
+Add Kinde's middleware to enforce authentication across your app. The `matcher` below excludes the auth callback route and static assets:
+
+```typescript
+// middleware.ts
+import { withAuth } from '@kinde-oss/kinde-auth-nextjs/middleware';
+
+export default withAuth();
+
+export const config = {
+  matcher: ['/((?!_next|favicon.ico|api/auth).*)'],
+};
+```
+
+Then protect the Tabula Lens route handler:
+
+```typescript
+// app/api/tabula-lens/route.ts
+import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+const handler = createNextRouteHandler(tabulaLens);
+
+export async function GET(request: Request) {
+  const { getUser } = getKindeServerSession();
+  const user = await getUser();
+
+  if (!user) return new Response('Unauthorized', { status: 401 });
+
+  return handler(request);
+}
+```
+
+### Express
+
+Use `setupKinde` to mount the Kinde auth routes, then apply `protectRoute` and `getUser` as middleware on the Tabula Lens route:
+
+```typescript
+import express from 'express';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const { setupKinde, protectRoute, getUser, GrantType } = require('@kinde-oss/kinde-node-express');
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+
+setupKinde(
+  {
+    clientId: process.env.KINDE_CLIENT_ID,
+    issuerBaseUrl: process.env.KINDE_ISSUER_URL,
+    siteUrl: 'http://localhost:3000',
+    secret: process.env.KINDE_CLIENT_SECRET,
+    redirectUrl: 'http://localhost:3000',
+    grantType: GrantType.AUTHORIZATION_CODE,
+    unAuthorisedUrl: 'http://localhost:3000/unauthorised',
+    postLogoutRedirectUrl: 'http://localhost:3000',
+  },
+  app
+);
+
+app.use('/api/tabula-lens', protectRoute, getUser, expressAdapter(tabulaLens));
+```
+
+## Frontend Integration
+
+Use the `useKindeAuth` hook to check authentication state and retrieve an access token:
+
+```tsx
+'use client';
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+export function TabulaLensViewer() {
+  const { isAuthenticated, isLoading, getAccessToken } = useKindeAuth();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!isAuthenticated) return <div>Sign in to view data</div>;
+
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      getAuthHeaders={async () => {
+        const token = await getAccessToken();
+        return { Authorization: `Bearer ${token}` };
+      }}
+    />
+  );
+}
+```
+
+For Next.js, import `useKindeBrowserClient` instead:
+
+```tsx
+'use client';
+import { useKindeBrowserClient } from '@kinde-oss/kinde-auth-nextjs';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+export function TabulaLensViewer() {
+  const { isAuthenticated, isLoading, getAccessToken } = useKindeBrowserClient();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!isAuthenticated) return <div>Sign in to view data</div>;
+
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      getAuthHeaders={async () => {
+        const token = await getAccessToken();
+        return { Authorization: `Bearer ${token}` };
+      }}
+    />
+  );
+}
+```
+
+## Important Notes
+
+- **The auth callback route must be `/api/auth/[...kindeAuth]`.** Kinde's SDK expects this path by default. If you need to change it, update both `handleAuth` and your Kinde application's allowed callback URLs in the Kinde dashboard.
+- **`getAccessToken()` returns a cached token.** Kinde manages token refresh automatically on a pre-expiry timer that runs at SDK initialization. You do not need to handle expiry manually — calling `getAccessToken()` will always return a usable token for an authenticated user.
+- **`middleware.ts` is for page-level protection.** The `withAuth()` middleware redirects unauthenticated users browsing pages. The explicit `getUser()` check in the route handler is still required to return a proper 401 for API requests (which should not redirect).
+- **`protectRoute` in Express handles the redirect flow.** For API-only Express apps, you may want to write a custom middleware that returns a 401 instead of redirecting, rather than using `protectRoute` directly.
+
+## Troubleshooting
+
+**`getUser()` returns `null` in the route handler despite middleware running**
+
+Ensure `middleware.ts` is at the project root and that its `matcher` does not accidentally exclude your `/api/tabula-lens` path. The middleware must run before the route handler for `getKindeServerSession()` to find an active session.
+
+**`getAccessToken()` returns `null` on the frontend**
+
+The user is not authenticated, or `isLoading` is still `true`. Always gate the `DatabaseViewer` render behind `isAuthenticated` and `!isLoading` checks, as shown in the example above.
+
+**Express: Kinde routes return 404**
+
+Confirm `setupKinde` is called before any routes are registered and that `app` is passed as the second argument. `setupKinde` mounts the Kinde callback and login routes internally and must run at application startup.

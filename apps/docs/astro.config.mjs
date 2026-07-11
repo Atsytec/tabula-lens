@@ -105,7 +105,34 @@ export default defineConfig({
 							label: 'Integrations',
 							items: [
 								{ label: 'Overview', slug: 'user-guides/integrations' },
-								{ label: 'Authentication', slug: 'user-guides/integrations/authentication' },
+								{
+									label: 'Authentication',
+									items: [
+										{ label: 'Overview', slug: 'user-guides/integrations/authentication' },
+										{ label: 'Auth.js', slug: 'user-guides/integrations/authjs' },
+										{ label: 'Auth0', slug: 'user-guides/integrations/auth0' },
+										{ label: 'Better Auth', slug: 'user-guides/integrations/better-auth' },
+										{ label: 'Clerk', slug: 'user-guides/integrations/clerk' },
+										{ label: 'Firebase Auth', slug: 'user-guides/integrations/firebase-auth' },
+										{ label: 'Kinde', slug: 'user-guides/integrations/kinde' },
+										{ label: 'Lucia Auth', slug: 'user-guides/integrations/lucia' },
+										{ label: 'Supabase Auth', slug: 'user-guides/integrations/supabase-auth' },
+									],
+								},
+								{
+									label: 'Databases',
+									items: [
+										{ label: 'Neon', slug: 'user-guides/integrations/neon' },
+										{ label: 'Supabase Database', slug: 'user-guides/integrations/supabase' },
+									],
+								},
+								{
+									label: 'Developer Tools',
+									items: [
+										{ label: 'ORM Coexistence', slug: 'user-guides/integrations/orm-coexistence' },
+										{ label: 'Sentry', slug: 'user-guides/integrations/sentry' },
+									],
+								},
 							],
 						},
 						{

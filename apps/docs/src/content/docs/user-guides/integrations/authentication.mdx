@@ -61,7 +61,7 @@ import { DatabaseViewer } from '@tabula-lens/react';
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
 
-  const getAuthHeaders = () => ({
+  const getAuthHeaders = async () => ({
     'Authorization': `Bearer ${token}`
   });
 
@@ -124,7 +124,7 @@ app.use('/api/tabula-lens', requireAuth, expressAdapter(tabulaLens));
 import { DatabaseViewer } from '@tabula-lens/react';
 
 function App() {
-  const getAuthHeaders = () => ({
+  const getAuthHeaders = async () => ({
     // Cookies are automatically sent by the browser
     'Content-Type': 'application/json'
   });
@@ -353,7 +353,7 @@ function DatabaseViewerWithAuth() {
   return (
     <DatabaseViewer
       path="/api/tabula-lens"
-      getAuthHeaders={() => ({
+      getAuthHeaders={async () => ({
         'Authorization': `Bearer ${token}`
       })}
       onError={handleAuthError}

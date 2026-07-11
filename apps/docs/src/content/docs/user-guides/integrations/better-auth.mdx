@@ -1,0 +1,182 @@
+---
+title: Better Auth Integration
+description: Integrate Better Auth authentication with Tabula Lens to secure your database endpoints.
+---
+
+# Better Auth Integration
+
+[Better Auth](https://www.better-auth.com/) is a framework-agnostic authentication library for TypeScript. This guide shows how to protect your Tabula Lens endpoint with Better Auth and pass session credentials from the frontend.
+
+## Prerequisites
+
+Install the required packages.
+
+**Backend:**
+
+```bash
+npm install better-auth
+```
+
+**Frontend:**
+
+```bash
+npm install better-auth
+```
+
+Set the required environment variables:
+
+```bash
+# Generate with: openssl rand -base64 32
+BETTER_AUTH_SECRET=your-secret-key-minimum-32-characters
+BETTER_AUTH_URL=http://localhost:3000
+```
+
+### Auth instance
+
+Create a shared auth instance. Better Auth supports multiple database adapters — the example below uses a generic placeholder; refer to the [Better Auth docs](https://www.better-auth.com/docs/installation) for your specific adapter.
+
+```typescript
+// lib/auth.ts
+import { betterAuth } from 'better-auth';
+
+export const auth = betterAuth({
+  database: { /* your DB adapter */ },
+  emailAndPassword: { enabled: true },
+  // Optional: social providers
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
+  },
+});
+```
+
+> **Note:** After creating or updating your auth instance, run `npx @better-auth/cli@latest migrate` to apply any required database schema changes.
+
+## Backend Setup
+
+The integration pattern is the same for all frameworks: validate the session before passing the request to the Tabula Lens handler.
+
+### Next.js App Router
+
+Mount the Better Auth handler and add session validation to the Tabula Lens route:
+
+```typescript
+// app/api/auth/[...all]/route.ts
+import { auth } from '@/lib/auth';
+import { toNextJsHandler } from 'better-auth/next-js';
+
+export const { GET, POST } = toNextJsHandler(auth);
+```
+
+```typescript
+// app/api/tabula-lens/route.ts
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+const handler = createNextRouteHandler(tabulaLens);
+
+export async function GET(request: Request) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  return handler(request);
+}
+```
+
+### Express
+
+Mount the Better Auth handler and add an auth middleware before the Tabula Lens adapter:
+
+```typescript
+import express from 'express';
+import { fromNodeHeaders, toNodeHandler } from 'better-auth/node';
+import { auth } from './lib/auth';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+
+// Mount the Better Auth handler (Express v5 syntax)
+// For Express v4, use '/api/auth/*' instead
+app.all('/api/auth/{*any}', toNodeHandler(auth));
+
+// Auth middleware
+async function requireAuth(req, res, next) {
+  const session = await auth.api.getSession({
+    headers: fromNodeHeaders(req.headers),
+  });
+
+  if (!session?.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  (req as any).user = session.user;
+  next();
+}
+
+// Protect the Tabula Lens endpoint
+app.use('/api/tabula-lens', requireAuth, expressAdapter(tabulaLens));
+```
+
+## Frontend Integration
+
+Create an auth client and use the session state to gate the viewer. Better Auth uses session cookies by default, so no token needs to be forwarded for same-origin requests — the browser sends the cookie automatically.
+
+```typescript
+// lib/auth-client.ts
+import { createAuthClient } from 'better-auth/react';
+
+export const authClient = createAuthClient({
+  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL!,
+});
+```
+
+```tsx
+// components/TabulaLensViewer.tsx
+'use client';
+import { authClient } from '@/lib/auth-client';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+export function TabulaLensViewer() {
+  const { data: session, isPending } = authClient.useSession();
+
+  if (isPending) return <div>Loading...</div>;
+  if (!session) return <div>Sign in to view data</div>;
+
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      getAuthHeaders={async () => ({})}
+      // Session cookie is sent automatically for same-origin requests
+    />
+  );
+}
+```
+
+## Important Notes
+
+- **Cookie-based sessions** — Better Auth sends session data via `HttpOnly` cookies. Same-origin API routes receive the cookie automatically; `getAuthHeaders` can return an empty object in that case.
+- **Cross-origin or mobile clients** — Enable the [bearer plugin](https://www.better-auth.com/docs/plugins/bearer) on the server and use `bearerClient` on the client to exchange a session token via the `Authorization` header instead.
+- **Database queries per request** — Each `auth.api.getSession()` call hits the database. Enable cookie caching to reduce the load:
+  ```typescript
+  // lib/auth.ts
+  export const auth = betterAuth({
+    // ...
+    session: {
+      cookieCache: {
+        enabled: true,
+        maxAge: 60 * 60, // 1 hour
+      },
+    },
+  });
+  ```
+- **Schema migrations** — Re-run `npx @better-auth/cli@latest migrate` whenever you add or remove plugins, as some plugins require additional database tables.
