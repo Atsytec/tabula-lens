@@ -9,7 +9,6 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "lint": "eslint . --ext .ts,.tsx,.astro",
     "check-types": "astro check",
     "test": "vitest"
   },

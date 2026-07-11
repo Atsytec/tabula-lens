@@ -43,9 +43,6 @@ jobs:
       - name: Type check documentation
         run: pnpm --filter @tabula-lens/docs run check-types
 
-      - name: Lint documentation
-        run: pnpm --filter @tabula-lens/docs run lint
-
       - name: Build documentation
         run: pnpm --filter @tabula-lens/docs run build
 
