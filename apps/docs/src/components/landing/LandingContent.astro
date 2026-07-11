@@ -387,114 +387,19 @@ npm install @tabula-lens/react</pre>
     flex-direction: column;
     gap: 0;
     margin-top: 1.5rem;
-
-    /* Preview / mockup palette (dark by default) */
-    --tl-preview-bg: hsl(220, 12%, 13%);
-    --tl-preview-bar-bg: hsl(220, 12%, 16%);
-    --tl-preview-bar-border: hsl(220, 8%, 22%);
-    --tl-preview-url-bg: hsl(220, 12%, 21%);
-    --tl-preview-url-text: hsl(220, 8%, 52%);
-    --tl-preview-toolbar-bg: hsl(220, 12%, 15%);
-    --tl-preview-toolbar-border: hsl(220, 8%, 20%);
-    --tl-preview-tab-text: hsl(220, 8%, 52%);
-    --tl-preview-tab-active-bg: hsl(207, 72%, 50%);
-    --tl-preview-tab-active-text: hsl(0, 0%, 100%);
-    --tl-preview-filter-bg: hsl(220, 12%, 18%);
-    --tl-preview-filter-border: hsl(220, 8%, 25%);
-    --tl-preview-filter-text: hsl(220, 8%, 44%);
-    --tl-preview-table-header-bg: hsl(220, 12%, 17%);
-    --tl-preview-table-header-text: hsl(207, 55%, 66%);
-    --tl-preview-table-header-border: hsl(220, 8%, 22%);
-    --tl-preview-table-row-odd: hsl(220, 12%, 13%);
-    --tl-preview-table-row-even: hsl(220, 12%, 15%);
-    --tl-preview-table-row-border: hsl(220, 8%, 18%);
-    --tl-preview-table-text: hsl(220, 12%, 80%);
-    --tl-preview-table-text-muted: hsl(220, 8%, 48%);
-    --tl-preview-badge-bg: hsl(220, 12%, 22%);
-    --tl-preview-badge-text: hsl(220, 8%, 58%);
-    --tl-preview-badge-admin-bg: hsl(207, 72%, 18%);
-    --tl-preview-badge-admin-text: hsl(207, 72%, 74%);
-    --tl-preview-pagination-bg: hsl(220, 12%, 16%);
-    --tl-preview-pagination-border: hsl(220, 8%, 21%);
-    --tl-preview-page-info: hsl(220, 8%, 48%);
-    --tl-preview-page-btn-bg: hsl(220, 12%, 20%);
-    --tl-preview-page-btn-text: hsl(220, 8%, 58%);
-    --tl-preview-page-active-bg: hsl(207, 72%, 50%);
-    --tl-preview-page-active-text: hsl(0, 0%, 100%);
-    --tl-preview-sort-asc: hsl(207, 72%, 74%);
-    --tl-preview-sort-unsorted: hsl(220, 8%, 38%);
-    --tl-preview-shadow:
-      0 0 0 1px hsl(220, 8%, 24%), 0 20px 80px -12px hsla(207, 72%, 40%, 0.22),
-      0 4px 16px -4px rgba(0, 0, 0, 0.45);
-
-    /* Inline code blocks */
-    --tl-code-bg: hsl(220, 12%, 10%);
-    --tl-code-border: hsl(220, 8%, 20%);
-    --tl-code-file-bg: hsl(220, 12%, 13%);
-    --tl-code-file-border: hsl(220, 8%, 18%);
-    --tl-code-file-text: hsl(220, 8%, 42%);
-    --tl-code-text: hsl(207, 55%, 80%);
-    --tl-code-string: hsl(120, 45%, 64%);
-    --tl-code-tag: hsl(207, 72%, 76%);
-    --tl-code-attr: hsl(30, 75%, 68%);
   }
 
-  [data-theme='light'] .landing {
-    --tl-preview-bg: hsl(220, 18%, 98%);
-    --tl-preview-bar-bg: hsl(220, 14%, 92%);
-    --tl-preview-bar-border: hsl(220, 10%, 82%);
-    --tl-preview-url-bg: hsl(220, 14%, 95%);
-    --tl-preview-url-text: hsl(220, 8%, 42%);
-    --tl-preview-toolbar-bg: hsl(220, 16%, 96%);
-    --tl-preview-toolbar-border: hsl(220, 10%, 86%);
-    --tl-preview-tab-text: hsl(220, 8%, 42%);
-    --tl-preview-filter-bg: hsl(220, 14%, 96%);
-    --tl-preview-filter-border: hsl(220, 10%, 84%);
-    --tl-preview-filter-text: hsl(220, 8%, 52%);
-    --tl-preview-table-header-bg: hsl(220, 14%, 92%);
-    --tl-preview-table-header-text: hsl(207, 55%, 45%);
-    --tl-preview-table-header-border: hsl(220, 10%, 84%);
-    --tl-preview-table-row-odd: hsl(220, 18%, 98%);
-    --tl-preview-table-row-even: hsl(220, 14%, 96%);
-    --tl-preview-table-row-border: hsl(220, 10%, 88%);
-    --tl-preview-table-text: hsl(220, 12%, 25%);
-    --tl-preview-table-text-muted: hsl(220, 8%, 52%);
-    --tl-preview-badge-bg: hsl(220, 10%, 90%);
-    --tl-preview-badge-text: hsl(220, 8%, 45%);
-    --tl-preview-badge-admin-bg: hsl(207, 72%, 90%);
-    --tl-preview-badge-admin-text: hsl(207, 72%, 35%);
-    --tl-preview-pagination-bg: hsl(220, 14%, 94%);
-    --tl-preview-pagination-border: hsl(220, 10%, 86%);
-    --tl-preview-page-info: hsl(220, 8%, 50%);
-    --tl-preview-page-btn-bg: hsl(220, 14%, 92%);
-    --tl-preview-page-btn-text: hsl(220, 8%, 45%);
-    --tl-preview-sort-asc: hsl(207, 72%, 45%);
-    --tl-preview-sort-unsorted: hsl(220, 8%, 62%);
-    --tl-preview-shadow:
-      0 0 0 1px hsl(220, 10%, 82%), 0 20px 80px -12px hsla(207, 72%, 40%, 0.12),
-      0 4px 16px -4px rgba(0, 0, 0, 0.08);
-
-    --tl-code-bg: hsl(220, 18%, 97%);
-    --tl-code-border: hsl(220, 10%, 86%);
-    --tl-code-file-bg: hsl(220, 14%, 94%);
-    --tl-code-file-border: hsl(220, 10%, 88%);
-    --tl-code-file-text: hsl(220, 8%, 52%);
-    --tl-code-text: hsl(220, 12%, 25%);
-    --tl-code-string: hsl(140, 55%, 32%);
-    --tl-code-tag: hsl(207, 72%, 42%);
-    --tl-code-attr: hsl(30, 80%, 42%);
+  /* Force all margins to 0 to avoid Starlight interference */
+  * {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
   }
 
   /* ════════════════════════════════
      PRODUCT PREVIEW / MOCKUP
   ════════════════════════════════ */
   .preview {
-    margin-bottom: 2.5rem;
-    user-select: none;
-  }
-
-  .preview * {
-    cursor: default;
+    padding-bottom: 2.5rem;
   }
 
   .preview-eyebrow {
@@ -503,7 +408,16 @@ npm install @tabula-lens/react</pre>
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--sl-color-gray-3);
-    margin: 0 0 0.9rem;
+    padding-bottom: 0.9rem;
+  }
+
+  .browser,
+  .browser *,
+  .browser *::before,
+  .browser *::after,
+  .browser button {
+    user-select: none;
+    cursor: default;
   }
 
   /* Browser chrome wrapper */
@@ -767,7 +681,8 @@ npm install @tabula-lens/react</pre>
     padding: 1.5rem 0;
     border-top: 1px solid var(--sl-color-gray-5);
     border-bottom: 1px solid var(--sl-color-gray-5);
-    margin-bottom: 3rem;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
   }
 
   .stat {
@@ -812,7 +727,7 @@ npm install @tabula-lens/react</pre>
     font-weight: 700;
     color: var(--sl-color-white);
     text-align: center;
-    margin: 0 0 0.5rem;
+    padding-bottom: 0.5rem;
     letter-spacing: -0.01em;
   }
 
@@ -820,14 +735,15 @@ npm install @tabula-lens/react</pre>
     color: var(--sl-color-gray-3);
     text-align: center;
     font-size: 0.95rem;
-    margin: 0 0 2rem;
+    padding-bottom: 2rem;
   }
 
   /* ════════════════════════════════
      HOW IT WORKS
   ════════════════════════════════ */
   .hiw {
-    margin-bottom: 3.5rem;
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
   }
 
   .hiw-grid {
@@ -865,21 +781,21 @@ npm install @tabula-lens/react</pre>
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
   }
 
   .step-title {
     font-size: 0.98rem;
     font-weight: 600;
     color: var(--sl-color-white);
-    margin: 0 0 0.75rem;
+    padding-bottom: 0.75rem;
   }
 
   .code-block {
     border-radius: 5px;
     overflow: hidden;
     background: var(--tl-code-bg);
-    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
     border: 1px solid var(--tl-code-border);
   }
 
@@ -893,7 +809,6 @@ npm install @tabula-lens/react</pre>
   }
 
   .code-pre {
-    margin: 0;
     padding: 0.65rem 0.9rem;
     font-family: ui-monospace, monospace;
     font-size: 0.74rem;
@@ -920,7 +835,6 @@ npm install @tabula-lens/react</pre>
   .step-desc {
     font-size: 0.82rem;
     color: var(--sl-color-gray-3);
-    margin: 0;
     line-height: 1.6;
   }
 
@@ -937,7 +851,7 @@ npm install @tabula-lens/react</pre>
      FEATURES
   ════════════════════════════════ */
   .features {
-    margin-bottom: 3.5rem;
+    padding-bottom: 3.5rem;
   }
 
   .features-grid {
@@ -980,20 +894,19 @@ npm install @tabula-lens/react</pre>
     align-items: center;
     justify-content: center;
     line-height: 1;
-    margin-bottom: 0.85rem;
   }
 
   .feature-card h3 {
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--sl-color-white);
-    margin: 0 0 0.5rem;
+    padding-top: 1rem;
+    padding-bottom: 0.5rem;
   }
 
   .feature-card p {
     font-size: 0.83rem;
     color: var(--sl-color-gray-3);
-    margin: 0;
     line-height: 1.57;
   }
 
@@ -1004,7 +917,7 @@ npm install @tabula-lens/react</pre>
     padding: 2.5rem 0;
     text-align: center;
     border-top: 1px solid var(--sl-color-gray-5);
-    margin-bottom: 2.5rem;
+    padding-bottom: 2.5rem;
   }
 
   .adapters-label {
@@ -1012,7 +925,7 @@ npm install @tabula-lens/react</pre>
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--sl-color-gray-3);
-    margin: 0 0 1rem;
+    padding-bottom: 1rem;
   }
 
   .adapters-list {
@@ -1049,14 +962,15 @@ npm install @tabula-lens/react</pre>
     font-size: 1.6rem;
     font-weight: 700;
     color: var(--sl-color-white);
-    margin: 0 0 0.75rem;
+    padding-bottom: 0.75rem;
     letter-spacing: -0.01em;
   }
 
   .cta-sub {
     color: var(--sl-color-gray-3);
-    margin: 0 auto 2rem;
+    padding-bottom: 2rem;
     max-width: 500px;
+    margin: 0 auto;
     line-height: 1.65;
     font-size: 0.92rem;
   }

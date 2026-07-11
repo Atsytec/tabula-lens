@@ -26,6 +26,56 @@
   --sl-color-gray-5: hsl(220, 10%, 22%);
   --sl-color-gray-6: hsl(220, 12%, 15%);
   --sl-color-black:  hsl(220, 10%, 10%);
+
+  /* Preview browser colors (dark mode) */
+  --tl-preview-bg: hsl(220, 12%, 13%);
+  --tl-preview-bar-bg: hsl(220, 12%, 16%);
+  --tl-preview-bar-border: hsl(220, 8%, 22%);
+  --tl-preview-url-bg: hsl(220, 12%, 21%);
+  --tl-preview-url-text: hsl(220, 8%, 52%);
+  --tl-preview-toolbar-bg: hsl(220, 12%, 15%);
+  --tl-preview-toolbar-border: hsl(220, 8%, 20%);
+  --tl-preview-tab-text: hsl(220, 8%, 52%);
+  --tl-preview-tab-active-bg: hsl(207, 72%, 50%);
+  --tl-preview-tab-active-text: hsl(0, 0%, 100%);
+  --tl-preview-filter-bg: hsl(220, 12%, 18%);
+  --tl-preview-filter-border: hsl(220, 8%, 25%);
+  --tl-preview-filter-text: hsl(220, 8%, 44%);
+  --tl-preview-table-header-bg: hsl(220, 12%, 17%);
+  --tl-preview-table-header-text: hsl(207, 55%, 66%);
+  --tl-preview-table-header-border: hsl(220, 8%, 22%);
+  --tl-preview-table-row-odd: hsl(220, 12%, 13%);
+  --tl-preview-table-row-even: hsl(220, 12%, 15%);
+  --tl-preview-table-row-border: hsl(220, 8%, 18%);
+  --tl-preview-table-text: hsl(220, 12%, 80%);
+  --tl-preview-table-text-muted: hsl(220, 8%, 48%);
+  --tl-preview-badge-bg: hsl(220, 12%, 22%);
+  --tl-preview-badge-text: hsl(220, 8%, 58%);
+  --tl-preview-badge-admin-bg: hsl(207, 72%, 18%);
+  --tl-preview-badge-admin-text: hsl(207, 72%, 74%);
+  --tl-preview-pagination-bg: hsl(220, 12%, 16%);
+  --tl-preview-pagination-border: hsl(220, 8%, 21%);
+  --tl-preview-page-info: hsl(220, 8%, 48%);
+  --tl-preview-page-btn-bg: hsl(220, 12%, 20%);
+  --tl-preview-page-btn-text: hsl(220, 8%, 58%);
+  --tl-preview-page-active-bg: hsl(207, 72%, 50%);
+  --tl-preview-page-active-text: hsl(0, 0%, 100%);
+  --tl-preview-sort-asc: hsl(207, 72%, 74%);
+  --tl-preview-sort-unsorted: hsl(220, 8%, 38%);
+  --tl-preview-shadow:
+    0 0 0 1px hsl(220, 8%, 24%), 0 20px 80px -12px hsla(207, 72%, 40%, 0.22),
+    0 4px 16px -4px rgba(0, 0, 0, 0.45);
+
+  /* Inline code blocks (dark mode) */
+  --tl-code-bg: hsl(220, 12%, 10%);
+  --tl-code-border: hsl(220, 8%, 20%);
+  --tl-code-file-bg: hsl(220, 12%, 13%);
+  --tl-code-file-border: hsl(220, 8%, 18%);
+  --tl-code-file-text: hsl(220, 8%, 42%);
+  --tl-code-text: hsl(207, 55%, 80%);
+  --tl-code-string: hsl(120, 45%, 64%);
+  --tl-code-tag: hsl(207, 72%, 76%);
+  --tl-code-attr: hsl(30, 75%, 68%);
 }
 
 /* ─── LIGHT MODE ([data-theme='light']) ─── */
@@ -46,6 +96,56 @@
   --sl-color-gray-6: hsl(220, 14%, 90%);
   --sl-color-gray-7: hsl(220, 14%, 97%);
   --sl-color-black:  hsl(0, 0%, 100%);
+
+  /* Preview browser colors (light mode) */
+  --tl-preview-bg: hsl(220, 18%, 98%);
+  --tl-preview-bar-bg: hsl(220, 14%, 92%);
+  --tl-preview-bar-border: hsl(220, 10%, 82%);
+  --tl-preview-url-bg: hsl(220, 14%, 95%);
+  --tl-preview-url-text: hsl(220, 8%, 42%);
+  --tl-preview-toolbar-bg: hsl(220, 16%, 96%);
+  --tl-preview-toolbar-border: hsl(220, 10%, 86%);
+  --tl-preview-tab-text: hsl(220, 8%, 42%);
+  --tl-preview-tab-active-bg: hsl(207, 72%, 50%);
+  --tl-preview-tab-active-text: hsl(0, 0%, 100%);
+  --tl-preview-filter-bg: hsl(220, 14%, 96%);
+  --tl-preview-filter-border: hsl(220, 10%, 84%);
+  --tl-preview-filter-text: hsl(220, 8%, 52%);
+  --tl-preview-table-header-bg: hsl(220, 14%, 92%);
+  --tl-preview-table-header-text: hsl(207, 55%, 45%);
+  --tl-preview-table-header-border: hsl(220, 10%, 84%);
+  --tl-preview-table-row-odd: hsl(220, 18%, 98%);
+  --tl-preview-table-row-even: hsl(220, 14%, 96%);
+  --tl-preview-table-row-border: hsl(220, 10%, 88%);
+  --tl-preview-table-text: hsl(220, 12%, 25%);
+  --tl-preview-table-text-muted: hsl(220, 8%, 52%);
+  --tl-preview-badge-bg: hsl(220, 10%, 90%);
+  --tl-preview-badge-text: hsl(220, 8%, 45%);
+  --tl-preview-badge-admin-bg: hsl(207, 72%, 90%);
+  --tl-preview-badge-admin-text: hsl(207, 72%, 35%);
+  --tl-preview-pagination-bg: hsl(220, 14%, 94%);
+  --tl-preview-pagination-border: hsl(220, 10%, 86%);
+  --tl-preview-page-info: hsl(220, 8%, 50%);
+  --tl-preview-page-btn-bg: hsl(220, 14%, 92%);
+  --tl-preview-page-btn-text: hsl(220, 8%, 45%);
+  --tl-preview-page-active-bg: hsl(207, 72%, 50%);
+  --tl-preview-page-active-text: hsl(0, 0%, 100%);
+  --tl-preview-sort-asc: hsl(207, 72%, 45%);
+  --tl-preview-sort-unsorted: hsl(220, 8%, 62%);
+  --tl-preview-shadow:
+    0 0 0 1px hsl(220, 10%, 82%), 0 20px 80px -12px hsla(207, 72%, 40%, 0.12),
+    0 4px 16px -4px rgba(0, 0, 0, 0.08);
+
+  /* Inline code blocks (light mode) */
+  --tl-code-bg: hsl(220, 18%, 97%);
+  --tl-code-border: hsl(220, 10%, 86%);
+  --tl-code-file-bg: hsl(220, 14%, 94%);
+  --tl-code-file-border: hsl(220, 10%, 88%);
+  --tl-code-file-text: hsl(220, 8%, 52%);
+  --tl-code-text: hsl(220, 12%, 25%);
+  --tl-code-string: hsl(140, 55%, 32%);
+  --tl-code-tag: hsl(207, 72%, 42%);
+  --tl-code-attr: hsl(30, 80%, 42%);
 }
 
 /* ─── ACCESSIBILITY ENHANCEMENTS ─── */
