@@ -1,0 +1,866 @@
+---
+// Tabula Lens landing page content component
+// Rendered below the Starlight splash hero on the docs index page
+---
+
+<section class="landing">
+
+  <!-- ─── Product Preview ─── -->
+  <div class="preview">
+    <p class="preview-eyebrow">The DatabaseViewer component — live in your React app</p>
+    <div class="browser">
+      <div class="browser-bar">
+        <div class="browser-dots">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+        </div>
+        <div class="browser-url">
+          <span>app.example.com/admin/data</span>
+        </div>
+      </div>
+      <div class="viewer">
+
+        <!-- Toolbar: table selector + filter -->
+        <div class="viewer-toolbar">
+          <div class="tab-list">
+            <button class="tab tab-active">users</button>
+            <button class="tab">orders</button>
+            <button class="tab">products</button>
+          </div>
+          <div class="filter-box">
+            <svg class="filter-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>Filter rows…</span>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+          <table class="data-table" aria-label="Sample DatabaseViewer preview — users table">
+            <thead>
+              <tr>
+                <th scope="col">id <span class="sort-asc" aria-label="sorted ascending">↑</span></th>
+                <th scope="col">name <span class="sort-unsorted" aria-label="sortable">⇅</span></th>
+                <th scope="col">email</th>
+                <th scope="col">role</th>
+                <th scope="col">created_at</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Alice Chen</td>
+                <td>alice@acme.io</td>
+                <td><span class="badge badge-admin">admin</span></td>
+                <td class="cell-muted">2024-01-12</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Bob Martin</td>
+                <td>bob@acme.io</td>
+                <td><span class="badge">user</span></td>
+                <td class="cell-muted">2024-02-03</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Carol Smith</td>
+                <td>carol@acme.io</td>
+                <td><span class="badge">user</span></td>
+                <td class="cell-muted">2024-02-18</td>
+              </tr>
+              <tr class="row-faded">
+                <td>4</td>
+                <td>Dan Torres</td>
+                <td>dan@acme.io</td>
+                <td><span class="badge">user</span></td>
+                <td class="cell-muted">2024-03-05</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="table-fade" aria-hidden="true"></div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <span class="page-info">Showing 1–4 of 24 rows</span>
+          <div class="page-btns" role="navigation" aria-label="Table pagination">
+            <button class="page-btn page-disabled" disabled aria-disabled="true">‹</button>
+            <button class="page-btn page-active" aria-current="page">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">›</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Stats Bar ─── -->
+  <div class="stats" role="list" aria-label="Library at a glance">
+    <div class="stat" role="listitem">
+      <strong class="stat-value">15</strong>
+      <span class="stat-label">framework adapters</span>
+    </div>
+    <span class="stat-sep" aria-hidden="true">·</span>
+    <div class="stat" role="listitem">
+      <strong class="stat-value">PostgreSQL</strong>
+      <span class="stat-label">database support</span>
+    </div>
+    <span class="stat-sep" aria-hidden="true">·</span>
+    <div class="stat" role="listitem">
+      <strong class="stat-value">TypeScript</strong>
+      <span class="stat-label">fully typed</span>
+    </div>
+    <span class="stat-sep" aria-hidden="true">·</span>
+    <div class="stat" role="listitem">
+      <strong class="stat-value">MIT</strong>
+      <span class="stat-label">open source</span>
+    </div>
+  </div>
+
+  <!-- ─── How It Works ─── -->
+  <section class="hiw" aria-labelledby="hiw-heading">
+    <h2 id="hiw-heading" class="section-heading">How it works</h2>
+    <p class="section-sub">Two packages. One endpoint. One component.</p>
+    <div class="hiw-grid">
+
+      <div class="step">
+        <div class="step-num" aria-hidden="true">1</div>
+        <h3 class="step-title">Install</h3>
+        <div class="code-block">
+          <div class="code-file">terminal</div>
+          <pre class="code-pre">npm install @tabula-lens/node
+npm install @tabula-lens/react</pre>
+        </div>
+        <p class="step-desc">One backend package for your Node.js server. One React component library for your frontend.</p>
+      </div>
+
+      <div class="step-arrow" aria-hidden="true">→</div>
+
+      <div class="step">
+        <div class="step-num" aria-hidden="true">2</div>
+        <h3 class="step-title">Register</h3>
+        <div class="code-block">
+          <div class="code-file">backend.ts</div>
+          <pre class="code-pre">app.use(<span class="cs">'/api/db'</span>,
+  expressAdapter(tabulaLens))</pre>
+        </div>
+        <p class="step-desc">One route. Database queries stay on your server — credentials never reach the client.</p>
+      </div>
+
+      <div class="step-arrow" aria-hidden="true">→</div>
+
+      <div class="step">
+        <div class="step-num" aria-hidden="true">3</div>
+        <h3 class="step-title">View</h3>
+        <div class="code-block">
+          <div class="code-file">frontend.tsx</div>
+          <pre class="code-pre">&lt;<span class="ct">DatabaseViewer</span>
+  <span class="ca">path</span>=<span class="cs">"/api/db"</span> /&gt;</pre>
+        </div>
+        <p class="step-desc">Drop in the component. Your database is immediately browsable, filterable, and paginated.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── Features ─── -->
+  <section class="features" aria-labelledby="features-heading">
+    <h2 id="features-heading" class="section-heading">Everything you need</h2>
+    <p class="section-sub">Built for production, usable in minutes.</p>
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>Security First</h3>
+        <p>Database credentials never leave the backend. Your connection strings stay on the server — always.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </div>
+        <h3>15 Adapters</h3>
+        <p>Express, Fastify, Koa, Hono, Next.js, TanStack Start, Bun, Elysia, and more — use your existing server.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </div>
+        <h3>Full-Featured Table</h3>
+        <p>Pagination, column sorting, row filtering, and configurable page sizes — all built in, zero configuration.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <h3>TypeScript Native</h3>
+        <p>Fully typed with strict type checking, IntelliSense support, and type-safe props throughout the API.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        </div>
+        <h3>Fully Customizable</h3>
+        <p>Override styles with CSS custom properties, className overrides, or swap in your own sub-components.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <h3>Zero Infrastructure</h3>
+        <p>Works with your existing database, backend, and auth — no new services, no extra infrastructure.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── Adapters ─── -->
+  <section class="adapters" aria-labelledby="adapters-heading">
+    <h2 id="adapters-heading" class="sr-only">Supported frameworks</h2>
+    <p class="adapters-label">Adapters for your stack</p>
+    <div class="adapters-list" role="list">
+      <span role="listitem">Express</span>
+      <span role="listitem">Fastify</span>
+      <span role="listitem">Koa</span>
+      <span role="listitem">Hono</span>
+      <span role="listitem">Next.js</span>
+      <span role="listitem">TanStack Start</span>
+      <span role="listitem">Nest.js</span>
+      <span role="listitem">Elysia</span>
+      <span role="listitem">Bun HTTP</span>
+      <span role="listitem">node:http</span>
+      <span role="listitem">Polka</span>
+      <span role="listitem">Oak (Deno)</span>
+      <span class="adapter-more" role="listitem">+ more</span>
+    </div>
+  </section>
+
+  <!-- ─── CTA ─── -->
+  <section class="cta" aria-labelledby="cta-heading">
+    <h2 id="cta-heading" class="cta-heading">Add a database viewer in 5 minutes</h2>
+    <p class="cta-sub">Works with your existing PostgreSQL database, Node.js backend, and React frontend — no new infrastructure needed.</p>
+    <div class="cta-actions">
+      <a href="/quick-start/getting-started/" class="btn-primary">Get Started →</a>
+      <a href="/api/react/" class="btn-secondary">API Reference</a>
+    </div>
+  </section>
+
+</section>
+
+<style>
+  /* ── Layout container ── */
+  .landing {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 1.5rem;
+  }
+
+  /* ════════════════════════════════
+     PRODUCT PREVIEW / MOCKUP
+  ════════════════════════════════ */
+  .preview {
+    margin-bottom: 2.5rem;
+  }
+
+  .preview-eyebrow {
+    text-align: center;
+    font-size: 0.73rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--sl-color-gray-3);
+    margin: 0 0 0.9rem;
+  }
+
+  /* Browser chrome wrapper */
+  .browser {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px hsl(220, 8%, 24%),
+      0 20px 80px -12px hsla(207, 72%, 40%, 0.22),
+      0 4px 16px -4px rgba(0, 0, 0, 0.45);
+    overflow-x: auto;
+  }
+
+  .browser-bar {
+    background: hsl(220, 12%, 16%);
+    height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 1rem;
+    border-bottom: 1px solid hsl(220, 8%, 22%);
+    min-width: 560px;
+  }
+
+  .browser-dots {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+  }
+
+  .dot-red    { background: #ff5f57; }
+  .dot-yellow { background: #ffbd2e; }
+  .dot-green  { background: #28ca41; }
+
+  .browser-url {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .browser-url span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: hsl(220, 12%, 21%);
+    height: 22px;
+    border-radius: 4px;
+    padding: 0 0.75rem;
+    font-family: ui-monospace, monospace;
+    font-size: 0.7rem;
+    color: hsl(220, 8%, 52%);
+    max-width: 260px;
+    width: 100%;
+  }
+
+  /* Viewer body */
+  .viewer {
+    background: hsl(220, 12%, 13%);
+    min-width: 560px;
+  }
+
+  .viewer-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0.75rem;
+    background: hsl(220, 12%, 15%);
+    border-bottom: 1px solid hsl(220, 8%, 20%);
+  }
+
+  .tab-list {
+    display: flex;
+    gap: 4px;
+  }
+
+  .tab {
+    padding: 4px 12px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: ui-monospace, monospace;
+    font-size: 0.74rem;
+    color: hsl(220, 8%, 52%);
+  }
+
+  .tab-active {
+    background: hsl(207, 72%, 50%);
+    color: hsl(0, 0%, 100%);
+    font-weight: 600;
+  }
+
+  .filter-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: hsl(220, 12%, 18%);
+    border: 1px solid hsl(220, 8%, 25%);
+    border-radius: 4px;
+    padding: 4px 10px;
+    color: hsl(220, 8%, 44%);
+  }
+
+  .filter-box span {
+    font-family: ui-monospace, monospace;
+    font-size: 0.72rem;
+  }
+
+  /* Data table */
+  .table-wrap {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .data-table {
+    width: 100%;
+    min-width: 560px;
+    border-collapse: collapse;
+    font-family: ui-monospace, monospace;
+    font-size: 0.78rem;
+  }
+
+  .data-table thead tr {
+    background: hsl(220, 12%, 17%);
+  }
+
+  .data-table th {
+    padding: 8px 12px;
+    text-align: left;
+    color: hsl(207, 55%, 66%);
+    font-weight: 600;
+    font-size: 0.73rem;
+    border-bottom: 1px solid hsl(220, 8%, 22%);
+    white-space: nowrap;
+  }
+
+  .sort-asc     { color: hsl(207, 72%, 74%); }
+  .sort-unsorted { color: hsl(220, 8%, 38%); }
+
+  .data-table tbody tr:nth-child(odd)  { background: hsl(220, 12%, 13%); }
+  .data-table tbody tr:nth-child(even) { background: hsl(220, 12%, 15%); }
+
+  .data-table td {
+    padding: 8px 12px;
+    color: hsl(220, 12%, 80%);
+    border-bottom: 1px solid hsl(220, 8%, 18%);
+    white-space: nowrap;
+  }
+
+  .cell-muted { color: hsl(220, 8%, 48%) !important; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 12px;
+    font-size: 0.69rem;
+    background: hsl(220, 12%, 22%);
+    color: hsl(220, 8%, 58%);
+  }
+
+  .badge-admin {
+    background: hsl(207, 72%, 18%);
+    color: hsl(207, 72%, 74%);
+  }
+
+  .row-faded { opacity: 0.3; }
+
+  .table-fade {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    background: linear-gradient(to bottom, transparent, hsl(220, 12%, 13%));
+    pointer-events: none;
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: hsl(220, 12%, 16%);
+    border-top: 1px solid hsl(220, 8%, 21%);
+    min-width: 560px;
+  }
+
+  .page-info {
+    font-family: ui-monospace, monospace;
+    font-size: 0.69rem;
+    color: hsl(220, 8%, 48%);
+  }
+
+  .page-btns {
+    display: flex;
+    gap: 3px;
+  }
+
+  .page-btn {
+    width: 28px;
+    height: 24px;
+    border-radius: 4px;
+    background: hsl(220, 12%, 20%);
+    border: none;
+    cursor: pointer;
+    font-family: ui-monospace, monospace;
+    font-size: 0.78rem;
+    color: hsl(220, 8%, 58%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .page-active {
+    background: hsl(207, 72%, 50%);
+    color: hsl(0, 0%, 100%);
+    font-weight: 600;
+    cursor: default;
+  }
+
+  .page-disabled {
+    opacity: 0.28;
+    cursor: not-allowed;
+  }
+
+  /* ════════════════════════════════
+     STATS BAR
+  ════════════════════════════════ */
+  .stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem 2rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--sl-color-gray-5);
+    border-bottom: 1px solid var(--sl-color-gray-5);
+    margin-bottom: 3rem;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--sl-color-accent-high);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-label {
+    font-size: 0.68rem;
+    color: var(--sl-color-gray-3);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .stat-sep {
+    font-size: 1.4rem;
+    color: var(--sl-color-gray-5);
+    line-height: 1;
+    user-select: none;
+  }
+
+  @media (max-width: 600px) {
+    .stat-sep { display: none; }
+  }
+
+  /* ════════════════════════════════
+     SECTION COMMON
+  ════════════════════════════════ */
+  .section-heading {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--sl-color-white);
+    text-align: center;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .section-sub {
+    color: var(--sl-color-gray-3);
+    text-align: center;
+    font-size: 0.95rem;
+    margin: 0 0 2rem;
+  }
+
+  /* ════════════════════════════════
+     HOW IT WORKS
+  ════════════════════════════════ */
+  .hiw {
+    margin-bottom: 3.5rem;
+  }
+
+  .hiw-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  .step-arrow {
+    display: flex;
+    align-items: flex-start;
+    padding-top: 2.6rem;
+    color: var(--sl-color-gray-4);
+    font-size: 1.2rem;
+    user-select: none;
+  }
+
+  .step {
+    background: var(--sl-color-gray-6);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 8px;
+    padding: 1.25rem;
+  }
+
+  .step-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--sl-color-accent-low);
+    color: var(--sl-color-accent-high);
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .step-title {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--sl-color-white);
+    margin: 0 0 0.75rem;
+  }
+
+  .code-block {
+    border-radius: 5px;
+    overflow: hidden;
+    background: hsl(220, 12%, 10%);
+    margin-bottom: 0.75rem;
+    border: 1px solid hsl(220, 8%, 20%);
+  }
+
+  .code-file {
+    background: hsl(220, 12%, 13%);
+    border-bottom: 1px solid hsl(220, 8%, 18%);
+    padding: 3px 10px;
+    font-family: ui-monospace, monospace;
+    font-size: 0.65rem;
+    color: hsl(220, 8%, 42%);
+  }
+
+  .code-pre {
+    margin: 0;
+    padding: 0.65rem 0.9rem;
+    font-family: ui-monospace, monospace;
+    font-size: 0.74rem;
+    line-height: 1.55;
+    color: hsl(207, 55%, 80%);
+    white-space: pre;
+    overflow-x: auto;
+    background: none;
+    border: none;
+    border-radius: 0;
+  }
+
+  /* Syntax highlight tokens */
+  .cs { color: hsl(120, 45%, 64%); } /* string */
+  .ct { color: hsl(207, 72%, 76%); } /* tag / component name */
+  .ca { color: hsl(30,  75%, 68%); } /* attribute */
+
+  .step-desc {
+    font-size: 0.82rem;
+    color: var(--sl-color-gray-3);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 720px) {
+    .hiw-grid {
+      grid-template-columns: 1fr;
+    }
+    .step-arrow {
+      display: none;
+    }
+  }
+
+  /* ════════════════════════════════
+     FEATURES
+  ════════════════════════════════ */
+  .features {
+    margin-bottom: 3.5rem;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.875rem;
+  }
+
+  @media (max-width: 880px) {
+    .features-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 540px) {
+    .features-grid { grid-template-columns: 1fr; }
+  }
+
+  .feature-card {
+    background: var(--sl-color-gray-6);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 8px;
+    padding: 1.25rem;
+    transition: border-color 0.15s ease;
+  }
+
+  .feature-card:hover {
+    border-color: var(--sl-color-accent);
+  }
+
+  .feature-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: var(--sl-color-accent-low);
+    color: var(--sl-color-accent-high);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.85rem;
+  }
+
+  .feature-card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--sl-color-white);
+    margin: 0 0 0.5rem;
+  }
+
+  .feature-card p {
+    font-size: 0.83rem;
+    color: var(--sl-color-gray-3);
+    margin: 0;
+    line-height: 1.57;
+  }
+
+  /* ════════════════════════════════
+     ADAPTERS
+  ════════════════════════════════ */
+  .adapters {
+    padding: 2.5rem 0;
+    text-align: center;
+    border-top: 1px solid var(--sl-color-gray-5);
+    margin-bottom: 2.5rem;
+  }
+
+  .adapters-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--sl-color-gray-3);
+    margin: 0 0 1rem;
+  }
+
+  .adapters-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .adapters-list span {
+    padding: 4px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--sl-color-gray-5);
+    font-size: 0.77rem;
+    color: var(--sl-color-gray-2);
+    font-family: ui-monospace, monospace;
+  }
+
+  .adapter-more {
+    color: var(--sl-color-accent-high) !important;
+    border-color: var(--sl-color-accent-low) !important;
+  }
+
+  /* ════════════════════════════════
+     CTA
+  ════════════════════════════════ */
+  .cta {
+    padding: 3rem 0 1rem;
+    text-align: center;
+    border-top: 1px solid var(--sl-color-gray-5);
+  }
+
+  .cta-heading {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--sl-color-white);
+    margin: 0 0 0.75rem;
+    letter-spacing: -0.01em;
+  }
+
+  .cta-sub {
+    color: var(--sl-color-gray-3);
+    margin: 0 auto 2rem;
+    max-width: 500px;
+    line-height: 1.65;
+    font-size: 0.92rem;
+  }
+
+  .cta-actions {
+    display: flex;
+    gap: 0.875rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    background: var(--sl-color-accent);
+    color: hsl(0, 0%, 100%);
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.15s ease;
+    border: 2px solid transparent;
+  }
+
+  .btn-primary:hover {
+    background: hsl(207, 72%, 42%);
+    text-decoration: none;
+    color: hsl(0, 0%, 100%);
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--sl-color-accent-high);
+    border: 2px solid var(--sl-color-accent);
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.15s ease;
+  }
+
+  .btn-secondary:hover {
+    background: var(--sl-color-accent-low);
+    text-decoration: none;
+    color: var(--sl-color-accent-high);
+  }
+
+  /* ── Screen reader only ── */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>
