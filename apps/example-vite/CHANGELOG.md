@@ -1,5 +1,13 @@
 # example-vite
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [879fd06]
+  - @tabula-lens/react@0.3.2
+  - @tabula-lens/node@0.3.2
+
 ## 0.1.1
 
 ### Patch Changes
