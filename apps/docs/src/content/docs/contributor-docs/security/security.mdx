@@ -47,7 +47,7 @@ app.get('/api/tabula-lens', async (req, res) => {
 ```jsx
 // Frontend: Send authentication
 <DatabaseViewer 
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   getAuthHeaders={() => ({
     'Authorization': `Bearer ${userToken}`
   })}
@@ -131,7 +131,7 @@ const tabulaLens = new TabulaLens('postgresql://user:password@host/db')
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
 
 // Frontend: Query through API
-<DatabaseViewer endpoint="/api/tabula-lens" />
+<DatabaseViewer path="/api/tabula-lens" />
 ```
 
 ### ❌ Don't: Bypass Authentication

@@ -196,7 +196,7 @@ function App() {
 
   return (
     <DatabaseViewer
-      endpoint="/api/tabula-lens"
+      path="/api/tabula-lens"
       styles={customStyles}
     />
   );
@@ -305,7 +305,7 @@ const advancedStyles = {
 };
 
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   styles={advancedStyles}
 />
 ```
@@ -318,7 +318,7 @@ For advanced styling with CSS frameworks (Tailwind, Bootstrap, etc.), use the `c
 
 ```jsx
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   className="my-custom-class"
 />
 ```
@@ -337,7 +337,7 @@ For advanced styling with CSS frameworks (Tailwind, Bootstrap, etc.), use the `c
 
 ```jsx
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   className="max-w-7xl mx-auto p-6 bg-white rounded-xl shadow-lg"
 />
 ```
@@ -346,7 +346,7 @@ For advanced styling with CSS frameworks (Tailwind, Bootstrap, etc.), use the `c
 
 ```jsx
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   className="container mt-4 p-4 bg-light rounded shadow"
 />
 ```
@@ -364,7 +364,7 @@ const CustomLoading = () => (
 );
 
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   loadingComponent={CustomLoading}
 />
 ```
@@ -388,7 +388,7 @@ const CustomError = ({ error, onRetry }) => (
 );
 
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   errorComponent={CustomError}
 />
 ```
@@ -409,7 +409,7 @@ const CustomEmpty = () => (
 );
 
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   emptyComponent={CustomEmpty}
 />
 ```
@@ -430,7 +430,7 @@ Apply theme overrides to specific components:
 }
 
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   className="my-database-viewer"
 />
 ```
@@ -446,7 +446,7 @@ Apply theme overrides to specific components:
 }
 
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   className="custom-table"
 />
 ```
@@ -547,7 +547,7 @@ Apply theme overrides to specific components:
 
 ```jsx
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   className="database-viewer"
 />
 ```
@@ -692,13 +692,13 @@ padding: 13px;  /* Inconsistent with design system */
 ```jsx
 /* ✅ Good: Specific class name */
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   className="app-database-viewer-2024"
 />
 
 /* ❌ Avoid: Generic class name */
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   className="table"  /* Too generic */
 />
 ```

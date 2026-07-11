@@ -32,7 +32,7 @@ The main component for displaying database data in your React application. It pr
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `initialTable` | `string` | - | Initial table to select |
-| `tableSelector` | `'dropdown' \| 'sidebar'` | `'dropdown'` | Table selector display mode |
+| `tableSelector` | `'dropdown' \| 'sidebar' \| 'none'` | `'dropdown'` | Table selector display mode |
 | `tableSelectorLabel` | `string` | `'Select Table'` | Label for the table selector |
 | `tableSelectorComponent` | `React.FC` | - | Custom table selector component |
 
@@ -48,7 +48,7 @@ The main component for displaying database data in your React application. It pr
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `showFilter` | `boolean` | `true` | Whether to show the filter input |
-| `filterPlaceholder` | `string` | `'Filter...'` | Placeholder text for the filter input |
+| `filterPlaceholder` | `string` | `'Filter records...'` | Placeholder text for the filter input |
 | `filterPosition` | `'top' \| 'bottom'` | `'top'` | Position of the filter input |
 | `filterDebounceMs` | `number` | `300` | Debounce delay for filter input in milliseconds |
 | `filterComponent` | `React.FC` | - | Custom filter input component |

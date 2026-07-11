@@ -23,7 +23,7 @@ Accepted
 
 ### Context
 
-Tabula Lens needed to support multiple frontend frameworks (React, Vue, Svelte, etc.) and backend frameworks (Express, Fastify, Next.js, etc.). A direct database connection from the frontend would expose credentials and create security vulnerabilities.
+Tabula Lens needed to work with any frontend technology and multiple backend frameworks (Express, Fastify, Next.js, etc.). A direct database connection from the frontend would expose credentials and create security vulnerabilities.
 
 ### Decision
 
@@ -539,7 +539,6 @@ Implement a custom TabulaLensError class with:
 
 The following architectural decisions may need to be made in the future:
 
-- **ADR-013**: Multi-Database Support (MySQL, SQLite, etc.)
 - **ADR-014**: Real-Time Data Streaming (WebSocket, Server-Sent Events)
 - **ADR-015**: GraphQL API Support
 - **ADR-016**: Edge Computing Support (Cloudflare Workers, Vercel Edge)

@@ -25,7 +25,7 @@ The most common pattern for Tabula Lens authentication is JSON Web Tokens (JWT).
 #### Backend Implementation
 
 ```typescript
-import { TabulaLens } from '@tabula-lens/node';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
 import jwt from 'jsonwebtoken';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
@@ -49,15 +49,8 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// Protected endpoint
-app.get('/api/tabula-lens', authenticateToken, async (req, res) => {
-  try {
-    const result = await tabulaLens.query(req.query);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to execute query' });
-  }
-});
+// Apply authentication middleware before the Tabula Lens adapter
+app.use('/api/tabula-lens', authenticateToken, expressAdapter(tabulaLens));
 ```
 
 #### Frontend Implementation
@@ -74,7 +67,7 @@ function App() {
 
   return (
     <DatabaseViewer
-      endpoint="/api/tabula-lens"
+      path="/api/tabula-lens"
       getAuthHeaders={getAuthHeaders}
       onError={(error) => {
         if (error.status === 401) {
@@ -96,7 +89,7 @@ For traditional web applications, you can use session-based authentication with 
 ```typescript
 import express from 'express';
 import session from 'express-session';
-import { TabulaLens } from '@tabula-lens/node';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
 
 const app = express();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
@@ -121,15 +114,8 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// Protected endpoint
-app.get('/api/tabula-lens', requireAuth, async (req, res) => {
-  try {
-    const result = await tabulaLens.query(req.query);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to execute query' });
-  }
-});
+// Apply authentication middleware before the Tabula Lens adapter
+app.use('/api/tabula-lens', requireAuth, expressAdapter(tabulaLens));
 ```
 
 #### Frontend Implementation
@@ -145,7 +131,7 @@ function App() {
 
   return (
     <DatabaseViewer
-      endpoint="/api/tabula-lens"
+      path="/api/tabula-lens"
       getAuthHeaders={getAuthHeaders}
       // With cookies, credentials must be included
       // This is handled by the browser automatically
@@ -366,7 +352,7 @@ function DatabaseViewerWithAuth() {
 
   return (
     <DatabaseViewer
-      endpoint="/api/tabula-lens"
+      path="/api/tabula-lens"
       getAuthHeaders={() => ({
         'Authorization': `Bearer ${token}`
       })}

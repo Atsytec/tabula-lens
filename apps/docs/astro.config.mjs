@@ -183,6 +183,12 @@ export default defineConfig({
 						{ label: 'Contributing to Documentation', slug: 'contributing' },
 					],
 				},
+				{
+					label: 'About',
+					items: [
+						{ label: 'Accessibility', slug: 'accessibility' },
+					],
+				},
 			],
 		}),
 	],

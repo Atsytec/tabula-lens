@@ -260,7 +260,7 @@ You can use any frontend framework that can make HTTP requests:
 
 ```javascript
 // React
-<DatabaseViewer endpoint="/api/tabula-lens" path="users" />
+<DatabaseViewer path="/api/tabula-lens" initialTable="users" />
 
 // Vanilla JavaScript
 fetch('/api/tabula-lens?path=users')
@@ -406,7 +406,7 @@ The architecture supports multiple extension points:
 
 Any framework that can make HTTP requests:
 - React (currently supported)
-- Other web frameworks (Vue, Svelte, Angular) - can be implemented by consuming the HTTP API
+- Other web frameworks (Vue, Svelte, Angular) - the HTTP API is framework-agnostic, but only React components are currently provided
 - Mobile frameworks (React Native, Flutter)
 - Desktop applications (Electron, Tauri)
 - Command-line tools
@@ -421,12 +421,10 @@ Any language/framework that can implement the HTTP API:
 
 ### New Databases
 
-Any database with a Node.js driver:
-- PostgreSQL (primary support)
-- MySQL
-- SQLite
-- MongoDB (with appropriate adapter)
-- Other SQL databases
+Currently supported database:
+- PostgreSQL (via Knex.js query builder)
+
+The HTTP API architecture allows for future database support, but only PostgreSQL is currently implemented.
 
 ### Custom Components
 

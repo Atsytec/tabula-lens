@@ -22,20 +22,20 @@ The TabulaLensError class provides structured error information:
 
 ```typescript
 class TabulaLensError extends Error {
-  code: string;
   statusCode: number;
-  details?: Record<string, any>;
+  code: string;
+  details?: unknown;
   
   constructor(
-    message: string,
-    code: string,
     statusCode: number,
-    details?: Record<string, any>
+    code: string,
+    message: string,
+    details?: unknown
   ) {
     super(message);
     this.name = 'TabulaLensError';
-    this.code = code;
     this.statusCode = statusCode;
+    this.code = code;
     this.details = details;
   }
 }
@@ -72,7 +72,7 @@ app.get('/api/tabula-lens', async (req, res) => {
 **Client-Side:**
 
 ```typescript
-import { TabulaLensError } from '@tabula-lens/react';
+import { TabulaLensError } from '@tabula-lens/node';
 
 function DatabaseViewerWithErrorHandling() {
   const handleError = (error) => {
@@ -97,7 +97,7 @@ function DatabaseViewerWithErrorHandling() {
 
   return (
     <DatabaseViewer
-      endpoint="/api/tabula-lens"
+      path="/api/tabula-lens"
       onError={handleError}
     />
   );
@@ -332,7 +332,7 @@ function DatabaseViewerWithErrorHandling() {
   
   return (
     <DatabaseViewer
-      endpoint="/api/tabula-lens"
+      path="/api/tabula-lens"
       onError={handleError}
     />
   );
@@ -375,7 +375,7 @@ class ErrorBoundary extends React.Component {
 
 // Usage
 <ErrorBoundary>
-  <DatabaseViewer endpoint="/api/tabula-lens" />
+  <DatabaseViewer path="/api/tabula-lens" />
 </ErrorBoundary>
 ```
 
@@ -427,7 +427,7 @@ const CustomErrorComponent = ({ error, onRetry }) => {
 };
 
 <DatabaseViewer
-  endpoint="/api/tabula-lens"
+  path="/api/tabula-lens"
   errorComponent={CustomErrorComponent}
 />
 ```
@@ -669,7 +669,7 @@ function DatabaseViewerWithRetry() {
   
   return (
     <DatabaseViewer
-      endpoint="/api/tabula-lens"
+      path="/api/tabula-lens"
       onError={handleError}
     />
   );
@@ -733,7 +733,7 @@ Use React error boundaries for component errors:
 
 ```typescript
 <ErrorBoundary>
-  <DatabaseViewer endpoint="/api/tabula-lens" />
+  <DatabaseViewer path="/api/tabula-lens" />
 </ErrorBoundary>
 ```
 
