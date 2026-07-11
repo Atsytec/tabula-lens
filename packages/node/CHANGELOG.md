@@ -1,5 +1,11 @@
 # @tabula-lens/node
 
+## 0.3.2
+
+### Patch Changes
+
+- 879fd06: Docs page release
+
 ## 0.3.1
 
 ### Patch Changes
