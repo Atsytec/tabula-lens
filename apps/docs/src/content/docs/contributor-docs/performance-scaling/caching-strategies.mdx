@@ -1,0 +1,756 @@
+---
+title: Caching Strategies
+description: Learn about caching strategies for Tabula Lens applications to improve performance and reduce database load.
+---
+
+# Caching Strategies
+
+This guide covers caching strategies for Tabula Lens applications, including application-level caching, database caching, and CDN caching to improve performance and reduce database load.
+
+## Overview
+
+Caching is one of the most effective ways to improve Tabula Lens application performance. By storing frequently accessed data in fast storage, you can:
+
+- Reduce database load and query time
+- Improve API response times
+- Decrease network latency
+- Enhance user experience
+- Scale applications more efficiently
+
+## Caching Layers
+
+Tabula Lens applications can benefit from multiple caching layers:
+
+**1. Application-Level Caching**
+- In-memory caching (Node.js)
+- Distributed caching (Redis, Memcached)
+- HTTP caching headers
+
+**2. Database Caching**
+- PostgreSQL query cache
+- Materialized views
+- Database connection pooling
+
+**3. CDN Caching**
+- Static asset caching
+- API response caching
+- Edge caching
+
+## Application-Level Caching
+
+### In-Memory Caching
+
+Use Node.js in-memory caching for simple use cases:
+
+```javascript
+const NodeCache = require('node-cache');
+
+const cache = new NodeCache({
+  stdTTL: 300,  // 5 minutes default TTL
+  checkperiod: 60,  // Check for expired keys every 60s
+  useClones: false  // Performance optimization
+});
+
+app.get('/api/tabula-lens', async (req, res) => {
+  const cacheKey = `tabula:${JSON.stringify(req.query)}`;
+  const cached = cache.get(cacheKey);
+  
+  if (cached) {
+    return res.json(cached);
+  }
+  
+  const result = await tabulaLens.query(req.query);
+  cache.set(cacheKey, result);
+  res.json(result);
+});
+```
+
+**Pros:**
+- Simple to implement
+- No external dependencies
+- Fast access times
+
+**Cons:**
+- Limited to single instance
+- Data lost on restart
+- Not suitable for distributed systems
+
+### Redis Caching
+
+Use Redis for distributed caching:
+
+```javascript
+const Redis = require('ioredis');
+const redis = new Redis(process.env.REDIS_URL);
+
+app.get('/api/tabula-lens', async (req, res) => {
+  const cacheKey = `tabula:${JSON.stringify(req.query)}`;
+  const cached = await redis.get(cacheKey);
+  
+  if (cached) {
+    return res.json(JSON.parse(cached));
+  }
+  
+  const result = await tabulaLens.query(req.query);
+  await redis.setex(cacheKey, 300, JSON.stringify(result));  // 5 minutes
+  res.json(result);
+});
+```
+
+**Advanced Redis Patterns:**
+
+```javascript
+// Cache with tags for invalidation
+async function cacheWithTags(key, value, tags, ttl) {
+  await redis.setex(key, ttl, JSON.stringify(value));
+  
+  for (const tag of tags) {
+    await redis.sadd(`tag:${tag}`, key);
+  }
+}
+
+async function invalidateByTag(tag) {
+  const keys = await redis.smembers(`tag:${tag}`);
+  if (keys.length > 0) {
+    await redis.del(...keys);
+    await redis.del(`tag:${tag}`);
+  }
+}
+
+// Usage
+await cacheWithTags('users:1', userData, ['users', 'user:1'], 300);
+await invalidateByTag('users');  // Invalidate all user-related caches
+```
+
+**Pros:**
+- Distributed caching
+- Persistent storage
+- Advanced data structures
+- High performance
+
+**Cons:**
+- External dependency
+- Network latency
+- Operational complexity
+
+### Cache-Aside Pattern
+
+Implement cache-aside pattern for better control:
+
+```javascript
+class CacheAside {
+  constructor(redis, tabulaLens) {
+    this.redis = redis;
+    this.tabulaLens = tabulaLens;
+  }
+  
+  async get(key, queryFn, ttl = 300) {
+    // Try cache first
+    const cached = await this.redis.get(key);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+    
+    // Cache miss - fetch from database
+    const data = await queryFn();
+    
+    // Store in cache
+    await this.redis.setex(key, ttl, JSON.stringify(data));
+    
+    return data;
+  }
+  
+  async invalidate(key) {
+    await this.redis.del(key);
+  }
+  
+  async invalidatePattern(pattern) {
+    const keys = await this.redis.keys(pattern);
+    if (keys.length > 0) {
+      await this.redis.del(...keys);
+    }
+  }
+}
+
+// Usage
+const cache = new CacheAside(redis, tabulaLens);
+
+app.get('/api/tabula-lens', async (req, res) => {
+  const cacheKey = `tabula:${JSON.stringify(req.query)}`;
+  
+  const result = await cache.get(cacheKey, async () => {
+    return await tabulaLens.query(req.query);
+  });
+  
+  res.json(result);
+});
+```
+
+## Database Caching
+
+### PostgreSQL Query Cache
+
+PostgreSQL has built-in query caching:
+
+```sql
+-- Enable query cache (PostgreSQL configuration)
+shared_buffers = 256MB
+effective_cache_size = 1GB
+
+-- Monitor cache hit ratio
+SELECT 
+  sum(heap_blks_read) as heap_read,
+  sum(heap_blks_hit) as heap_hit,
+  sum(heap_blks_hit) / (sum(heap_blks_hit) + sum(heap_blks_read)) as cache_hit_ratio
+FROM pg_statio_user_tables;
+```
+
+**Target cache hit ratio:** > 95%
+
+### Materialized Views
+
+Use materialized views for complex queries:
+
+```sql
+-- Create materialized view
+CREATE MATERIALIZED VIEW user_order_summary AS
+SELECT 
+  u.id as user_id,
+  u.name,
+  u.email,
+  COUNT(o.id) as order_count,
+  SUM(o.total) as total_spent
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id, u.name, u.email;
+
+-- Refresh materialized view
+REFRESH MATERIALIZED VIEW user_order_summary;
+
+-- Query materialized view (much faster)
+SELECT * FROM user_order_summary WHERE user_id = 1;
+```
+
+**Automated Refresh:**
+
+```sql
+-- Create function to refresh materialized view
+CREATE OR REPLACE FUNCTION refresh_user_order_summary()
+RETURNS void AS $$
+BEGIN
+  REFRESH MATERIALIZED VIEW CONCURRENTLY user_order_summary;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Schedule refresh (using pg_cron extension)
+SELECT cron.schedule('refresh-user-summary', '*/5 * * * *', 'SELECT refresh_user_order_summary()');
+```
+
+### Connection Pooling
+
+Use connection pooling to cache database connections:
+
+```javascript
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 20,  // Maximum pool size
+  min: 5,   // Minimum pool size
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+const tabulaLens = new TabulaLens(pool);
+```
+
+**Benefits:**
+- Reuses database connections
+- Reduces connection overhead
+- Improves query performance
+- Handles connection spikes
+
+## HTTP Caching
+
+### Cache-Control Headers
+
+Implement HTTP caching headers:
+
+```javascript
+app.get('/api/tabula-lens', async (req, res) => {
+  const result = await tabulaLens.query(req.query);
+  
+  // Set cache headers
+  res.set('Cache-Control', 'public, max-age=300');  // 5 minutes
+  res.set('ETag', generateETag(result));
+  
+  // Check if client has cached version
+  if (req.fresh) {
+    return res.status(304).end();
+  }
+  
+  res.json(result);
+});
+
+function generateETag(data) {
+  return crypto
+    .createHash('md5')
+    .update(JSON.stringify(data))
+    .digest('hex');
+}
+```
+
+### Conditional Requests
+
+Implement conditional requests with ETags:
+
+```javascript
+app.get('/api/tabula-lens', async (req, res) => {
+  const result = await tabulaLens.query(req.query);
+  const etag = generateETag(result);
+  
+  res.set('ETag', etag);
+  
+  if (req.headers['if-none-match'] === etag) {
+    return res.status(304).end();
+  }
+  
+  res.json(result);
+});
+```
+
+### CDN Caching
+
+Configure CDN caching for API responses:
+
+```javascript
+// Set CDN cache headers
+app.get('/api/tabula-lens', async (req, res) => {
+  const result = await tabulaLens.query(req.query);
+  
+  // CDN cache for 5 minutes, browser cache for 1 minute
+  res.set('Cache-Control', 'public, s-maxage=300, max-age=60');
+  res.set('CDN-Cache-Control', 'public, max-age=300');
+  
+  res.json(result);
+});
+```
+
+## Caching Strategies
+
+### Strategy 1: Time-Based Expiration
+
+Cache data for a fixed time period:
+
+```javascript
+const cache = new NodeCache({ stdTTL: 300 });  // 5 minutes
+
+app.get('/api/tabula-lens', async (req, res) => {
+  const cacheKey = `tabula:${JSON.stringify(req.query)}`;
+  const cached = cache.get(cacheKey);
+  
+  if (cached) {
+    return res.json(cached);
+  }
+  
+  const result = await tabulaLens.query(req.query);
+  cache.set(cacheKey, result);
+  res.json(result);
+});
+```
+
+**Use Cases:**
+- Data that changes infrequently
+- Reference data
+- Dashboard metrics
+
+**TTL Guidelines:**
+- Static data: 1 hour - 1 day
+- Slowly changing data: 5 - 30 minutes
+- Fast changing data: 1 - 5 minutes
+- Real-time data: No caching
+
+### Strategy 2: Event-Based Invalidation
+
+Invalidate cache when data changes:
+
+```javascript
+// Invalidate cache on data changes
+app.post('/api/users', async (req, res) => {
+  const result = await createUser(req.body);
+  
+  // Invalidate related caches
+  await cache.invalidatePattern('tabula:users:*');
+  await cache.invalidatePattern('tabula:user:*');
+  
+  res.json(result);
+});
+
+app.put('/api/users/:id', async (req, res) => {
+  const result = await updateUser(req.params.id, req.body);
+  
+  // Invalidate specific user cache
+  await cache.invalidate(`tabula:user:${req.params.id}`);
+  await cache.invalidatePattern('tabula:users:*');
+  
+  res.json(result);
+});
+```
+
+**Use Cases:**
+- User-generated content
+- Frequently updated data
+- Data consistency requirements
+
+### Strategy 3: Write-Through Cache
+
+Write data to cache and database simultaneously:
+
+```javascript
+class WriteThroughCache {
+  constructor(redis, tabulaLens) {
+    this.redis = redis;
+    this.tabulaLens = tabulaLens;
+  }
+  
+  async write(key, value, queryFn, ttl = 300) {
+    // Write to database
+    await queryFn();
+    
+    // Write to cache
+    await this.redis.setex(key, ttl, JSON.stringify(value));
+  }
+  
+  async read(key, queryFn, ttl = 300) {
+    // Try cache first
+    const cached = await this.redis.get(key);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+    
+    // Cache miss - fetch from database
+    const data = await queryFn();
+    
+    // Store in cache
+    await this.redis.setex(key, ttl, JSON.stringify(data));
+    
+    return data;
+  }
+}
+```
+
+**Use Cases:**
+- Read-heavy workloads
+- Data that must be consistent
+- Low latency requirements
+
+### Strategy 4: Write-Behind Cache
+
+Write to cache immediately, database asynchronously:
+
+```javascript
+class WriteBehindCache {
+  constructor(redis, tabulaLens) {
+    this.redis = redis;
+    this.tabulaLens = tabulaLens;
+    this.queue = [];
+  }
+  
+  async write(key, value, queryFn) {
+    // Write to cache immediately
+    await this.redis.set(key, JSON.stringify(value));
+    
+    // Queue database write
+    this.queue.push({ key, queryFn });
+    
+    // Process queue asynchronously
+    this.processQueue();
+  }
+  
+  async processQueue() {
+    while (this.queue.length > 0) {
+      const { key, queryFn } = this.queue.shift();
+      try {
+        await queryFn();
+      } catch (error) {
+        // Re-queue on failure
+        this.queue.unshift({ key, queryFn });
+      }
+    }
+  }
+}
+```
+
+**Use Cases:**
+- High write throughput
+- Temporary data inconsistency acceptable
+- Performance-critical writes
+
+### Strategy 5: Multi-Level Caching
+
+Implement multiple cache levels:
+
+```javascript
+class MultiLevelCache {
+  constructor(l1Cache, l2Cache, tabulaLens) {
+    this.l1Cache = l1Cache;  // In-memory (fast)
+    this.l2Cache = l2Cache;  // Redis (distributed)
+    this.tabulaLens = tabulaLens;
+  }
+  
+  async get(key, queryFn, ttl = 300) {
+    // Try L1 cache first
+    const l1Cached = this.l1Cache.get(key);
+    if (l1Cached) {
+      return l1Cached;
+    }
+    
+    // Try L2 cache
+    const l2Cached = await this.l2Cache.get(key);
+    if (l2Cached) {
+      const data = JSON.parse(l2Cached);
+      this.l1Cache.set(key, data);  // Populate L1
+      return data;
+    }
+    
+    // Cache miss - fetch from database
+    const data = await queryFn();
+    
+    // Store in both caches
+    this.l1Cache.set(key, data);
+    await this.l2Cache.setex(key, ttl, JSON.stringify(data));
+    
+    return data;
+  }
+  
+  async invalidate(key) {
+    this.l1Cache.del(key);
+    await this.l2Cache.del(key);
+  }
+}
+```
+
+**Use Cases:**
+- High-performance requirements
+- Distributed systems
+- Reducing database load
+
+## Cache Invalidation Strategies
+
+### Time-Based Invalidation
+
+```javascript
+// Set TTL on cache entries
+await redis.setex(key, 300, value);  // Expires in 5 minutes
+```
+
+### Event-Based Invalidation
+
+```javascript
+// Invalidate on data changes
+app.post('/api/users', async (req, res) => {
+  await createUser(req.body);
+  await cache.invalidatePattern('users:*');
+  res.json({ success: true });
+});
+```
+
+### Manual Invalidation
+
+```javascript
+// Admin endpoint to clear cache
+app.post('/admin/cache/clear', async (req, res) => {
+  await cache.flushAll();
+  res.json({ success: true });
+});
+```
+
+### Tag-Based Invalidation
+
+```javascript
+// Cache with tags
+await cache.set('user:1', userData, ['users', 'user:1']);
+
+// Invalidate by tag
+await cache.invalidateByTag('users');  // Invalidates all user caches
+```
+
+## Caching Best Practices
+
+### 1. Cache Key Design
+
+```javascript
+// ✅ Good: Descriptive cache keys
+const cacheKey = `user:${userId}:profile`;
+const cacheKey = `tabula:query:${JSON.stringify(query)}`;
+
+// ❌ Avoid: Generic or unclear keys
+const cacheKey = 'data';
+const cacheKey = 'query';
+```
+
+### 2. Appropriate TTL
+
+```javascript
+// ✅ Good: Context-appropriate TTL
+await redis.setex('static:data', 3600, data);  // 1 hour
+await redis.setex('user:data', 300, data);     // 5 minutes
+await redis.setex('realtime:data', 10, data);   // 10 seconds
+
+// ❌ Avoid: One-size-fits-all TTL
+await redis.setex(key, 3600, data);  // Too long for dynamic data
+```
+
+### 3. Cache Size Management
+
+```javascript
+// ✅ Good: Limit cache size
+const cache = new NodeCache({
+  maxKeys: 1000,  // Maximum number of keys
+  checkperiod: 60
+});
+
+// ❌ Avoid: Unbounded cache growth
+const cache = new NodeCache();  // Can grow indefinitely
+```
+
+### 4. Error Handling
+
+```javascript
+// ✅ Good: Graceful fallback
+try {
+  const cached = await redis.get(key);
+  if (cached) return JSON.parse(cached);
+} catch (error) {
+  console.error('Cache error:', error);
+  // Fall back to database
+}
+
+const data = await queryFn();
+return data;
+
+// ❌ Avoid: Cache failures breaking application
+const cached = await redis.get(key);  // Can crash if Redis is down
+```
+
+### 5. Monitoring
+
+```javascript
+// Monitor cache performance
+const cacheStats = {
+  hits: 0,
+  misses: 0,
+  hitRate: () => cacheStats.hits / (cacheStats.hits + cacheStats.misses)
+};
+
+app.get('/api/tabula-lens', async (req, res) => {
+  const cached = await redis.get(key);
+  if (cached) {
+    cacheStats.hits++;
+    return res.json(JSON.parse(cached));
+  }
+  
+  cacheStats.misses++;
+  const data = await queryFn();
+  await redis.setex(key, ttl, JSON.stringify(data));
+  res.json(data);
+});
+```
+
+## Cache Monitoring
+
+### Key Metrics
+
+- **Cache Hit Ratio**: Percentage of requests served from cache
+- **Cache Miss Ratio**: Percentage of requests that miss cache
+- **Cache Latency**: Time to read from cache
+- **Cache Size**: Current cache memory usage
+- **Eviction Rate**: Rate at which items are evicted
+
+### Monitoring Implementation
+
+```javascript
+// Redis monitoring
+async function getCacheStats() {
+  const info = await redis.info('stats');
+  const keyspace = await redis.info('keyspace');
+  
+  return {
+    hits: info.keyspace_hits,
+    misses: info.keyspace_misses,
+    hitRate: info.keyspace_hits / (info.keyspace_hits + info.keyspace_misses),
+    keys: keyspace.db0.keys,
+  };
+}
+
+// Log cache stats periodically
+setInterval(async () => {
+  const stats = await getCacheStats();
+  logger.info('Cache stats', stats);
+}, 60000);  // Every minute
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Issue: Low cache hit ratio**
+
+**Solution:**
+- Review cache key design
+- Check TTL settings
+- Analyze access patterns
+- Consider cache warming
+
+**Issue: High memory usage**
+
+**Solution:**
+- Implement cache size limits
+- Use appropriate TTL
+- Monitor cache eviction
+- Consider data compression
+
+**Issue: Stale data**
+
+**Solution:**
+- Implement event-based invalidation
+- Reduce TTL for frequently changing data
+- Use cache versioning
+- Implement cache validation
+
+**Issue: Cache stampede**
+
+**Solution:**
+```javascript
+// Implement cache locking
+async function getWithLock(key, queryFn, ttl = 300) {
+  const cached = await redis.get(key);
+  if (cached) return JSON.parse(cached);
+  
+  // Acquire lock
+  const lockKey = `lock:${key}`;
+  const lock = await redis.set(lockKey, '1', 'NX', 'EX', 10);
+  
+  if (lock) {
+    try {
+      const data = await queryFn();
+      await redis.setex(key, ttl, JSON.stringify(data));
+      return data;
+    } finally {
+      await redis.del(lockKey);
+    }
+  } else {
+    // Wait for lock to release
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return getWithLock(key, queryFn, ttl);
+  }
+}
+```
+
+## Next Steps
+
+- Implement caching strategy appropriate for your use case
+- Set up cache monitoring and alerting
+- Regularly review cache performance metrics
+- Review [Performance Optimization Guide](/user-guides/production/performance-optimization) for performance tuning
+- Check [Performance Characteristics](/contributor-docs/performance-scaling/performance-characteristics) for performance benchmarks

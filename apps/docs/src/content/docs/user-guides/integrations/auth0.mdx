@@ -1,0 +1,164 @@
+---
+title: Auth0 Integration
+description: Integrate Auth0 authentication with Tabula Lens to secure your database endpoints.
+---
+
+# Auth0 Integration
+
+[Auth0](https://auth0.com/) is a cloud identity platform that handles authentication and authorization. This guide shows how to protect your Tabula Lens endpoint with Auth0 JWT validation and pass an access token from the frontend.
+
+## Prerequisites
+
+### Auth0 Dashboard setup
+
+Before writing any code, configure the following in your [Auth0 Dashboard](https://manage.auth0.com/):
+
+1. **Create an Application** — choose *Single Page Application* for React frontends or *Regular Web App* for server-rendered apps. Note the **Domain** and **Client ID**.
+2. **Create an API** — give it an identifier (this becomes your `audience`). Note the **API identifier**.
+
+### Install packages
+
+**Backend (Express):**
+
+```bash
+npm install express-oauth2-jwt-bearer
+```
+
+**Backend (Next.js):**
+
+```bash
+npm install @auth0/nextjs-auth0
+```
+
+**Frontend:**
+
+```bash
+npm install @auth0/auth0-react
+```
+
+### Environment variables
+
+```bash
+# Backend
+AUTH0_DOMAIN=your-tenant.auth0.com
+AUTH0_AUDIENCE=https://your-api-identifier
+
+# Frontend
+NEXT_PUBLIC_AUTH0_DOMAIN=your-tenant.auth0.com
+NEXT_PUBLIC_AUTH0_CLIENT_ID=your-client-id
+NEXT_PUBLIC_AUTH0_AUDIENCE=https://your-api-identifier
+```
+
+## Backend Setup
+
+### Express
+
+Use `express-oauth2-jwt-bearer` to validate the JWT before forwarding the request to Tabula Lens:
+
+```typescript
+import express from 'express';
+import { auth } from 'express-oauth2-jwt-bearer';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+
+// Configure JWT validation — JWKS is fetched automatically from Auth0
+const checkJwt = auth({
+  issuerBaseURL: `https://${process.env.AUTH0_DOMAIN}`,
+  audience: process.env.AUTH0_AUDIENCE,
+});
+
+// Protect the Tabula Lens endpoint
+app.use('/api/tabula-lens', checkJwt, expressAdapter(tabulaLens));
+
+// Handle JWT validation errors
+app.use((err, req, res, next) => {
+  if (err.name === 'UnauthorizedError') {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  next(err);
+});
+```
+
+### Next.js App Router
+
+Use the official `@auth0/nextjs-auth0` SDK to protect the route:
+
+```typescript
+// app/api/auth/[auth0]/route.ts
+import { handleAuth } from '@auth0/nextjs-auth0';
+
+export const GET = handleAuth();
+```
+
+```typescript
+// app/api/tabula-lens/route.ts
+import { withApiAuthRequired } from '@auth0/nextjs-auth0';
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+const handler = createNextRouteHandler(tabulaLens);
+
+export const GET = withApiAuthRequired(async function (request: Request) {
+  return handler(request);
+});
+```
+
+> **Note:** `@auth0/nextjs-auth0` manages its own session cookies for Next.js. If you are building a standalone API (not a Next.js full-stack app), use the Express pattern with `express-oauth2-jwt-bearer` and validate the `Authorization` header instead.
+
+## Frontend Integration
+
+Wrap your app with `Auth0Provider`, then use `getAccessTokenSilently` to retrieve a token for each request:
+
+```tsx
+// app/layout.tsx (or your root component)
+import { Auth0Provider } from '@auth0/auth0-react';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Auth0Provider
+      domain={process.env.NEXT_PUBLIC_AUTH0_DOMAIN!}
+      clientId={process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID!}
+      authorizationParams={{
+        redirect_uri: typeof window !== 'undefined' ? window.location.origin : '',
+        audience: process.env.NEXT_PUBLIC_AUTH0_AUDIENCE,
+      }}
+    >
+      {children}
+    </Auth0Provider>
+  );
+}
+```
+
+```tsx
+// components/TabulaLensViewer.tsx
+'use client';
+import { useAuth0 } from '@auth0/auth0-react';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+export function TabulaLensViewer() {
+  const { getAccessTokenSilently, isAuthenticated, isLoading } = useAuth0();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!isAuthenticated) return <div>Sign in to view data</div>;
+
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      getAuthHeaders={async () => {
+        const token = await getAccessTokenSilently();
+        return { Authorization: `Bearer ${token}` };
+      }}
+    />
+  );
+}
+```
+
+## Important Notes
+
+- **`audience` must match exactly** — the `audience` value on both the backend and frontend must be identical to the API identifier in your Auth0 Dashboard. A mismatch causes JWT validation to fail.
+- **JWKS is automatic** — `express-oauth2-jwt-bearer` fetches public keys from `https://YOUR_DOMAIN/.well-known/jwks.json` at startup. No manual key configuration is needed.
+- **Token refresh is automatic** — `getAccessTokenSilently()` silently refreshes expired tokens using a refresh token or the Auth0 session. Each call to `getAuthHeaders` will always yield a valid token.
+- **RS256 by default** — Auth0 signs tokens with RS256 (asymmetric). Do not switch to HS256 unless you have a specific reason, as RS256 is more secure for public clients.
+- **`audience` scope** — if you need to request specific scopes (e.g. `read:database`), add them to `authorizationParams.scope` in the provider and enforce them on the backend with `requiredScopes`.

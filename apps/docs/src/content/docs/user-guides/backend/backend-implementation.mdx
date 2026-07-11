@@ -1,0 +1,1084 @@
+---
+title: Backend Implementation
+description: Learn how to set up Tabula Lens on your Node.js backend with comprehensive framework adapter documentation.
+---
+
+# Backend Implementation
+
+This guide covers how to integrate Tabula Lens into your Node.js backend with comprehensive documentation for all 15 supported framework adapters.
+
+> 💡 **Quick Reference**: For installation and basic usage examples, check out the [@tabula-lens/node README](https://github.com/Atsytec/tabula-lens/blob/main/packages/node/README.md).
+
+## Installation
+
+```bash
+npm install @tabula-lens/node
+# or
+pnpm add @tabula-lens/node
+# or
+yarn add @tabula-lens/node
+```
+
+## Basic Setup
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Query data
+const result = await tabulaLens.query({
+  table: 'users',
+  page: 1,
+  limit: 10,
+});
+
+console.log(result.data);
+// => [{ id: 1, name: 'John', email: 'john@example.com' }, ...]
+```
+
+## Configuration Options
+
+### TabulaLens Constructor Options
+
+```typescript
+interface TabulaLensOptions {
+  logger?: Logger;
+  logLevel?: 'error' | 'warn' | 'info' | 'debug' | 'silent';
+  enableQueryLogging?: boolean;
+  enableRequestLogging?: boolean;
+  sensitiveDataMasking?: boolean;
+  logFormat?: 'json' | 'text' | 'pretty';
+}
+```
+
+### Basic Configuration
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+// Basic usage with default logging
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Custom log level
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+});
+
+// Production configuration
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+});
+```
+
+## Framework Adapters
+
+Tabula Lens supports 15+ Node.js frameworks through dedicated adapters:
+
+### Traditional Frameworks
+- Express (4.x & 5.x)
+- Fastify
+- Koa
+- Hapi
+- Restify
+
+### Modern Frameworks
+- Next.js
+- TanStack Start
+- Remix
+- SvelteKit
+
+### Edge Frameworks
+- Hono
+- Elysia
+- Fresh
+
+### Native
+- Native Node.js HTTP
+
+## Traditional Frameworks
+
+### Express (4.x & 5.x)
+
+**Peer Dependencies:**
+```bash
+npm install express@^4.18.0 || ^5.0.0
+```
+
+**Basic Setup:**
+
+```typescript
+import express from 'express';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Create API endpoint using adapter
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
+
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
+```
+
+**Advanced Configuration:**
+
+```typescript
+import express from 'express';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+  enableRequestLogging: true,
+});
+
+// Add middleware for authentication
+app.use('/api/tabula-lens', (req, res, next) => {
+  const token = req.headers.authorization;
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  // Validate token here
+  next();
+});
+
+// Use adapter after authentication middleware
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
+
+app.listen(3000);
+```
+
+**Express 5.x Support:**
+
+```typescript
+import express from 'express';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Express 5.x works the same way
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
+
+app.listen(3000);
+```
+
+### Fastify
+
+**Peer Dependencies:**
+```bash
+npm install fastify@^4.0.0
+```
+
+**Basic Setup:**
+
+```typescript
+import Fastify from 'fastify';
+import { TabulaLens, fastifyAdapter } from '@tabula-lens/node';
+
+const fastify = Fastify();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Create API endpoint using adapter
+fastify.all('/api/tabula-lens/*', fastifyAdapter(tabulaLens));
+
+fastify.listen({ port: 3000 }, (err) => {
+  if (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+  fastify.log.info('Server running on port 3000');
+});
+```
+
+**Advanced Configuration:**
+
+```typescript
+import Fastify from 'fastify';
+import { TabulaLens, fastifyAdapter } from '@tabula-lens/node';
+
+const fastify = Fastify({
+  logger: true,
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+});
+
+// Add authentication hook
+fastify.addHook('onRequest', async (request, reply) => {
+  if (request.url.startsWith('/api/tabula-lens')) {
+    const token = request.headers.authorization;
+    if (!token) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+  }
+});
+
+// Use adapter
+fastify.all('/api/tabula-lens/*', fastifyAdapter(tabulaLens));
+
+fastify.listen({ port: 3000 });
+```
+
+### Koa
+
+**Peer Dependencies:**
+```bash
+npm install koa@^2.14.0
+npm install @koa/router
+```
+
+**Basic Setup:**
+
+```typescript
+import Koa from 'koa';
+import Router from '@koa/router';
+import { TabulaLens, koaAdapter } from '@tabula-lens/node';
+
+const app = new Koa();
+const router = new Router();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Create API endpoint using adapter
+router.all('/api/tabula-lens', koaAdapter(tabulaLens));
+
+app.use(router.routes());
+app.use(router.allowedMethods());
+
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
+```
+
+**Advanced Configuration:**
+
+```typescript
+import Koa from 'koa';
+import Router from '@koa/router';
+import { TabulaLens, koaAdapter } from '@tabula-lens/node';
+
+const app = new Koa();
+const router = new Router();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+});
+
+// Add authentication middleware
+app.use(async (ctx, next) => {
+  if (ctx.path.startsWith('/api/tabula-lens')) {
+    const token = ctx.headers.authorization;
+    if (!token) {
+      ctx.status = 401;
+      ctx.body = { error: 'Unauthorized' };
+      return;
+    }
+  }
+  await next();
+});
+
+// Use adapter
+router.all('/api/tabula-lens', koaAdapter(tabulaLens));
+
+app.use(router.routes());
+app.use(router.allowedMethods());
+
+app.listen(3000);
+```
+
+### Hapi
+
+**Peer Dependencies:**
+```bash
+npm install @hapi/hapi@^21.0.0
+```
+
+**Basic Setup:**
+
+```typescript
+import Hapi from '@hapi/hapi';
+import { TabulaLens, hapiAdapter } from '@tabula-lens/node';
+
+const init = async () => {
+  const server = Hapi.server({
+    port: 3000,
+    host: 'localhost',
+  });
+
+  const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+  // Create API endpoint using adapter
+  server.route({
+    method: '*',
+    path: '/api/tabula-lens/{p*}',
+    handler: hapiAdapter(tabulaLens),
+  });
+
+  await server.start();
+  console.log('Server running on %s', server.info.uri);
+};
+
+init();
+```
+
+**Advanced Configuration:**
+
+```typescript
+import Hapi from '@hapi/hapi';
+import { TabulaLens, hapiAdapter } from '@tabula-lens/node';
+
+const init = async () => {
+  const server = Hapi.server({
+    port: 3000,
+    host: 'localhost',
+  });
+
+  const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+    logLevel: 'info',
+  });
+
+  // Add authentication pre-handler
+  server.ext('onPreAuth', (request, h) => {
+    if (request.path.startsWith('/api/tabula-lens')) {
+      const token = request.headers.authorization;
+      if (!token) {
+        return h.response({ error: 'Unauthorized' }).code(401);
+      }
+    }
+    return h.continue;
+  });
+
+  // Use adapter
+  server.route({
+    method: '*',
+    path: '/api/tabula-lens/{p*}',
+    handler: hapiAdapter(tabulaLens),
+  });
+
+  await server.start();
+  console.log('Server running on %s', server.info.uri);
+};
+
+init();
+```
+
+### Restify
+
+**Peer Dependencies:**
+```bash
+npm install restify@^11.0.0
+```
+
+**Basic Setup:**
+
+```typescript
+import restify from 'restify';
+import { TabulaLens, restifyAdapter } from '@tabula-lens/node';
+
+const server = restify.createServer();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Create API endpoint using adapter
+server.all('/api/tabula-lens', restifyAdapter(tabulaLens));
+
+server.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
+```
+
+**Advanced Configuration:**
+
+```typescript
+import restify from 'restify';
+import { TabulaLens, restifyAdapter } from '@tabula-lens/node';
+
+const server = restify.createServer();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+});
+
+// Add authentication middleware
+server.use((req, res, next) => {
+  if (req.path().startsWith('/api/tabula-lens')) {
+    const token = req.headers.authorization;
+    if (!token) {
+      res.send(401, { error: 'Unauthorized' });
+      return next(false);
+    }
+  }
+  next();
+});
+
+// Use adapter
+server.all('/api/tabula-lens', restifyAdapter(tabulaLens));
+
+server.listen(3000);
+```
+
+## Modern Frameworks
+
+### Next.js
+
+**Peer Dependencies:**
+```bash
+npm install next@latest
+# No additional peer dependencies for Tabula Lens
+```
+
+**App Router Setup:**
+
+```typescript
+// app/api/tabula-lens/route.ts
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createNextRouteHandler(tabulaLens);
+
+export { handler as GET, handler as POST, handler as PUT, handler as DELETE };
+```
+
+**Advanced Configuration:**
+
+```typescript
+// app/api/tabula-lens/route.ts
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+import { NextRequest } from 'next/server';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+  enableRequestLogging: true,
+});
+
+const handler = createNextRouteHandler(tabulaLens, {
+  parseBody: true,
+  onRequest: async (request: NextRequest) => {
+    // Custom authentication logic
+    const token = request.headers.get('authorization');
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+      });
+    }
+    return null; // Continue to handler
+  },
+});
+
+export { handler as GET, handler as POST, handler as PUT, handler as DELETE };
+```
+
+**Pages Router Setup:**
+
+```typescript
+// pages/api/tabula-lens.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createNextRouteHandler(tabulaLens);
+
+export default async function handlerWrapper(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  await handler(req, res);
+}
+```
+
+### TanStack Start
+
+**Peer Dependencies:**
+```bash
+npm install @tanstack/react-start@^1.0.0
+```
+
+**Basic Setup:**
+
+```typescript
+// app/routes/api.tabula-lens.ts
+import { createFileRoute } from '@tanstack/react-router';
+import { TabulaLens, createTanStackStartHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+export const handler = createTanStackStartHandler(tabulaLens);
+
+export const Route = createFileRoute('/api/tabula-lens')({
+  loader: async () => {
+    // Optional: Add custom logic
+    return null;
+  },
+});
+```
+
+**Advanced Configuration:**
+
+```typescript
+// app/routes/api.tabula-lens.ts
+import { createFileRoute } from '@tanstack/react-router';
+import { TabulaLens, createTanStackStartHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+});
+
+export const handler = createTanStackStartHandler(tabulaLens, {
+  onRequest: async (request) => {
+    // Custom authentication
+    const token = request.headers.get('authorization');
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+      });
+    }
+    return null;
+  },
+});
+
+export const Route = createFileRoute('/api/tabula-lens')({
+  loader: async () => null,
+});
+```
+
+### Remix
+
+**Peer Dependencies:**
+```bash
+npm install remix@^2.0.0
+```
+
+**Basic Setup:**
+
+```typescript
+// app/routes/api.tabula-lens.ts
+import { TabulaLens, createRemixHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+export const loader = createRemixHandler(tabulaLens);
+export const action = createRemixHandler(tabulaLens);
+```
+
+**Advanced Configuration:**
+
+```typescript
+// app/routes/api.tabula-lens.ts
+import { TabulaLens, createRemixHandler } from '@tabula-lens/node';
+import { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+});
+
+const authenticatedHandler = async (args: LoaderFunctionArgs | ActionFunctionArgs) => {
+  const token = args.request.headers.get('authorization');
+  if (!token) {
+    throw new Response('Unauthorized', { status: 401 });
+  }
+  return createRemixHandler(tabulaLens)(args);
+};
+
+export const loader = authenticatedHandler;
+export const action = authenticatedHandler;
+```
+
+### SvelteKit
+
+**Peer Dependencies:**
+```bash
+npm install @sveltejs/kit@^2.0.0
+```
+
+**Basic Setup:**
+
+```typescript
+// src/routes/api/tabula-lens/+server.ts
+import { TabulaLens, createSvelteKitHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+export const GET = createSvelteKitHandler(tabulaLens);
+export const POST = createSvelteKitHandler(tabulaLens);
+```
+
+**Advanced Configuration:**
+
+```typescript
+// src/routes/api/tabula-lens/+server.ts
+import { TabulaLens, createSvelteKitHandler } from '@tabula-lens/node';
+import type { RequestEvent } from '@sveltejs/kit';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+});
+
+const authenticatedHandler = async (event: RequestEvent) => {
+  const token = event.request.headers.get('authorization');
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+    });
+  }
+  return createSvelteKitHandler(tabulaLens)(event);
+};
+
+export const GET = authenticatedHandler;
+export const POST = authenticatedHandler;
+```
+
+## Edge Frameworks
+
+### Hono
+
+**Peer Dependencies:**
+```bash
+npm install hono@^4.0.0
+```
+
+**Basic Setup:**
+
+```typescript
+import { Hono } from 'hono';
+import { TabulaLens, honoAdapter } from '@tabula-lens/node';
+
+const app = new Hono();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Create API endpoint using adapter
+app.all('/api/tabula-lens/*', honoAdapter(tabulaLens));
+
+export default app;
+```
+
+**Advanced Configuration:**
+
+```typescript
+import { Hono } from 'hono';
+import { TabulaLens, honoAdapter } from '@tabula-lens/node';
+
+const app = new Hono();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+});
+
+// Add authentication middleware
+app.use('/api/tabula-lens/*', async (c, next) => {
+  const token = c.req.header('authorization');
+  if (!token) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+  await next();
+});
+
+// Use adapter
+app.all('/api/tabula-lens/*', honoAdapter(tabulaLens));
+
+export default app;
+```
+
+### Elysia
+
+**Peer Dependencies:**
+```bash
+npm install elysia@^1.0.0
+```
+
+**Basic Setup:**
+
+```typescript
+import { Elysia } from 'elysia';
+import { TabulaLens, elysiaAdapter } from '@tabula-lens/node';
+
+const app = new Elysia();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Create API endpoint using adapter
+app.all('/api/tabula-lens/*', elysiaAdapter(tabulaLens));
+
+app.listen(3000);
+```
+
+**Advanced Configuration:**
+
+```typescript
+import { Elysia } from 'elysia';
+import { TabulaLens, elysiaAdapter } from '@tabula-lens/node';
+
+const app = new Elysia();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+});
+
+// Add authentication hook
+app.onRequest(({ request, set }) => {
+  if (request.url.includes('/api/tabula-lens')) {
+    const token = request.headers.get('authorization');
+    if (!token) {
+      set.status = 401;
+      return { error: 'Unauthorized' };
+    }
+  }
+});
+
+// Use adapter
+app.all('/api/tabula-lens/*', elysiaAdapter(tabulaLens));
+
+app.listen(3000);
+```
+
+### Fresh (Deno)
+
+**Peer Dependencies:**
+```bash
+# No additional peer dependencies (Deno native)
+```
+
+**Basic Setup:**
+
+```typescript
+import { TabulaLens, freshAdapter } from '@tabula-lens/node';
+import { App } from 'https://deno.land/x/fresh@1.4.2/server.ts';
+
+const tabulaLens = new TabulaLens(Deno.env.get('DATABASE_URL')!);
+
+// Create API endpoint using adapter
+app.get('/api/tabula-lens', freshAdapter(tabulaLens));
+app.post('/api/tabula-lens', freshAdapter(tabulaLens));
+```
+
+**Advanced Configuration:**
+
+```typescript
+import { TabulaLens, freshAdapter } from '@tabula-lens/node';
+import { App, Middleware } from 'https://deno.land/x/fresh@1.4.2/server.ts';
+
+const tabulaLens = new TabulaLens(Deno.env.get('DATABASE_URL')!, {
+  logLevel: 'info',
+});
+
+// Add authentication middleware
+const authMiddleware: Middleware = async (req, ctx) => {
+  if (req.url.includes('/api/tabula-lens')) {
+    const token = req.headers.get('authorization');
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+      });
+    }
+  }
+  return ctx.next();
+};
+
+app.use(authMiddleware);
+
+// Use adapter
+app.get('/api/tabula-lens', freshAdapter(tabulaLens));
+app.post('/api/tabula-lens', freshAdapter(tabulaLens));
+```
+
+## Native Node.js HTTP
+
+**Peer Dependencies:**
+```bash
+# No additional peer dependencies
+```
+
+**Basic Setup:**
+
+```typescript
+import http from 'http';
+import { TabulaLens, nativeAdapter } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+const server = http.createServer(nativeAdapter(tabulaLens));
+
+server.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
+```
+
+**Advanced Configuration:**
+
+```typescript
+import http from 'http';
+import { TabulaLens, nativeAdapter } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+});
+
+const server = http.createServer((req, res) => {
+  // Add authentication
+  if (req.url?.startsWith('/api/tabula-lens')) {
+    const token = req.headers.authorization;
+    if (!token) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return;
+    }
+  }
+
+  // Use adapter
+  nativeAdapter(tabulaLens)(req, res);
+});
+
+server.listen(3000);
+```
+
+## Security Best Practices
+
+### Authentication
+
+Always implement proper authentication on your API endpoints:
+
+```typescript
+// Example authentication middleware
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization;
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  // Validate token here
+  next();
+};
+```
+
+### Environment Variables
+
+Never commit database credentials to version control:
+
+```bash
+# .env file
+DATABASE_URL=postgresql://user:password@localhost:5432/mydb
+```
+
+```typescript
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config();
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+```
+
+### Database User Permissions
+
+Use read-only database users when possible:
+
+```sql
+-- Create read-only user
+CREATE USER tabula_lens_readonly WITH PASSWORD 'secure_password';
+GRANT CONNECT ON DATABASE mydb TO tabula_lens_readonly;
+GRANT USAGE ON SCHEMA public TO tabula_lens_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO tabula_lens_readonly;
+```
+
+### SSL Connections
+
+Use SSL connections in production:
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  // DATABASE_URL should include sslmode=require
+  // postgresql://user:password@host:port/database?sslmode=require
+});
+```
+
+## Error Handling
+
+### TabulaLensError Class
+
+The package includes a custom error class for error handling:
+
+```typescript
+import { TabulaLens, TabulaLensError } from '@tabula-lens/node';
+
+try {
+  const result = await tabulaLens.query({ table: 'users' });
+} catch (error) {
+  if (error instanceof TabulaLensError) {
+    console.error('Tabula Lens error:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Error details:', error.details);
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
+```
+
+### Custom Error Handling
+
+Implement custom error handling in your routes:
+
+```typescript
+app.use('/api/tabula-lens', async (req, res, next) => {
+  try {
+    await expressAdapter(tabulaLens)(req, res, next);
+  } catch (error) {
+    if (error instanceof TabulaLensError) {
+      res.status(500).json({
+        error: error.message,
+        code: error.code,
+      });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+```
+
+## Monitoring and Observability
+
+### Logging Configuration
+
+Configure logging for monitoring:
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+  logFormat: 'json',
+  enableRequestLogging: true,
+  enableQueryLogging: true,
+  sensitiveDataMasking: true,
+});
+```
+
+### Custom Logger Integration
+
+Integrate with your existing logging system:
+
+```typescript
+import winston from 'winston';
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'combined.log' }),
+  ],
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+## Performance Considerations
+
+### Connection Pooling
+
+Tabula Lens automatically manages connection pooling:
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  // Connection pooling is handled automatically by Knex.js
+  // You can customize pool size in the connection string:
+  // postgresql://user:password@host:port/database?pool_min=2&pool_max=10
+});
+```
+
+### Query Optimization
+
+Optimize queries for better performance:
+
+```typescript
+// Select only needed columns
+const result = await tabulaLens.query({
+  table: 'users',
+  columns: ['id', 'name', 'email'], // Only select needed columns
+  page: 1,
+  limit: 20,
+});
+
+// Use appropriate page sizes
+const result = await tabulaLens.query({
+  table: 'users',
+  page: 1,
+  limit: 50, // Balance between data transfer and number of requests
+});
+```
+
+## Testing
+
+### Testing with Framework Adapters
+
+Test your Tabula Lens integration:
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import request from 'supertest';
+import express from 'express';
+
+describe('Tabula Lens Integration', () => {
+  let app: express.Express;
+  let tabulaLens: TabulaLens;
+
+  beforeAll(() => {
+    tabulaLens = new TabulaLens('postgresql://test:test@localhost:5432/test');
+    app = express();
+    app.use('/api/tabula-lens', expressAdapter(tabulaLens));
+  });
+
+  afterAll(async () => {
+    await tabulaLens.close();
+  });
+
+  it('should query data', async () => {
+    const response = await request(app)
+      .get('/api/tabula-lens?table=users&page=1&limit=10')
+      .expect(200);
+
+    expect(response.body).toHaveProperty('data');
+    expect(response.body).toHaveProperty('columns');
+    expect(response.body).toHaveProperty('pagination');
+  });
+});
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Connection Issues:**
+
+```typescript
+// Verify your DATABASE_URL
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
+
+// Test connection
+try {
+  const tables = await tabulaLens.getTables();
+  console.log('Connected successfully. Tables:', tables);
+} catch (error) {
+  console.error('Connection failed:', error);
+}
+```
+
+**Adapter Issues:**
+
+```typescript
+// Ensure adapter is properly imported
+import { expressAdapter } from '@tabula-lens/node';
+
+// Verify adapter is used correctly
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
+```
+
+**Performance Issues:**
+
+```typescript
+// Enable query logging to diagnose performance
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'debug',
+  enableQueryLogging: true,
+});
+```
+
+Tabula Lens provides comprehensive framework adapter support for seamless integration with your existing Node.js backend infrastructure.

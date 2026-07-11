@@ -1,0 +1,136 @@
+---
+title: Sentry Integration
+description: Add Sentry error tracking and database query monitoring to Tabula Lens.
+---
+
+# Sentry Integration
+
+[Sentry](https://sentry.io) provides error tracking and performance monitoring. Because Tabula Lens uses Knex.js internally, Sentry's `knexIntegration` automatically instruments all database queries made by Tabula Lens — capturing query text, duration, and errors without any manual configuration beyond a standard Sentry setup.
+
+## Prerequisites
+
+**Express:**
+
+```bash
+npm install @sentry/node @sentry/profiling-node
+```
+
+**Next.js:**
+
+```bash
+npm install @sentry/nextjs
+```
+
+`knexIntegration()` is available in `@sentry/node` >= 8.38.0. Run `npm list @sentry/node` to confirm your installed version meets this requirement.
+
+## Express Setup
+
+Sentry must be initialized before any other module is imported. Create a dedicated `instrument.ts` file and import it as the very first line of your server entry point:
+
+```typescript
+// instrument.ts
+import * as Sentry from '@sentry/node';
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  integrations: [
+    nodeProfilingIntegration(),
+    Sentry.knexIntegration(), // Auto-instruments Tabula Lens's Knex queries
+  ],
+  tracesSampleRate: 1.0,
+});
+```
+
+```typescript
+// server.ts
+import './instrument'; // Must be the first import
+
+import express from 'express';
+import * as Sentry from '@sentry/node';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+
+// Sentry request handler (before all routes)
+app.use(Sentry.Handlers.requestHandler());
+app.use(Sentry.Handlers.tracingHandler());
+
+// Tabula Lens route
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
+
+// Sentry error handler (after all routes)
+app.use(Sentry.Handlers.errorHandler());
+
+app.listen(3000);
+```
+
+## Next.js Setup
+
+Use the Sentry wizard for automated configuration:
+
+```bash
+npx @sentry/wizard@latest -i nextjs
+```
+
+The wizard creates the required config files and updates `next.config.ts` automatically. To add `knexIntegration` to an existing setup, include it in your server-side Sentry config:
+
+```typescript
+// sentry.server.config.ts
+import * as Sentry from '@sentry/nextjs';
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  integrations: [
+    Sentry.knexIntegration(), // Auto-instruments Tabula Lens's Knex queries
+  ],
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+});
+```
+
+```typescript
+// next.config.ts
+import { withSentryConfig } from '@sentry/nextjs';
+
+const nextConfig = { /* your config */ };
+
+export default withSentryConfig(nextConfig, {
+  org: 'your-org-slug',
+  project: 'your-project-name',
+});
+```
+
+## What Sentry Captures
+
+With `knexIntegration()` enabled, Sentry automatically captures:
+
+- **Errors** — Unhandled exceptions in route handlers, including errors thrown during Tabula Lens queries.
+- **Database queries** — Every Knex query executed by Tabula Lens, including query text and duration.
+- **Performance** — Query timing, slow query detection, and distributed trace spans for end-to-end visibility.
+
+## Environment Variables
+
+```bash
+SENTRY_DSN=https://key@org.ingest.sentry.io/projectId
+
+# Next.js also requires the public DSN for client-side error reporting
+NEXT_PUBLIC_SENTRY_DSN=https://key@org.ingest.sentry.io/projectId
+```
+
+## Important Notes
+
+- **`knexIntegration()` requires `@sentry/node` >= 8.38.0** — Earlier versions do not include this integration. Upgrade if your installed version is older.
+- **Initialize Sentry before all other imports** — `instrument.ts` must be the very first import in your entry point. If Sentry initializes after `@tabula-lens/node` is loaded, the Knex instrumentation will not activate.
+- **Reduce `tracesSampleRate` in production** — A value of `1.0` captures every transaction. For production, `0.1` (10% sampling) is a reasonable starting point to control data volume and cost.
+- **The Sentry wizard is the easiest path for Next.js** — Run `npx @sentry/wizard@latest -i nextjs` to have source maps, configuration files, and `next.config.ts` handled automatically.
+
+## Troubleshooting
+
+**Knex queries are not appearing in Sentry performance traces**
+
+Confirm that `instrument.ts` is imported before any other module in your entry point — including before `@tabula-lens/node`. Sentry must patch the Knex prototype at startup; if `TabulaLens` is instantiated before `Sentry.init()` runs, the instrumentation is missed.
+
+**`knexIntegration is not a function` error**
+
+Your installed version of `@sentry/node` predates 8.38.0. Run `npm install @sentry/node@latest` to update.

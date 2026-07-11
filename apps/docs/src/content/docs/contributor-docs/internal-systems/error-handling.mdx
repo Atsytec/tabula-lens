@@ -1,0 +1,825 @@
+---
+title: Error Handling Patterns
+description: Learn about error handling patterns and best practices for Tabula Lens applications.
+---
+
+# Error Handling Patterns
+
+This guide covers error handling patterns for Tabula Lens applications, including the TabulaLensError class, error codes, client-side error handling, server-side error handling, and a comprehensive error catalog.
+
+## Overview
+
+Tabula Lens provides a structured approach to error handling with:
+
+- **TabulaLensError Class**: Custom error class with error codes and context
+- **Error Codes**: Standardized error codes for different error types
+- **Error Catalog**: Comprehensive catalog of errors with causes and fixes
+- **Best Practices**: Security-conscious error handling patterns
+
+## TabulaLensError Class
+
+The TabulaLensError class provides structured error information:
+
+```typescript
+class TabulaLensError extends Error {
+  statusCode: number;
+  code: string;
+  details?: unknown;
+  
+  constructor(
+    statusCode: number,
+    code: string,
+    message: string,
+    details?: unknown
+  ) {
+    super(message);
+    this.name = 'TabulaLensError';
+    this.statusCode = statusCode;
+    this.code = code;
+    this.details = details;
+  }
+}
+```
+
+### Usage Examples
+
+**Server-Side:**
+
+```typescript
+import { TabulaLensError } from '@tabula-lens/node';
+
+app.get('/api/tabula-lens', async (req, res) => {
+  try {
+    const result = await tabulaLens.query(req.query);
+    res.json(result);
+  } catch (error) {
+    if (error instanceof TabulaLensError) {
+      res.status(error.statusCode).json({
+        error: error.message,
+        code: error.code,
+        details: error.details
+      });
+    } else {
+      res.status(500).json({
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR'
+      });
+    }
+  }
+});
+```
+
+**Client-Side:**
+
+```typescript
+import { TabulaLensError } from '@tabula-lens/node';
+
+function DatabaseViewerWithErrorHandling() {
+  const handleError = (error) => {
+    if (error instanceof TabulaLensError) {
+      switch (error.code) {
+        case 'TABLE_NOT_FOUND':
+          console.error('Table does not exist:', error.details);
+          break;
+        case 'INVALID_QUERY':
+          console.error('Invalid query parameters:', error.details);
+          break;
+        case 'AUTHENTICATION_FAILED':
+          console.error('Authentication failed');
+          break;
+        default:
+          console.error('Unknown error:', error.message);
+      }
+    } else {
+      console.error('Unexpected error:', error);
+    }
+  };
+
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      onError={handleError}
+    />
+  );
+}
+```
+
+## Error Codes
+
+Tabula Lens uses standardized error codes for different error types:
+
+### HTTP API Error Codes
+
+| Error Code | Status Code | Description |
+|------------|-------------|-------------|
+| TABLE_NOT_FOUND | 404 | Requested table does not exist |
+| INVALID_QUERY | 400 | Invalid query parameters |
+| AUTHENTICATION_FAILED | 401 | Authentication failed |
+| DATABASE_ERROR | 500 | Database operation failed |
+| INTERNAL_ERROR | 500 | Internal server error |
+
+### Package Error Codes
+
+**@tabula-lens/node:**
+
+| Error Code | Description |
+|------------|-------------|
+| CONNECTION_FAILED | Database connection failed |
+| QUERY_FAILED | Query execution failed |
+| INVALID_CONFIG | Invalid configuration |
+| AUTH_ERROR | Authentication error |
+
+**@tabula-lens/react:**
+
+| Error Code | Description |
+|------------|-------------|
+| FETCH_FAILED | Failed to fetch data |
+| INVALID_PROPS | Invalid component props |
+| RENDER_ERROR | Component rendering error |
+
+## Server-Side Error Handling
+
+### Error Handling Middleware
+
+```typescript
+function errorHandler(err, req, res, next) {
+  if (err instanceof TabulaLensError) {
+    res.status(err.statusCode).json({
+      error: err.message,
+      code: err.code,
+      details: err.details
+    });
+  } else {
+    // Log unexpected errors
+    console.error('Unexpected error:', err);
+    
+    res.status(500).json({
+      error: 'An unexpected error occurred',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+}
+
+app.use(errorHandler);
+```
+
+### Database Error Handling
+
+```typescript
+app.get('/api/tabula-lens', async (req, res) => {
+  try {
+    const result = await tabulaLens.query(req.query);
+    res.json(result);
+  } catch (error) {
+    // Handle specific database errors
+    if (error.code === '42P01') { // PostgreSQL: relation does not exist
+      throw new TabulaLensError(
+        'Table not found',
+        'TABLE_NOT_FOUND',
+        404,
+        { table: req.query.table }
+      );
+    } else if (error.code === '42601') { // PostgreSQL: syntax error
+      throw new TabulaLensError(
+        'Invalid query syntax',
+        'INVALID_QUERY',
+        400,
+        { query: req.query }
+      );
+    } else {
+      throw new TabulaLensError(
+        'Database operation failed',
+        'DATABASE_ERROR',
+        500,
+        { originalError: error.message }
+      );
+    }
+  }
+});
+```
+
+### Authentication Error Handling
+
+```typescript
+async function authenticate(req) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  
+  if (!token) {
+    throw new TabulaLensError(
+      'Authentication token required',
+      'AUTHENTICATION_FAILED',
+      401
+    );
+  }
+  
+  try {
+    const user = await verifyToken(token);
+    return user;
+  } catch (error) {
+    throw new TabulaLensError(
+      'Invalid or expired token',
+      'AUTHENTICATION_FAILED',
+      401
+    );
+  }
+}
+
+app.get('/api/tabula-lens', async (req, res) => {
+  try {
+    const user = await authenticate(req);
+    const result = await tabulaLens.query(req.query);
+    res.json(result);
+  } catch (error) {
+    if (error instanceof TabulaLensError) {
+      res.status(error.statusCode).json({
+        error: error.message,
+        code: error.code
+      });
+    } else {
+      res.status(500).json({
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR'
+      });
+    }
+  }
+});
+```
+
+### Validation Error Handling
+
+```typescript
+function validateQuery(query) {
+  const errors = [];
+  
+  if (!query.table) {
+    errors.push('Table name is required');
+  }
+  
+  if (query.page && (query.page < 1 || !Number.isInteger(query.page))) {
+    errors.push('Page must be a positive integer');
+  }
+  
+  if (query.limit && (query.limit < 1 || query.limit > 1000)) {
+    errors.push('Limit must be between 1 and 1000');
+  }
+  
+  if (errors.length > 0) {
+    throw new TabulaLensError(
+      'Invalid query parameters',
+      'INVALID_QUERY',
+      400,
+      { errors }
+    );
+  }
+  
+  return query;
+}
+
+app.get('/api/tabula-lens', async (req, res) => {
+  try {
+    const validatedQuery = validateQuery(req.query);
+    const result = await tabulaLens.query(validatedQuery);
+    res.json(result);
+  } catch (error) {
+    if (error instanceof TabulaLensError) {
+      res.status(error.statusCode).json({
+        error: error.message,
+        code: error.code,
+        details: error.details
+      });
+    } else {
+      res.status(500).json({
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR'
+      });
+    }
+  }
+});
+```
+
+## Client-Side Error Handling
+
+### React Component Error Handling
+
+```typescript
+function DatabaseViewerWithErrorHandling() {
+  const [error, setError] = useState(null);
+  
+  const handleError = (error) => {
+    setError(error);
+    
+    // Log error for debugging
+    console.error('DatabaseViewer error:', error);
+    
+    // Send error to monitoring service
+    if (error.code) {
+      trackError(error.code, error.message);
+    }
+  };
+  
+  const handleRetry = () => {
+    setError(null);
+  };
+  
+  if (error) {
+    return (
+      <ErrorState
+        error={error}
+        onRetry={handleRetry}
+      />
+    );
+  }
+  
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      onError={handleError}
+    />
+  );
+}
+```
+
+### Error Boundary
+
+```typescript
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+    
+    // Send error to monitoring service
+    trackError('REACT_ERROR', error.message, errorInfo);
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return (
+        <ErrorState
+          error={this.state.error}
+          onRetry={() => this.setState({ hasError: false, error: null })}
+        />
+      );
+    }
+    
+    return this.props.children;
+  }
+}
+
+// Usage
+<ErrorBoundary>
+  <DatabaseViewer path="/api/tabula-lens" />
+</ErrorBoundary>
+```
+
+### Custom Error Components
+
+```typescript
+const CustomErrorComponent = ({ error, onRetry }) => {
+  const getErrorMessage = (error) => {
+    switch (error.code) {
+      case 'TABLE_NOT_FOUND':
+        return 'The requested table does not exist';
+      case 'INVALID_QUERY':
+        return 'Invalid query parameters';
+      case 'AUTHENTICATION_FAILED':
+        return 'Authentication failed. Please log in again.';
+      case 'DATABASE_ERROR':
+        return 'A database error occurred. Please try again.';
+      default:
+        return 'An error occurred. Please try again.';
+    }
+  };
+  
+  const getErrorAction = (error) => {
+    switch (error.code) {
+      case 'AUTHENTICATION_FAILED':
+        return 'Log in';
+      case 'TABLE_NOT_FOUND':
+        return 'Go back';
+      default:
+        return 'Retry';
+    }
+  };
+  
+  return (
+    <div className="error-container">
+      <h3>Error</h3>
+      <p>{getErrorMessage(error)}</p>
+      {error.details && (
+        <details>
+          <summary>Error Details</summary>
+          <pre>{JSON.stringify(error.details, null, 2)}</pre>
+        </details>
+      )}
+      <button onClick={onRetry}>
+        {getErrorAction(error)}
+      </button>
+    </div>
+  );
+};
+
+<DatabaseViewer
+  path="/api/tabula-lens"
+  errorComponent={CustomErrorComponent}
+/>
+```
+
+## Error Catalog
+
+### TABLE_NOT_FOUND (404)
+
+**Description:** The requested table does not exist in the database.
+
+**Causes:**
+- Table name is misspelled
+- Table does not exist in the database
+- User does not have permission to access the table
+- Table is in a different schema
+
+**Solutions:**
+- Verify table name spelling
+- Check if table exists in database
+- Verify user permissions
+- Include schema name if needed: `schema.table`
+
+**Example:**
+
+```json
+{
+  "error": "Table 'users' not found",
+  "code": "TABLE_NOT_FOUND",
+  "details": {
+    "table": "users"
+  }
+}
+```
+
+### INVALID_QUERY (400)
+
+**Description:** The query parameters are invalid or malformed.
+
+**Causes:**
+- Invalid parameter values
+- Missing required parameters
+- Parameter type mismatch
+- Invalid filter syntax
+
+**Solutions:**
+- Validate all parameters before sending
+- Check parameter types and formats
+- Ensure required parameters are included
+- Verify filter syntax
+
+**Example:**
+
+```json
+{
+  "error": "Invalid query parameters",
+  "code": "INVALID_QUERY",
+  "details": {
+    "errors": [
+      "Page must be a positive integer",
+      "Limit must be between 1 and 1000"
+    ]
+  }
+}
+```
+
+### AUTHENTICATION_FAILED (401)
+
+**Description:** Authentication failed or no authentication provided.
+
+**Causes:**
+- Missing authentication token
+- Invalid or expired token
+- Invalid token format
+- Token verification failed
+
+**Solutions:**
+- Provide valid authentication token
+- Refresh expired token
+- Check token format (Bearer token)
+- Verify token is not malformed
+
+**Example:**
+
+```json
+{
+  "error": "Authentication failed",
+  "code": "AUTHENTICATION_FAILED",
+  "details": {
+    "reason": "Token expired"
+  }
+}
+```
+
+### DATABASE_ERROR (500)
+
+**Description:** A database operation failed.
+
+**Causes:**
+- Database connection failed
+- Query execution failed
+- Database constraint violation
+- Database is unavailable
+
+**Solutions:**
+- Check database connection
+- Verify query syntax
+- Check database constraints
+- Ensure database is available
+
+**Example:**
+
+```json
+{
+  "error": "Database operation failed",
+  "code": "DATABASE_ERROR",
+  "details": {
+    "originalError": "relation \"users\" does not exist"
+  }
+}
+```
+
+### INTERNAL_ERROR (500)
+
+**Description:** An internal server error occurred.
+
+**Causes:**
+- Unexpected server error
+- Configuration error
+- Resource exhaustion
+- Dependency failure
+
+**Solutions:**
+- Check server logs for details
+- Verify server configuration
+- Check server resources
+- Verify all dependencies are available
+
+**Example:**
+
+```json
+{
+  "error": "An unexpected error occurred",
+  "code": "INTERNAL_ERROR"
+}
+```
+
+## Error Handling Best Practices
+
+### 1. Security-Conscious Error Messages
+
+```typescript
+// ✅ Good: Generic error messages
+res.status(500).json({
+  error: 'An error occurred while processing your request'
+});
+
+// ❌ Avoid: Exposing internal details
+res.status(500).json({
+  error: 'PostgreSQL connection failed: connection refused at localhost:5432'
+});
+```
+
+### 2. Log Errors Server-Side
+
+```typescript
+try {
+  const result = await tabulaLens.query(req.query);
+  res.json(result);
+} catch (error) {
+  // Log detailed error server-side
+  logger.error('Database query failed', {
+    error: error.message,
+    stack: error.stack,
+    query: req.query,
+    userId: req.user?.id,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Send generic error to client
+  res.status(500).json({
+    error: 'An error occurred while processing your request'
+  });
+}
+```
+
+### 3. Provide Actionable Error Messages
+
+```typescript
+// ✅ Good: Actionable error message
+throw new TabulaLensError(
+  'Table "users" not found. Please check the table name and try again.',
+  'TABLE_NOT_FOUND',
+  404,
+  { table: 'users' }
+);
+
+// ❌ Avoid: Vague error message
+throw new TabulaLensError(
+  'Error',
+  'TABLE_NOT_FOUND',
+  404
+);
+```
+
+### 4. Use Appropriate HTTP Status Codes
+
+```typescript
+// ✅ Good: Correct status codes
+TABLE_NOT_FOUND -> 404
+INVALID_QUERY -> 400
+AUTHENTICATION_FAILED -> 401
+DATABASE_ERROR -> 500
+INTERNAL_ERROR -> 500
+
+// ❌ Avoid: Incorrect status codes
+TABLE_NOT_FOUND -> 500  // Should be 404
+INVALID_QUERY -> 500   // Should be 400
+```
+
+### 5. Implement Error Recovery
+
+```typescript
+function DatabaseViewerWithRetry() {
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
+  
+  const handleError = (error) => {
+    if (error.code === 'DATABASE_ERROR' && retryCount < maxRetries) {
+      // Retry for database errors
+      setRetryCount(retryCount + 1);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000 * retryCount);  // Exponential backoff
+    } else {
+      // Show error for other errors or max retries reached
+      setError(error);
+    }
+  };
+  
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      onError={handleError}
+    />
+  );
+}
+```
+
+### 6. Monitor Error Rates
+
+```typescript
+// Track error rates
+const errorCounts = {
+  TABLE_NOT_FOUND: 0,
+  INVALID_QUERY: 0,
+  AUTHENTICATION_FAILED: 0,
+  DATABASE_ERROR: 0,
+  INTERNAL_ERROR: 0
+};
+
+function trackError(code) {
+  errorCounts[code]++;
+  
+  // Alert if error rate is high
+  if (errorCounts[code] > 100) {
+    alert(`High error rate for ${code}: ${errorCounts[code]}`);
+  }
+}
+```
+
+## Error Handling Patterns
+
+### Pattern 1: Try-Catch-Wrap
+
+Wrap errors in custom error classes:
+
+```typescript
+async function wrappedQuery(query) {
+  try {
+    return await tabulaLens.query(query);
+  } catch (error) {
+    if (error.code === '42P01') {
+      throw new TabulaLensError(
+        'Table not found',
+        'TABLE_NOT_FOUND',
+        404,
+        { table: query.table }
+      );
+    }
+    throw new TabulaLensError(
+      'Database operation failed',
+      'DATABASE_ERROR',
+      500,
+      { originalError: error.message }
+    );
+  }
+}
+```
+
+### Pattern 2: Error Boundary
+
+Use React error boundaries for component errors:
+
+```typescript
+<ErrorBoundary>
+  <DatabaseViewer path="/api/tabula-lens" />
+</ErrorBoundary>
+```
+
+### Pattern 3: Fallback UI
+
+Provide fallback UI for error states:
+
+```typescript
+const FallbackComponent = ({ error }) => (
+  <div className="fallback">
+    <h3>Something went wrong</h3>
+    <p>{error.message}</p>
+    <button onClick={() => window.location.reload()}>
+      Retry
+    </button>
+  </div>
+);
+```
+
+### Pattern 4: Error Recovery
+
+Implement automatic error recovery:
+
+```typescript
+function withRetry(fn, maxRetries = 3) {
+  return async (...args) => {
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        return await fn(...args);
+      } catch (error) {
+        if (i === maxRetries - 1) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+      }
+    }
+  };
+}
+
+const queryWithRetry = withRetry(tabulaLens.query.bind(tabulaLens));
+```
+
+## Troubleshooting
+
+### Common Error Handling Issues
+
+**Issue: Errors not being caught**
+
+**Solution:**
+```typescript
+// Ensure async/await errors are caught
+try {
+  const result = await tabulaLens.query(req.query);
+} catch (error) {
+  // Handle error
+}
+```
+
+**Issue: Generic error messages**
+
+**Solution:**
+```typescript
+// Provide specific error messages
+throw new TabulaLensError(
+  'Table "users" not found',
+  'TABLE_NOT_FOUND',
+  404,
+  { table: 'users' }
+);
+```
+
+**Issue: Error information leakage**
+
+**Solution:**
+```typescript
+// Log detailed errors server-side
+logger.error('Error details', error);
+
+// Send generic errors to client
+res.status(500).json({
+  error: 'An error occurred'
+});
+```
+
+## Next Steps
+
+- Implement error handling patterns in your application
+- Set up error monitoring and alerting
+- Create custom error components for better UX
+- Review [Security Model](/contributor-docs/security/security) for security considerations
+- Check [API Reference](/api/http) for error code documentation

@@ -1,0 +1,940 @@
+---
+title: React API
+description: Complete API reference for the @tabula-lens/react package.
+---
+
+# React API Reference
+
+Complete API reference for the `@tabula-lens/react` package.
+
+## Installation
+
+```bash
+npm install @tabula-lens/react
+```
+
+> 💡 **Quick Reference**: For a quick start guide and basic usage examples, check out the [@tabula-lens/react README](https://github.com/Atsytec/tabula-lens/blob/main/packages/react/README.md).
+
+## DatabaseViewer Component
+
+The main component for displaying database data in your React application. It provides a complete, feature-rich data table with filtering, sorting, pagination, and customization options.
+
+### Props
+
+#### Required Props
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `path` | `string` | Yes | API endpoint path for fetching data |
+
+#### Optional Props - Table Selection
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `initialTable` | `string` | - | Initial table to select |
+| `tableSelector` | `'dropdown' \| 'sidebar' \| 'none'` | `'dropdown'` | Table selector display mode |
+| `tableSelectorLabel` | `string` | `'Select Table'` | Label for the table selector |
+| `tableSelectorComponent` | `React.FC` | - | Custom table selector component |
+
+#### Optional Props - Authentication
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `getAuthHeaders` | `() => Promise<Record<string, string>>` | - | Function to get authentication headers |
+| `headers` | `Record<string, string>` | - | Static headers to include in requests |
+
+#### Optional Props - Filtering
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `showFilter` | `boolean` | `true` | Whether to show the filter input |
+| `filterPlaceholder` | `string` | `'Filter records...'` | Placeholder text for the filter input |
+| `filterPosition` | `'top' \| 'bottom' \| 'both'` | `'top'` | Position of the filter input |
+| `filterDebounceMs` | `number` | `300` | Debounce delay for filter input in milliseconds |
+| `filterComponent` | `React.FC` | - | Custom filter input component |
+| `defaultFilterColumns` | `Record<string, string[]>` | - | Default filter columns per table |
+| `showFilterColumnSelector` | `boolean` | `true` | Whether to show the filter column selector |
+
+#### Optional Props - Pagination
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `showPagination` | `boolean` | `true` | Whether to show pagination controls |
+| `pageSize` | `number` | `10` | Number of records per page |
+| `pageSizeOptions` | `number[]` | `[10, 20, 30, 50, 100]` | Available page size options |
+| `showPageSizeSelector` | `boolean` | `true` | Whether to show the page size selector |
+| `paginationPosition` | `'top' \| 'bottom' \| 'both'` | `'bottom'` | Position of pagination controls |
+| `paginationComponent` | `React.FC` | - | Custom pagination component |
+
+#### Optional Props - Sorting
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `enableSorting` | `boolean` | `true` | Whether to enable column sorting |
+| `sortableColumns` | `string[]` | - | Array of column names that can be sorted |
+| `defaultSort` | `{ column: string; direction: 'asc' \| 'desc' }` | - | Default sort configuration |
+| `multiSort` | `boolean` | `false` | Whether to enable multi-column sorting |
+| `sortIcon` | `React.FC<{ direction: 'asc' \| 'desc' \| null }>` | - | Custom sort icon component |
+
+#### Optional Props - Formatting
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `formatHeader` | `((columnName: string) => string) \| null` | - | Custom column header formatter function |
+| `formatCell` | `(value: unknown, column: string) => React.ReactNode` | - | Custom cell value formatter function |
+
+#### Optional Props - Styling
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `className` | `string` | - | Additional CSS class name for the container |
+| `classNames` | `ClassNames` | - | Custom class names for specific elements |
+| `style` | `React.CSSProperties` | - | Inline style for the container |
+| `styles` | `Styles` | - | Custom styles for specific elements |
+
+#### Optional Props - Data Fetching
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `refetchInterval` | `number` | - | Interval in milliseconds to refetch data |
+| `onError` | `(error: Error) => void` | - | Error callback function |
+| `queryOptions` | `object` | - | Additional TanStack Query options (`staleTime`, `cacheTime`, `retry`, `retryDelay`, `refetchOnWindowFocus`, `refetchOnReconnect`, `refetchOnMount`) |
+
+#### Optional Props - Logging
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `logger` | `Logger` | - | Custom logger instance |
+| `enableLogging` | `boolean` | `false` | Whether to enable built-in logging |
+| `logLevel` | `LogLevel` | - | Log level when creating a default logger |
+| `logFetchErrors` | `boolean` | `true` | Whether to log fetch errors |
+| `logQueryErrors` | `boolean` | `true` | Whether to log query errors |
+| `logPerformanceMetrics` | `boolean` | `true` | Whether to log performance metrics |
+
+#### Optional Props - Custom Components
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `loadingComponent` | `React.FC` | - | Custom loading state component |
+| `errorComponent` | `React.FC<{ error: Error; retry: () => void }>` | - | Custom error state component |
+| `emptyComponent` | `React.FC` | - | Custom empty state component |
+
+### Basic Example
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+    />
+  );
+}
+```
+
+### Advanced Example with All Options
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  const getAuthHeaders = async () => ({
+    'Authorization': `Bearer ${getToken()}`
+  });
+
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      initialTable="users"
+      tableSelector="sidebar"
+      tableSelectorLabel="Choose Table"
+      getAuthHeaders={getAuthHeaders}
+      showFilter={true}
+      filterPlaceholder="Search records..."
+      filterPosition="top"
+      filterDebounceMs={300}
+      defaultFilterColumns={{
+        users: ['name', 'email'],
+        products: ['title', 'description']
+      }}
+      showPagination={true}
+      pageSize={25}
+      pageSizeOptions={[10, 25, 50, 100]}
+      paginationPosition="both"
+      enableSorting={true}
+      sortableColumns={['name', 'email', 'created_at']}
+      defaultSort={{ column: 'created_at', direction: 'desc' }}
+      formatHeader={(name) => name.toUpperCase()}
+      formatCell={(value, column) => {
+        if (column === 'email') {
+          return <a href={`mailto:${value}`}>{value}</a>;
+        }
+        return value;
+      }}
+      className="my-custom-class"
+      refetchInterval={30000}
+      onError={(error) => console.error('Database viewer error:', error)}
+    />
+  );
+}
+```
+
+## Sub-Components
+
+### LoadingState
+
+Component displayed while data is loading.
+
+#### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `customComponent` | `React.FC` | - | Custom loading component |
+| `className` | `string` | - | Additional CSS class name |
+| `classNames` | `ClassNames` | - | Custom class names for specific elements |
+| `style` | `React.CSSProperties` | - | Custom inline style for the container |
+| `styles` | `Styles` | - | Custom styles for specific elements |
+
+#### Example
+
+```jsx
+import { LoadingState } from '@tabula-lens/react';
+
+<LoadingState className="custom-loading" />
+```
+
+### ErrorState
+
+Component displayed when an error occurs.
+
+#### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `error` | `Error` | - | Error object |
+| `onRetry` | `() => void` | - | Retry callback function |
+| `customComponent` | `React.FC<{ error: Error; retry: () => void }>` | - | Custom error component |
+| `className` | `string` | - | Additional CSS class name |
+| `classNames` | `ClassNames` | - | Custom class names for specific elements |
+| `style` | `React.CSSProperties` | - | Custom inline style for the container |
+| `styles` | `Styles` | - | Custom styles for specific elements |
+| `isRecoverable` | `boolean` | `true` | Whether to show the retry button |
+
+#### Example
+
+```jsx
+import { ErrorState } from '@tabula-lens/react';
+
+<ErrorState 
+  error={error} 
+  onRetry={() => refetch()}
+  className="custom-error"
+/>
+```
+
+### EmptyState
+
+Component displayed when no data is available.
+
+#### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `customComponent` | `React.FC` | - | Custom empty state component |
+| `className` | `string` | - | Additional CSS class name |
+| `classNames` | `ClassNames` | - | Custom class names for specific elements |
+| `style` | `React.CSSProperties` | - | Custom inline style for the container |
+| `styles` | `Styles` | - | Custom styles for specific elements |
+| `hasActiveFilter` | `boolean` | `false` | Whether a filter is currently active (changes the empty message) |
+| `onClearFilter` | `() => void` | - | Callback to clear the active filter |
+
+#### Example
+
+```jsx
+import { EmptyState } from '@tabula-lens/react';
+
+<EmptyState className="custom-empty" />
+```
+
+### TableSelector
+
+Component for selecting which table to view.
+
+#### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `tables` | `string[]` | - | Available tables |
+| `selectedTable` | `string \| undefined` | - | Currently selected table |
+| `onSelectTable` | `(table: string) => void` | - | Table selection callback |
+| `mode` | `'dropdown' \| 'sidebar'` | `'dropdown'` | Display mode |
+| `label` | `string` | `'Select Table'` | Selector label |
+| `className` | `string` | - | Additional CSS class name |
+| `classNames` | `ClassNames` | - | Custom class names |
+| `styles` | `Styles` | - | Custom styles |
+
+#### Example
+
+```jsx
+import { TableSelector } from '@tabula-lens/react';
+
+<TableSelector
+  tables={['users', 'products', 'orders']}
+  selectedTable="users"
+  onSelectTable={(table) => console.log('Selected:', table)}
+  mode="dropdown"
+  label="Choose Table"
+/>
+```
+
+### FilterInput
+
+Component for filtering table data.
+
+#### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `value` | `string` | - | Current filter value |
+| `onChange` | `(value: string) => void` | - | Filter change callback |
+| `placeholder` | `string` | `'Filter...'` | Input placeholder |
+| `className` | `string` | - | Additional CSS class name |
+| `classNames` | `ClassNames` | - | Custom class names |
+| `styles` | `Styles` | - | Custom styles |
+
+#### Example
+
+```jsx
+import { FilterInput } from '@tabula-lens/react';
+
+<FilterInput
+  value={filter}
+  onChange={setFilter}
+  placeholder="Search..."
+/>
+```
+
+### Pagination
+
+Component for paginating through table data.
+
+#### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `pageIndex` | `number` | - | Current page index (0-based) |
+| `pageCount` | `number` | - | Total number of pages |
+| `pageSize` | `number` | - | Current page size |
+| `canPreviousPage` | `boolean` | - | Whether previous page is available |
+| `canNextPage` | `boolean` | - | Whether next page is available |
+| `onPageChange` | `(pageIndex: number) => void` | - | Callback when page changes |
+| `onPageSizeChange` | `(pageSize: number) => void` | - | Callback when page size changes |
+| `pageSizeOptions` | `number[]` | - | Available page size options |
+| `showPageSizeSelector` | `boolean` | - | Whether to show the page size selector |
+| `customComponent` | `React.FC<{ pageIndex, pageCount, pageSize, canPreviousPage, canNextPage, previousPage, nextPage, firstPage, lastPage, setPageSize }>` | - | Custom pagination component |
+| `className` | `string` | - | Additional CSS class name |
+| `classNames` | `ClassNames` | - | Custom class names |
+| `styles` | `Styles` | - | Custom styles |
+
+#### Example
+
+```jsx
+import { Pagination } from '@tabula-lens/react';
+
+<Pagination
+  pageIndex={currentPage}
+  pageCount={totalPages}
+  pageSize={pageSize}
+  canPreviousPage={currentPage > 0}
+  canNextPage={currentPage < totalPages - 1}
+  onPageChange={(index) => setCurrentPage(index)}
+  onPageSizeChange={(size) => setPageSize(size)}
+  pageSizeOptions={[10, 25, 50, 100]}
+  showPageSizeSelector={true}
+/>
+```
+
+### DataTable
+
+Component for rendering the data table. Uses TanStack Table internally via `@tanstack/react-table` types.
+
+#### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `data` | `Record<string, unknown>[]` | - | Table data records |
+| `columns` | `ColumnDef<Record<string, unknown>>[]` | - | TanStack Table column definitions |
+| `sorting` | `SortingState` | - | Current sorting state (from `@tanstack/react-table`) |
+| `onSortingChange` | `(sorting: SortingState) => void` | - | Sorting change callback |
+| `pagination` | `PaginationState` | - | Current pagination state (from `@tanstack/react-table`) |
+| `onPaginationChange` | `(pagination: PaginationState) => void` | - | Pagination change callback |
+| `pageCount` | `number` | - | Total number of pages |
+| `enableSorting` | `boolean` | - | Whether sorting is enabled |
+| `multiSort` | `boolean` | `false` | Whether multi-column sorting is enabled |
+| `sortIcon` | `React.FC<{ direction: 'asc' \| 'desc' \| null }>` | - | Custom sort icon component |
+| `formatHeader` | `((name: string) => string) \| null` | - | Column header formatter |
+| `formatCell` | `(value: unknown, column: string) => React.ReactNode` | - | Cell value formatter |
+| `emptyComponent` | `React.FC` | - | Custom empty state component |
+| `hasActiveFilter` | `boolean` | - | Whether a filter is active (affects empty message) |
+| `onClearFilter` | `() => void` | - | Callback to clear the active filter |
+| `className` | `string` | - | Additional CSS class name |
+| `classNames` | `ClassNames` | - | Custom class names for specific elements |
+| `style` | `React.CSSProperties` | - | Custom inline style for the container |
+| `styles` | `Styles` | - | Custom styles for specific elements |
+
+#### Note
+
+`DataTable` is intended to be used together with state from `useTableState`. Column definitions are normally built dynamically by `DatabaseViewer` from the query result. See the complete example in `DatabaseViewer` for the typical usage pattern.
+
+## Custom Hooks
+
+### useLogger
+
+Hook for logger initialization and component lifecycle logging.
+
+#### Parameters
+
+Accepts a single options object:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `logger` | `Logger` | - | Custom logger instance to use |
+| `enableLogging` | `boolean` | `false` | Whether logging is enabled |
+| `logLevel` | `LogLevel` | - | Log level to use when creating a default logger |
+
+#### Returns
+
+| Return | Type | Description |
+|--------|------|-------------|
+| `logger` | `Logger \| null` | Logger instance (null if `enableLogging` is false) |
+| `componentId` | `string` | Unique component ID for log correlation |
+
+#### Example
+
+```jsx
+import { useLogger } from '@tabula-lens/react';
+
+function MyComponent() {
+  const { logger, componentId } = useLogger({ enableLogging: true, logLevel: 'debug' });
+  
+  useEffect(() => {
+    logger?.info('Component mounted', { componentId });
+  }, []);
+}
+```
+
+### useTableState
+
+Hook for table state management (pagination, sorting, filtering). Uses TanStack Table types for sorting and pagination state.
+
+#### Parameters
+
+Accepts a single options object:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `initialTable` | `string` | - | Initial table to select |
+| `pageSize` | `number` | `10` | Initial page size |
+| `defaultSort` | `{ column: string; direction: 'asc' \| 'desc' }` | - | Initial sort configuration |
+| `filterDebounceMs` | `number` | `300` | Debounce delay for filter input in milliseconds |
+
+#### Returns
+
+| Return | Type | Description |
+|--------|------|-------------|
+| `selectedTable` | `string \| undefined` | Currently selected table |
+| `setSelectedTable` | `(table: string) => void` | Set the selected table |
+| `sorting` | `SortingState` | Current TanStack Table sorting state |
+| `setSorting` | `(sorting: SortingState) => void` | Update sorting state |
+| `pagination` | `PaginationState` | Current TanStack Table pagination state (`{ pageIndex, pageSize }`) |
+| `setPagination` | `(pagination: PaginationState) => void` | Update pagination state |
+| `filter` | `string` | Current raw filter value |
+| `setFilter` | `(filter: string) => void` | Update filter value |
+| `debouncedFilter` | `string` | Debounced filter value (used for actual queries) |
+
+#### Example
+
+```jsx
+import { useTableState } from '@tabula-lens/react';
+
+function MyComponent() {
+  const {
+    selectedTable,
+    setSelectedTable,
+    sorting,
+    setSorting,
+    pagination,
+    setPagination,
+    filter,
+    setFilter,
+    debouncedFilter,
+  } = useTableState({
+    initialTable: 'users',
+    pageSize: 25,
+    defaultSort: { column: 'created_at', direction: 'desc' },
+  });
+  
+  // Use state for data fetching
+}
+```
+
+### useDatabaseData
+
+Hook for data fetching logic with authentication and error handling. Fetches both table data and the tables list.
+
+#### Parameters
+
+Accepts a single options object:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `path` | `string` | - | API endpoint base path (e.g. `'/api/tabula-lens'`) |
+| `selectedTable` | `string \| undefined` | - | Currently selected table |
+| `queryParams` | `string` | - | URL query string (typically from `buildQueryParams`) |
+| `getAuthHeaders` | `() => Promise<Record<string, string>>` | - | Async function returning auth headers |
+| `headers` | `Record<string, string>` | - | Static headers to include in requests |
+| `logger` | `Logger \| null` | - | Logger instance |
+| `componentId` | `string` | - | Component ID for logging |
+| `logFetchErrors` | `boolean` | `true` | Whether to log fetch errors |
+| `logPerformanceMetrics` | `boolean` | `true` | Whether to log performance metrics |
+| `queryOptions` | `object` | `{}` | Additional TanStack Query options |
+| `refetchInterval` | `number` | - | Interval in milliseconds to refetch data |
+| `tableSelectorMode` | `'dropdown' \| 'sidebar' \| 'none'` | `'dropdown'` | Table selector mode (affects whether table list is fetched) |
+
+#### Returns
+
+| Return | Type | Description |
+|--------|------|-------------|
+| `data` | `QueryResult \| undefined` | Query result data |
+| `tables` | `string[] \| undefined` | List of available table names |
+| `isLoading` | `boolean` | Loading state for the data query |
+| `error` | `Error \| null` | Error object |
+| `refetch` | `() => void` | Refetch the data query |
+
+#### Example
+
+```jsx
+import { useDatabaseData, buildQueryParams, useTableState } from '@tabula-lens/react';
+
+function MyComponent() {
+  const tableState = useTableState({ initialTable: 'users' });
+  const queryParams = buildQueryParams({
+    selectedTable: tableState.selectedTable,
+    pagination: tableState.pagination,
+    sorting: tableState.sorting,
+    filter: tableState.debouncedFilter,
+  });
+
+  const { data, tables, isLoading, error, refetch } = useDatabaseData({
+    path: '/api/tabula-lens',
+    selectedTable: tableState.selectedTable,
+    queryParams,
+    getAuthHeaders: async () => ({ 'Authorization': `Bearer ${getToken()}` }),
+    refetchInterval: 30000,
+  });
+  
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  
+  return <div>Data: {JSON.stringify(data)}</div>;
+}
+```
+
+### buildQueryParams
+
+Utility function for building a URL query string from table state. Used internally by `DatabaseViewer` to construct requests to the `/query` endpoint.
+
+#### Parameters
+
+Accepts a single options object:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `selectedTable` | `string \| undefined` | - | Currently selected table name |
+| `pagination` | `PaginationState` | - | TanStack Table pagination state (`{ pageIndex, pageSize }`) |
+| `sorting` | `SortingState` | - | TanStack Table sorting state |
+| `filter` | `string` | - | Filter value |
+| `filterColumns` | `string[]` | - | Columns to filter |
+
+#### Returns
+
+`string` - URL-encoded query string (e.g. `"table=users&page=1&limit=25&filter=john"`).
+
+#### Example
+
+```jsx
+import { buildQueryParams } from '@tabula-lens/react';
+
+const queryString = buildQueryParams({
+  selectedTable: 'users',
+  pagination: { pageIndex: 0, pageSize: 25 },
+  sorting: [{ id: 'created_at', desc: true }],
+  filter: 'john',
+  filterColumns: ['name', 'email'],
+});
+
+// Result: "table=users&page=1&limit=25&sort=created_at%3Adesc&filter=john&filterColumns=name%2Cemail"
+```
+
+## Utility Functions
+
+### isQueryResult
+
+Type guard to check if an object is a valid QueryResult.
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `value` | `unknown` | Value to check |
+
+#### Returns
+
+`boolean` - True if the value is a valid QueryResult.
+
+#### Example
+
+```jsx
+import { isQueryResult } from '@tabula-lens/react';
+
+if (isQueryResult(data)) {
+  console.log('Valid query result:', data.pagination);
+}
+```
+
+### validatePagination
+
+Validates pagination parameters.
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `pagination` | `object` | Pagination object to validate |
+
+#### Returns
+
+`boolean` - True if pagination is valid.
+
+#### Example
+
+```jsx
+import { validatePagination } from '@tabula-lens/react';
+
+const isValid = validatePagination({
+  page: 1,
+  limit: 25,
+  total: 100,
+  totalPages: 4
+});
+```
+
+### sanitizeColumnData
+
+Sanitizes column data to ensure type safety.
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `value` | `unknown` | Value to sanitize |
+
+#### Returns
+
+`string` - Sanitized value as a string.
+
+#### Example
+
+```jsx
+import { sanitizeColumnData } from '@tabula-lens/react';
+
+const sanitized = sanitizeColumnData(null); // Returns ''
+const sanitized = sanitizeColumnData(123); // Returns '123'
+```
+
+### createAuthenticatedHeaders
+
+Creates request headers with authentication.
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `options` | `object` | Fetch options including headers and auth function |
+
+#### Returns
+
+`Promise<HeadersInit>` - Complete headers object with authentication.
+
+#### Example
+
+```jsx
+import { createAuthenticatedHeaders } from '@tabula-lens/react';
+
+const headers = await createAuthenticatedHeaders({
+  headers: { 'Content-Type': 'application/json' },
+  getAuthHeaders: async () => ({
+    'Authorization': 'Bearer token'
+  })
+});
+```
+
+### validateResponse
+
+Validates HTTP response and checks content type.
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `response` | `Response` | Fetch response object |
+| `options` | `object` | Validation options |
+
+#### Returns
+
+`Promise<void>` - Throws error if validation fails.
+
+#### Example
+
+```jsx
+import { validateResponse } from '@tabula-lens/react';
+
+await validateResponse(response, {
+  logger,
+  componentId: 'MyComponent',
+  fetchId: 'fetch-123'
+});
+```
+
+### mergeClassName
+
+Merges class names with proper precedence.
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `defaultClass` | `string` | Default class name |
+| `customClass` | `string \| undefined` | Custom class name |
+
+#### Returns
+
+`string` - Merged class name.
+
+#### Example
+
+```jsx
+import { mergeClassName } from '@tabula-lens/react';
+
+const className = mergeClassName('default-class', 'custom-class');
+```
+
+### mergeStyle
+
+Merges style objects with proper precedence.
+
+#### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `defaultStyle` | `React.CSSProperties` | Default style object |
+| `customStyle` | `React.CSSProperties \| undefined` | Custom style object |
+
+#### Returns
+
+`React.CSSProperties` - Merged style object.
+
+#### Example
+
+```jsx
+import { mergeStyle } from '@tabula-lens/react';
+
+const style = mergeStyle(
+  { color: 'blue', fontSize: '16px' },
+  { color: 'red' }
+);
+// Result: { color: 'red', fontSize: '16px' }
+```
+
+## Type Exports
+
+```typescript
+export type {
+  QueryResult,
+  ClassNames,
+  Styles,
+  TableSelectorMode,
+  FilterPosition,
+  PaginationPosition,
+  DatabaseViewerProps
+};
+```
+
+## Style Customization
+
+### ClassNames Interface
+
+```typescript
+interface ClassNames {
+  container?: string;
+  tableWrapper?: string;
+  table?: string;
+  header?: string;
+  cell?: string;
+  filter?: string;
+  filterInput?: string;
+  pagination?: string;
+  paginationButton?: string;
+  paginationInfo?: string;
+  pageSize?: string;
+  tableSelector?: string;
+  tableSelectorDropdown?: string;
+  tableSelectorSidebar?: string;
+  empty?: string;
+  loading?: string;
+  error?: string;
+  retry?: string;
+  info?: string;
+  // ... more specific element classes
+}
+```
+
+### Styles Interface
+
+```typescript
+interface Styles {
+  container?: React.CSSProperties;
+  tableWrapper?: React.CSSProperties;
+  table?: React.CSSProperties;
+  th?: React.CSSProperties;
+  td?: React.CSSProperties;
+  header?: React.CSSProperties;
+  cell?: React.CSSProperties;
+  sortable?: React.CSSProperties;
+  sorted?: React.CSSProperties;
+  filter?: React.CSSProperties;
+  filterInput?: React.CSSProperties;
+  pagination?: React.CSSProperties;
+  paginationButton?: React.CSSProperties;
+  // ... more specific element styles
+}
+```
+
+## Complete Example
+
+```jsx
+import React from 'react';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  const getAuthHeaders = async () => {
+    const token = localStorage.getItem('authToken');
+    return {
+      'Authorization': `Bearer ${token}`,
+      'X-Custom-Header': 'custom-value'
+    };
+  };
+
+  const handleError = (error) => {
+    console.error('Database viewer error:', error);
+    // Send error to monitoring service
+  };
+
+  return (
+    <div className="app-container">
+      <DatabaseViewer
+        path="/api/tabula-lens"
+        initialTable="users"
+        tableSelector="sidebar"
+        tableSelectorLabel="Data Tables"
+        getAuthHeaders={getAuthHeaders}
+        headers={{
+          'Accept': 'application/json'
+        }}
+        showFilter={true}
+        filterPlaceholder="Search records..."
+        filterPosition="top"
+        filterDebounceMs={300}
+        defaultFilterColumns={{
+          users: ['name', 'email', 'status'],
+          products: ['title', 'description', 'sku']
+        }}
+        showFilterColumnSelector={true}
+        showPagination={true}
+        pageSize={25}
+        pageSizeOptions={[10, 25, 50, 100]}
+        showPageSizeSelector={true}
+        paginationPosition="both"
+        enableSorting={true}
+        sortableColumns={['name', 'email', 'created_at', 'status']}
+        defaultSort={{ column: 'created_at', direction: 'desc' }}
+        multiSort={false}
+        formatHeader={(columnName) => {
+          // Convert snake_case to Title Case
+          return columnName
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        }}
+        formatCell={(value, column) => {
+          if (column === 'email') {
+            return <a href={`mailto:${value}`} className="email-link">{value}</a>;
+          }
+          if (column === 'status') {
+            const statusColors = {
+              active: 'green',
+              inactive: 'red',
+              pending: 'yellow'
+            };
+            return (
+              <span 
+                className={`status-badge ${statusColors[value] || 'gray'}`}
+              >
+                {value}
+              </span>
+            );
+          }
+          if (column === 'created_at') {
+            return new Date(value as string).toLocaleDateString();
+          }
+          return value;
+        }}
+        className="custom-database-viewer"
+        classNames={{
+          container: 'my-container',
+          table: 'my-table',
+          header: 'my-header',
+          cell: 'my-cell'
+        }}
+        styles={{
+          container: { padding: '20px' },
+          table: { width: '100%' },
+          header: { backgroundColor: '#f5f5f5' }
+        }}
+        refetchInterval={60000}
+        onError={handleError}
+        loadingComponent={() => (
+          <div className="custom-loading">
+            <div className="spinner"></div>
+            <p>Loading data...</p>
+          </div>
+        )}
+        errorComponent={({ error, retry }) => (
+          <div className="custom-error">
+            <p>Error loading data: {error.message}</p>
+            <button onClick={retry}>Retry</button>
+          </div>
+        )}
+        emptyComponent={() => (
+          <div className="custom-empty">
+            <p>No data available</p>
+          </div>
+        )}
+      />
+    </div>
+  );
+}
+
+export default App;
+```

@@ -1,0 +1,131 @@
+---
+title: Clerk Integration
+description: Integrate Clerk authentication with Tabula Lens to secure your database endpoints.
+---
+
+# Clerk Integration
+
+[Clerk](https://clerk.com) is a complete authentication and user management platform. This guide shows how to protect your Tabula Lens endpoints using Clerk middleware and pass session tokens to the `DatabaseViewer` component.
+
+## Prerequisites
+
+Install the appropriate Clerk package for your framework:
+
+```bash
+# Next.js
+npm install @clerk/nextjs
+
+# Express
+npm install @clerk/express
+```
+
+You'll also need a Clerk account with `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` set in your environment.
+
+## Backend Setup
+
+### Next.js App Router
+
+Clerk requires its middleware to run on every request so the `auth()` helper has access to the session. Add `clerkMiddleware()` to your `middleware.ts`:
+
+```typescript
+// middleware.ts
+import { clerkMiddleware } from '@clerk/nextjs/server';
+
+export default clerkMiddleware();
+
+export const config = {
+  matcher: [
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
+  ],
+};
+```
+
+Then protect the Tabula Lens route handler:
+
+```typescript
+// app/api/tabula-lens/route.ts
+import { auth } from '@clerk/nextjs/server';
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+const handler = createNextRouteHandler(tabulaLens);
+
+export async function GET(request: Request) {
+  const { userId } = await auth();
+  if (!userId) return new Response('Unauthorized', { status: 401 });
+  return handler(request);
+}
+```
+
+### Express
+
+Apply `clerkMiddleware()` globally, then guard the Tabula Lens route with a manual `getAuth()` check:
+
+```typescript
+import express from 'express';
+import { clerkMiddleware, getAuth } from '@clerk/express';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+
+// Apply Clerk middleware globally
+app.use(clerkMiddleware());
+
+// Protect the Tabula Lens route
+app.use('/api/tabula-lens', (req, res, next) => {
+  const { userId } = getAuth(req);
+  if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+  next();
+}, expressAdapter(tabulaLens));
+```
+
+## Frontend Integration
+
+Use the `useAuth` hook to retrieve a session token and pass it via `getAuthHeaders`:
+
+```tsx
+'use client';
+import { useAuth } from '@clerk/nextjs';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+export function TabulaLensViewer() {
+  const { getToken, isLoaded, isSignedIn } = useAuth();
+
+  if (!isLoaded) return <div>Loading...</div>;
+  if (!isSignedIn) return <div>Sign in to view data</div>;
+
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      getAuthHeaders={async () => {
+        const token = await getToken();
+        return { Authorization: `Bearer ${token}` };
+      }}
+    />
+  );
+}
+```
+
+## Important Notes
+
+- **Use `@clerk/express`**, not the deprecated `@clerk/clerk-sdk-node` package.
+- **Don't use `requireAuth()`** for API routes — it's deprecated. The manual `getAuth()` check shown above gives you explicit control over the error response.
+- **`clerkMiddleware()` in `middleware.ts` is required** for the `auth()` helper to work inside App Router route handlers. Without it, `auth()` will return an empty object.
+- **`getToken()` works for both same-origin and cross-origin requests.** For same-origin Next.js routes Clerk can also authenticate via cookie, but calling `getToken()` explicitly is more reliable.
+- **JWT templates are for third-party integrations** (e.g., Supabase, Firebase). Use plain `getToken()` — no template argument needed — for Tabula Lens.
+
+## Troubleshooting
+
+**401 returned from the route handler despite being signed in**
+
+Confirm `clerkMiddleware()` is configured in `middleware.ts` and that its `matcher` covers `/api` routes. Without the middleware, `auth()` cannot read the session.
+
+**`getToken()` returns `null` on the frontend**
+
+The user is not signed in, or the Clerk provider has not finished loading. Always check `isLoaded` and `isSignedIn` before rendering `DatabaseViewer`.
+
+**Express: `getAuth(req).userId` is `undefined`**
+
+Ensure `app.use(clerkMiddleware())` is registered _before_ your protected routes. Clerk must parse the request before `getAuth` can access it.

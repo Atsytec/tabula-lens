@@ -1,0 +1,762 @@
+---
+title: React Component Architecture
+description: Learn about the modular component architecture of DatabaseViewer and how to compose sub-components.
+---
+
+# React Component Architecture
+
+The DatabaseViewer component is built with a modular, composable architecture that promotes reusability, maintainability, and performance optimization. This guide explains the component architecture, sub-component composition patterns, custom hook usage, and performance optimization strategies.
+
+## Architecture Overview
+
+The component follows a hierarchical architecture with clear separation of concerns:
+
+```
+DatabaseViewer (Main Orchestrator)
+├── Custom Hooks
+│   ├── useLogger
+│   ├── useTableState
+│   ├── useDatabaseData
+│   └── buildQueryParams
+├── Sub-components
+│   ├── LoadingState
+│   ├── ErrorState
+│   ├── EmptyState
+│   ├── TableSelector
+│   ├── FilterInput
+│   ├── Pagination
+│   ├── DataTable
+│   └── FilterColumnSelector
+└── Utility Functions
+    ├── fetchHelpers
+    ├── validationHelpers
+    ├── styleHelpers
+    └── propValidation
+```
+
+## Main Component: DatabaseViewer
+
+The DatabaseViewer component serves as the orchestrator that:
+
+- Manages overall component state
+- Coordinates data fetching through custom hooks
+- Handles error states and retry logic
+- Renders appropriate sub-components based on state
+- Provides configuration through props
+- Implements performance optimizations with React.memo
+
+### Key Responsibilities
+
+```tsx
+// Simplified architecture overview
+function DatabaseViewer(props: DatabaseViewerProps) {
+  // Custom hooks for state management
+  const logger = useLogger();
+  const tableState = useTableState(props);
+  const { data, loading, error, refetch } = useDatabaseData(props, tableState);
+  
+  // Render appropriate sub-components based on state
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState error={error} retry={refetch} />;
+  if (!data || data.rows.length === 0) return <EmptyState />;
+  
+  return (
+    <>
+      <TableSelector />
+      <FilterInput />
+      <DataTable />
+      <Pagination />
+    </>
+  );
+}
+```
+
+## Sub-Component Composition
+
+### LoadingState Component
+
+Displays loading state during data fetching with customizable styling.
+
+**Features:**
+- React.memo for performance optimization
+- Customizable through props
+- Integrates with design system tokens
+- Supports custom loading components
+
+**Usage:**
+
+```tsx
+import { LoadingState } from '@tabula-lens/react';
+
+function MyLoadingState() {
+  return <LoadingState message="Loading your data..." />;
+}
+```
+
+**Custom Implementation:**
+
+```tsx
+function CustomLoadingState() {
+  return (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <span className="ml-4 text-gray-600">Loading data...</span>
+    </div>
+  );
+}
+
+<DatabaseViewer 
+  path="/api/tabula-lens"
+  loadingComponent={CustomLoadingState}
+/>
+```
+
+### ErrorState Component
+
+Displays error messages with retry functionality.
+
+**Features:**
+- React.memo for performance optimization
+- Retry functionality built-in
+- Customizable error display
+- Integrates with error callbacks
+
+**Usage:**
+
+```tsx
+import { ErrorState } from '@tabula-lens/react';
+
+function MyErrorState() {
+  const error = new Error('Failed to load data');
+  const retry = () => console.log('Retrying...');
+  
+  return <ErrorState error={error} retry={retry} />;
+}
+```
+
+**Custom Implementation:**
+
+```tsx
+function CustomErrorState({ error, retry }: { error: Error; retry: () => void }) {
+  return (
+    <div className="p-8 bg-red-50 border border-red-200 rounded-lg">
+      <h3 className="text-red-800 font-semibold mb-2">Error loading data</h3>
+      <p className="text-red-600 mb-4">{error.message}</p>
+      <button 
+        onClick={retry}
+        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
+<DatabaseViewer 
+  path="/api/tabula-lens"
+  errorComponent={CustomErrorState}
+/>
+```
+
+### EmptyState Component
+
+Displays empty state when no data is available.
+
+**Features:**
+- React.memo for performance optimization
+- Customizable empty state message
+- Supports custom empty components
+- Integrates with design system
+
+**Usage:**
+
+```tsx
+import { EmptyState } from '@tabula-lens/react';
+
+function MyEmptyState() {
+  return <EmptyState message="No data found" />;
+}
+```
+
+**Custom Implementation:**
+
+```tsx
+function CustomEmptyState() {
+  return (
+    <div className="p-8 text-center">
+      <div className="text-gray-400 text-6xl mb-4">📭</div>
+      <h3 className="text-gray-600 font-semibold mb-2">No data available</h3>
+      <p className="text-gray-500">Try adjusting your filters or check back later.</p>
+    </div>
+  );
+}
+
+<DatabaseViewer 
+  path="/api/tabula-lens"
+  emptyComponent={CustomEmptyState}
+/>
+```
+
+### TableSelector Component
+
+Provides table selection UI with dropdown and sidebar modes.
+
+**Features:**
+- React.memo for performance optimization
+- Two display modes: dropdown and sidebar
+- Customizable labels and styling
+- Integrates with CSS custom properties
+
+**Usage:**
+
+```tsx
+import { TableSelector } from '@tabula-lens/react';
+
+function MyTableSelector() {
+  const tables = ['users', 'products', 'orders'];
+  const currentTable = 'users';
+  const onTableChange = (table: string) => console.log('Selected:', table);
+  
+  return (
+    <TableSelector 
+      tables={tables}
+      currentTable={currentTable}
+      onTableChange={onTableChange}
+      mode="dropdown"
+    />
+  );
+}
+```
+
+**Configuration:**
+
+```tsx
+<DatabaseViewer 
+  path="/api/tabula-lens"
+  tableSelector="dropdown"
+  tableSelectorLabel="Choose a table"
+  initialTable="users"
+/>
+```
+
+### FilterInput Component
+
+Handles text-based filtering with debouncing.
+
+**Features:**
+- React.memo for performance optimization
+- Configurable debounce time
+- Customizable placeholder and styling
+- Supports custom filter components
+
+**Usage:**
+
+```tsx
+import { FilterInput } from '@tabula-lens/react';
+
+function MyFilterInput() {
+  const filter = '';
+  const onFilterChange = (value: string) => console.log('Filter:', value);
+  
+  return (
+    <FilterInput 
+      filter={filter}
+      onFilterChange={onFilterChange}
+      placeholder="Search records..."
+      debounceMs={300}
+    />
+  );
+}
+```
+
+**Configuration:**
+
+```tsx
+<DatabaseViewer 
+  path="/api/tabula-lens"
+  showFilter={true}
+  filterPlaceholder="Search records..."
+  filterDebounceMs={300}
+  filterPosition="top"
+/>
+```
+
+### Pagination Component
+
+Manages pagination controls and page size selection.
+
+**Features:**
+- React.memo for performance optimization
+- Configurable page sizes
+- Multiple position options
+- Customizable pagination component
+
+**Usage:**
+
+```tsx
+import { Pagination } from '@tabula-lens/react';
+
+function MyPagination() {
+  const currentPage = 1;
+  const totalPages = 10;
+  const pageSize = 20;
+  const onPageChange = (page: number) => console.log('Page:', page);
+  const onPageSizeChange = (size: number) => console.log('Size:', size);
+  
+  return (
+    <Pagination 
+      currentPage={currentPage}
+      totalPages={totalPages}
+      pageSize={pageSize}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      pageSizeOptions={[10, 20, 30, 50, 100]}
+    />
+  );
+}
+```
+
+**Configuration:**
+
+```tsx
+<DatabaseViewer 
+  path="/api/tabula-lens"
+  showPagination={true}
+  pageSize={20}
+  pageSizeOptions={[10, 20, 30, 50, 100]}
+  showPageSizeSelector={true}
+  paginationPosition="bottom"
+/>
+```
+
+### DataTable Component
+
+Renders the data table with sorting capabilities.
+
+**Features:**
+- React.memo for performance optimization
+- Built-in sorting functionality
+- Hover indicators for sortable columns
+- Customizable cell rendering
+- Responsive design
+
+**Usage:**
+
+```tsx
+import { DataTable } from '@tabula-lens/react';
+
+function MyDataTable() {
+  const data = {
+    columns: ['id', 'name', 'email'],
+    rows: [
+      { id: 1, name: 'John', email: 'john@example.com' },
+      { id: 2, name: 'Jane', email: 'jane@example.com' }
+    ]
+  };
+  const sort = { column: 'name', direction: 'asc' };
+  const onSortChange = (sort) => console.log('Sort:', sort);
+  
+  return (
+    <DataTable 
+      data={data}
+      sort={sort}
+      onSortChange={onSortChange}
+      sortableColumns={['name', 'email']}
+    />
+  );
+}
+```
+
+**Configuration:**
+
+```tsx
+<DatabaseViewer 
+  path="/api/tabula-lens"
+  enableSorting={true}
+  sortableColumns={['id', 'name', 'email']}
+  defaultSort={{ column: 'name', direction: 'asc' }}
+  multiSort={false}
+/>
+```
+
+## Custom Hooks
+
+### useLogger Hook
+
+Provides logging functionality with configurable levels.
+
+**Features:**
+- Configurable log levels (debug, info, warn, error, silent)
+- Browser-compatible logging
+- Request ID tracking
+- Performance monitoring
+
+**Usage:**
+
+```tsx
+import { useLogger } from '@tabula-lens/react';
+
+function MyComponent() {
+  const logger = useLogger();
+  
+  useEffect(() => {
+    logger.info('Component mounted');
+    logger.debug('Debug information');
+    logger.warn('Warning message');
+    logger.error('Error occurred');
+  }, []);
+  
+  return <div>My Component</div>;
+}
+```
+
+### useTableState Hook
+
+Manages table state (current table, sorting, filtering, pagination).
+
+**Features:**
+- Centralized state management
+- Memoized state updates
+- Type-safe state operations
+- Performance optimized
+
+**Usage:**
+
+```tsx
+import { useTableState } from '@tabula-lens/react';
+
+function MyComponent() {
+  const {
+    selectedTable,
+    setSelectedTable,
+    sorting,
+    setSorting,
+    pagination,
+    setPagination,
+    filter,
+    setFilter,
+    debouncedFilter,
+  } = useTableState({
+    initialTable: 'users',
+    defaultSort: { column: 'id', direction: 'asc' },
+    pageSize: 20,
+  });
+  
+  return <div>Current table: {selectedTable}</div>;
+}
+```
+
+### useDatabaseData Hook
+
+Handles data fetching with caching and error handling.
+
+**Features:**
+- Automatic data fetching
+- Error handling and retry logic
+- Loading state management
+- Refetch capabilities
+- Cache management
+
+**Usage:**
+
+```tsx
+import { useDatabaseData, buildQueryParams, useTableState } from '@tabula-lens/react';
+
+function MyComponent() {
+  const { selectedTable, pagination, sorting, debouncedFilter } = useTableState({
+    initialTable: 'users',
+  });
+
+  const queryParams = buildQueryParams({
+    selectedTable,
+    pagination,
+    sorting,
+    filter: debouncedFilter,
+  });
+
+  const { data, isLoading, error, refetch } = useDatabaseData({
+    path: '/api/tabula-lens',
+    selectedTable,
+    queryParams,
+  });
+  
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  
+  return <div>Data: {JSON.stringify(data)}</div>;
+}
+```
+
+### buildQueryParams Function
+
+Builds a URL query string from table state.
+
+**Features:**
+- Type-safe parameter building using TanStack Table types
+- Handles sorting state (array of `{ id, desc }` objects)
+- Handles pagination state (`{ pageIndex, pageSize }`)
+- URL-encodes filter and sort values
+
+**Usage:**
+
+```tsx
+import { buildQueryParams } from '@tabula-lens/react';
+
+const queryString = buildQueryParams({
+  selectedTable: 'users',
+  pagination: { pageIndex: 0, pageSize: 20 },
+  sorting: [{ id: 'id', desc: false }],
+  filter: 'john',
+  filterColumns: ['name', 'email'],
+});
+
+// Result: "table=users&page=1&limit=20&sort=id%3Aasc&filter=john&filterColumns=name%2Cemail"
+console.log(queryString);
+```
+
+## Utility Functions
+
+### fetchHelpers
+
+Fetch-related utilities for API interactions.
+
+**createAuthenticatedHeaders**
+
+```tsx
+import { createAuthenticatedHeaders } from '@tabula-lens/react';
+
+const headers = await createAuthenticatedHeaders(async () => ({
+  Authorization: `Bearer ${token}`
+}));
+```
+
+**validateResponse**
+
+```tsx
+import { validateResponse } from '@tabula-lens/react';
+
+const response = await fetch('/api/data');
+const validatedData = await validateResponse(response);
+```
+
+### validationHelpers
+
+Validation utilities for data and parameters.
+
+**validatePagination**
+
+```tsx
+import { validatePagination } from '@tabula-lens/react';
+
+const isValid = validatePagination({ page: 1, limit: 20, total: 100, totalPages: 5 });
+// Returns: true or throws error
+```
+
+**sanitizeColumnData**
+
+```tsx
+import { sanitizeColumnData } from '@tabula-lens/react';
+
+const sanitized = sanitizeColumnData(rawData);
+```
+
+**isQueryResult**
+
+```tsx
+import { isQueryResult } from '@tabula-lens/react';
+
+if (isQueryResult(data)) {
+  // Type-safe access to query result properties
+  console.log(data.columns, data.rows);
+}
+```
+
+### styleHelpers
+
+Style merging utilities for customization.
+
+**mergeClassName**
+
+```tsx
+import { mergeClassName } from '@tabula-lens/react';
+
+const className = mergeClassName('default-class', 'custom-class');
+// Returns: 'default-class custom-class'
+```
+
+**mergeStyle**
+
+```tsx
+import { mergeStyle } from '@tabula-lens/react';
+
+const style = mergeStyle(
+  { padding: '16px' },
+  { margin: '8px' }
+);
+// Returns: { padding: '16px', margin: '8px' }
+```
+
+## Performance Optimization
+
+### React.memo Usage
+
+All sub-components use React.memo to prevent unnecessary re-renders:
+
+```tsx
+export const LoadingState = memo(function LoadingState({ message }: LoadingStateProps) {
+  return <div className="loading">{message}</div>;
+});
+```
+
+### Memoized Render Functions
+
+The main component uses memoized render functions for expensive operations:
+
+```tsx
+const TableSelectorRenderer = useMemo(() => (
+  <TableSelector 
+    tables={tables}
+    currentTable={currentTable}
+    onTableChange={handleTableChange}
+  />
+), [tables, currentTable, handleTableChange]);
+```
+
+### useMemo for Style Calculations
+
+Style calculations are memoized to avoid recomputation:
+
+```tsx
+const containerStyle = useMemo(() => ({
+  ...defaultStyles.container,
+  ...customStyles.container
+}), [customStyles.container]);
+```
+
+### Pagination Memoization
+
+Pagination calculations are memoized for performance:
+
+```tsx
+const paginationInfo = useMemo(() => ({
+  totalPages: Math.ceil(totalRows / pageSize),
+  hasNextPage: currentPage < totalPages,
+  hasPreviousPage: currentPage > 1
+}), [totalRows, pageSize, currentPage]);
+```
+
+## State Management Patterns
+
+### Centralized State
+
+The component uses centralized state management through custom hooks:
+
+```tsx
+function DatabaseViewer(props) {
+  const tableState = useTableState(props);
+  const { data, loading, error } = useDatabaseData(props, tableState);
+  
+  // All state is managed through hooks
+  // Sub-components receive only the data they need
+}
+```
+
+### Prop Drilling Minimization
+
+The component minimizes prop drilling by:
+
+- Using custom hooks for state management
+- Composing sub-components with minimal props
+- Leveraging React context when appropriate
+- Using render props for complex customization
+
+### Event Handling
+
+Event handlers are memoized to prevent unnecessary re-renders:
+
+```tsx
+const handleTableChange = useCallback((table: string) => {
+  setCurrentTable(table);
+}, []);
+```
+
+## Component Composition Examples
+
+### Basic Composition
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      tableSelector="dropdown"
+      showFilter={true}
+      showPagination={true}
+    />
+  );
+}
+```
+
+### Advanced Composition with Custom Components
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      loadingComponent={CustomLoadingState}
+      errorComponent={CustomErrorState}
+      emptyComponent={CustomEmptyState}
+      tableSelectorComponent={CustomTableSelector}
+      filterComponent={CustomFilterInput}
+      paginationComponent={CustomPagination}
+    />
+  );
+}
+```
+
+### Composition with Custom Hooks
+
+```tsx
+import { DatabaseViewer, useTableState, useDatabaseData } from '@tabula-lens/react';
+
+function App() {
+  const tableState = useTableState({
+    initialTable: 'users',
+    defaultSort: { column: 'id', direction: 'asc' }
+  });
+  
+  const { data, loading, error } = useDatabaseData({
+    path: '/api/tabula-lens',
+    ...tableState
+  });
+  
+  return <DatabaseViewer path="/api/tabula-lens" {...tableState} />;
+}
+```
+
+## Best Practices
+
+1. **Use Custom Components for Complex UI**: Replace default sub-components when you need complex custom UI
+2. **Leverage Custom Hooks**: Use exported custom hooks for advanced state management
+3. **Optimize Performance**: Use React.memo and useMemo for expensive operations
+4. **Type Safety**: Leverage TypeScript definitions for type-safe component composition
+5. **Design System Integration**: Use CSS custom properties for consistent theming
+6. **Error Handling**: Implement proper error boundaries and error callbacks
+7. **Testing**: Test custom components and hooks independently
+
+## Migration Guide
+
+If you're migrating from an older version:
+
+1. **Component Props**: All props remain backward compatible
+2. **Custom Components**: Custom component patterns are enhanced, not changed
+3. **Performance**: React.memo is automatically applied, no changes needed
+4. **Styling**: CSS custom properties are now available for theming
+5. **Hooks**: Custom hooks are now exported for advanced use cases
+
+The modular architecture ensures that you can adopt new features incrementally without breaking existing functionality.

@@ -1,0 +1,148 @@
+---
+title: Lucia Auth Integration
+description: Integrate Lucia Auth with Tabula Lens to secure your database endpoints.
+---
+
+# Lucia Auth Integration
+
+:::caution[Deprecated]
+Lucia Auth v3 is deprecated and is no longer maintained. The author recommends implementing authentication from scratch using Lucia's documentation as a reference, or migrating to an actively maintained solution such as [Auth.js](https://authjs.dev), [Better Auth](https://better-auth.com), or a managed provider like [Clerk](./clerk) or [Kinde](./kinde).
+
+The examples below are provided for teams who need to maintain an existing Lucia setup. New projects should not adopt Lucia.
+:::
+
+[Lucia](https://lucia-auth.com) is a session management library for TypeScript that gives you full control over your authentication flow. This guide shows how to validate Lucia sessions inside a Tabula Lens route handler for teams maintaining an existing Lucia v3 setup.
+
+## Prerequisites
+
+Lucia does not have a single install target — the core package works alongside a database adapter of your choice:
+
+```bash
+npm install lucia
+```
+
+You'll also need a database adapter that matches your storage backend (e.g. `@lucia-auth/adapter-drizzle`, `@lucia-auth/adapter-prisma`). Refer to the [Lucia adapter documentation](https://lucia-auth.com/database) for the full list.
+
+## Backend Setup
+
+### Lucia Configuration
+
+Initialize a Lucia instance and export it for use in your route handlers:
+
+```typescript
+// lib/auth.ts
+import { Lucia } from 'lucia';
+
+// Replace with your chosen adapter, e.g.:
+// import { DrizzlePostgreSQLAdapter } from '@lucia-auth/adapter-drizzle';
+// const adapter = new DrizzlePostgreSQLAdapter(db, sessionTable, userTable);
+
+export const lucia = new Lucia(adapter, {
+  sessionCookie: {
+    expires: false,
+    attributes: {
+      secure: process.env.NODE_ENV === 'production',
+    },
+  },
+});
+```
+
+### Next.js App Router
+
+Read the session cookie and validate it with `lucia.validateSession()` before delegating to the Tabula Lens handler:
+
+```typescript
+// app/api/tabula-lens/route.ts
+import { lucia } from '@/lib/auth';
+import { cookies } from 'next/headers';
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+const handler = createNextRouteHandler(tabulaLens);
+
+export async function GET(request: Request) {
+  const cookieStore = cookies();
+  const sessionId = cookieStore.get(lucia.sessionCookieName)?.value ?? null;
+
+  if (!sessionId) return new Response('Unauthorized', { status: 401 });
+
+  const { user, session } = await lucia.validateSession(sessionId);
+
+  if (!user || !session) return new Response('Unauthorized', { status: 401 });
+
+  return handler(request);
+}
+```
+
+### Express
+
+For Express, read the session cookie from `req.cookies` and validate it the same way. Ensure `cookie-parser` is registered before your route:
+
+```typescript
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import { lucia } from './lib/auth';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+
+app.use(cookieParser());
+
+async function requireAuth(req, res, next) {
+  const sessionId = req.cookies[lucia.sessionCookieName] ?? null;
+
+  if (!sessionId) return res.status(401).json({ error: 'Unauthorized' });
+
+  const { user, session } = await lucia.validateSession(sessionId);
+
+  if (!user || !session) return res.status(401).json({ error: 'Invalid session' });
+
+  req.user = user;
+  next();
+}
+
+app.use('/api/tabula-lens', requireAuth, expressAdapter(tabulaLens));
+```
+
+## Frontend Integration
+
+Lucia is session-cookie based. For same-origin requests the browser sends the session cookie automatically — no `Authorization` header is needed:
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+export function TabulaLensViewer() {
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      getAuthHeaders={async () => ({})}
+    />
+  );
+}
+```
+
+## Important Notes
+
+- **Lucia is no longer maintained.** Bugs and security issues will not be patched upstream. If you are planning new development, choose an actively maintained library.
+- **Session cookies are sent automatically for same-origin requests.** Pass `getAuthHeaders={async () => ({})}` — you do not need to read or forward the cookie manually.
+- **`lucia.validateSession()` handles session refresh.** When Lucia returns a fresh session (i.e. `session.fresh === true`), you should set a new session cookie in the response. The examples above omit this for brevity; refer to the [Lucia session validation docs](https://lucia-auth.com/guides/validate-session-cookies) for the full pattern.
+- **Cross-origin setups require manual token handling.** If your frontend and backend are on different origins, session cookies won't be forwarded. In that case you'll need to store the session ID in local storage and pass it as a custom header — a pattern that Lucia does not officially support. Consider migrating to a provider that has first-class token support.
+
+## Migrating Away from Lucia
+
+The Lucia author's own recommendation is to use Lucia's source code and guides as a learning resource rather than a production dependency. Recommended alternatives:
+
+- **[Auth.js](https://authjs.dev)** — battle-tested, supports many OAuth providers and databases, and has official Next.js and Express adapters. See the [Auth.js integration guide](./authjs).
+- **[Better Auth](https://better-auth.com)** — a newer, TypeScript-first library with a similar philosophy to Lucia but with active maintenance.
+- **[Clerk](./clerk)** or **[Kinde](./kinde)** — fully managed auth platforms that eliminate the need to manage sessions, adapters, and token refresh yourself.
+
+## Troubleshooting
+
+**`validateSession()` always returns `{ user: null, session: null }`**
+
+Confirm `lucia.sessionCookieName` matches the name of the cookie your sign-in flow sets. Mismatches occur when multiple Lucia instances are created with different configurations, or when the `sessionCookie.name` option has been customized in one place but not the other.
+
+**The session cookie is not sent on requests (Next.js)**
+
+Ensure the `DatabaseViewer`'s `path` prop points to a same-origin API route. Cross-origin requests require explicit `credentials: 'include'` handling, which Tabula Lens does not configure by default.

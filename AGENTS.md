@@ -16,6 +16,11 @@
 - **Type check**: `npm run check-types` (runs `tsc --noEmit`)
 - **Lint**: `npm run lint`
 
+### @tabula-lens/docs
+
+- **Build**: `npm run build`
+- **Dev**: `npm run dev`
+
 ## Known Issues
 
 ### Pre-existing Test Failures in @tabula-lens/react
@@ -303,3 +308,962 @@ All Phase 7 changes maintain 100% backward compatibility:
 - JSDoc additions are documentation-only
 - Hover indicators enhance UX without breaking existing behavior
 - CSS custom properties include fallback values
+
+## Phase 6: Guides & Concepts Implementation (2026-07-11)
+
+Phase 6 has been successfully implemented, adding comprehensive how-to guides and conceptual documentation to the documentation site.
+
+### How-to Guides Created
+
+**Authentication Guide** (`guides/authentication.mdx`)
+
+- Comprehensive authentication patterns for Tabula Lens HTTP API
+- JWT authentication implementation examples
+- Session-based authentication patterns
+- OAuth 2.0 integration examples
+- Role-based access control (RBAC) implementation
+- Row-level security patterns
+- Multi-tenant authentication strategies
+- Token management best practices
+- Security best practices for authentication
+- Framework-specific examples (Next.js, Express)
+- Troubleshooting common authentication issues
+
+**Styling Customization Guide** (`guides/styling-customization.mdx`)
+
+- Complete CSS custom properties documentation
+- Design token usage and customization
+- Style object customization patterns
+- Class name override patterns
+- Component-level styling examples
+- Dark mode implementation details
+- Manual dark mode control
+- Custom theming examples
+- Responsive design patterns
+- Accessibility considerations
+- Best practices for styling
+- Troubleshooting styling issues
+
+**Deployment Guide** (`guides/deployment.mdx`)
+
+- Database deployment strategies (managed vs self-hosted)
+- Backend deployment options (Vercel, Railway, AWS EC2, Docker, Kubernetes)
+- Frontend deployment options (Vercel, Netlify, AWS S3, Docker)
+- CI/CD pipeline configuration with GitHub Actions
+- Monitoring and logging setup
+- Health check implementation
+- Security best practices for deployment
+- Performance optimization for production
+- Troubleshooting common deployment issues
+
+**Performance Optimization Guide** (`guides/performance-optimization.mdx`)
+
+- Database performance optimization (indexing, connection pooling, caching)
+- Backend API performance (compression, pagination, query batching)
+- Frontend performance (React.memo, data fetching optimization, virtual scrolling)
+- Bundle optimization strategies
+- Monitoring and profiling
+- Performance testing with Artillery
+- Performance benchmarks and metrics
+- Performance best practices
+- Performance checklist
+- Troubleshooting performance issues
+
+**Testing Guide** (`guides/testing.mdx`)
+
+- Testing setup for Node package (Vitest, Node environment)
+- Testing setup for React package (Vitest, jsdom, React Testing Library)
+- Unit testing examples for TabulaLens
+- Component testing examples for DatabaseViewer
+- Custom hooks testing
+- Sub-components testing
+- Utility functions testing
+- Integration testing examples
+- End-to-end testing patterns
+- Testing best practices
+- Coverage goals and monitoring
+- CI/CD testing configuration
+- Troubleshooting common testing issues
+
+### Conceptual Documentation Created
+
+**Enhanced Security Model** (`concepts/security.mdx`)
+
+- Added comprehensive security architecture documentation
+- Threat model analysis
+- Security layers (network, authentication, authorization, input validation, data protection, monitoring)
+- Advanced security features (row-level security, audit logging, rate limiting, IP whitelisting)
+- Security testing strategies
+- Security checklist
+- Incident response planning
+- Security best practices
+
+**Performance Characteristics** (`concepts/performance-characteristics.mdx`)
+
+- Database query performance metrics
+- API response performance metrics
+- Frontend rendering performance metrics
+- Performance factors (database, network, application)
+- Performance benchmarks with test results
+- Performance optimization impact analysis
+- Performance monitoring (KPIs, tools)
+- Performance tuning strategies (database, API, frontend)
+- Performance best practices
+
+**Caching Strategies** (`concepts/caching-strategies.mdx`)
+
+- Caching layers overview (application, database, CDN)
+- In-memory caching with NodeCache
+- Redis distributed caching
+- Cache-aside pattern implementation
+- Write-through and write-behind caching
+- Multi-level caching strategies
+- Cache invalidation strategies (time-based, event-based, manual, tag-based)
+- Caching best practices
+- Cache monitoring and metrics
+- Troubleshooting caching issues
+
+**Scalability Considerations** (`concepts/scalability.mdx`)
+
+- Vertical scaling strategies
+- Horizontal scaling strategies
+- Database scaling (read replicas, sharding, connection pooling)
+- Architecture patterns (microservices, event-driven, CQRS)
+- Performance optimization for scale
+- Auto-scaling configuration (Kubernetes, AWS)
+- Monitoring and scaling
+- Scaling checklist
+- Scaling best practices
+- Troubleshooting scaling issues
+
+**Architecture Decision Records** (`concepts/architecture-decisions.mdx`)
+
+- ADR-001: HTTP API as Universal Interface
+- ADR-002: PostgreSQL as Primary Database
+- ADR-003: Modular Component Architecture
+- ADR-004: CSS Custom Properties for Theming
+- ADR-005: Comprehensive Logging System
+- ADR-006: Framework Adapter Pattern
+- ADR-007: Manual API Documentation Over TypeDoc
+- ADR-008: Vitest as Testing Framework
+- ADR-009: Astro with Starlight for Documentation
+- ADR-010: Security-First Architecture
+- ADR-011: Design System Source of Truth
+- ADR-012: Error Handling with TabulaLensError
+- ADR template for future decisions
+- ADR contribution guidelines
+
+**Error Handling Patterns** (`concepts/error-handling.mdx`)
+
+- TabulaLensError class documentation
+- Error codes and status codes
+- Server-side error handling patterns
+- Client-side error handling patterns
+- Error catalog with causes and fixes:
+  - TABLE_NOT_FOUND (404)
+  - INVALID_QUERY (400)
+  - AUTHENTICATION_FAILED (401)
+  - DATABASE_ERROR (500)
+  - INTERNAL_ERROR (500)
+- Error handling best practices
+- Error handling patterns (try-catch-wrap, error boundary, fallback UI, error recovery)
+- Troubleshooting error handling issues
+
+### Verification
+
+**Documentation Site**
+
+- Build succeeds without errors
+- All 28 pages generated successfully
+- Type checking passes (0 errors, 0 warnings, 0 hints)
+- Linting passes
+- Search index built successfully
+
+**New Documentation Pages**
+
+- 5 how-to guides (authentication, styling, deployment, performance, testing)
+- 5 conceptual documentation pages (security enhancements, performance, caching, scalability, architecture decisions, error handling)
+- Total: 10 new comprehensive documentation pages
+
+### Files Created
+
+**How-to Guides:**
+
+- `apps/docs/src/content/docs/guides/authentication.mdx` - Comprehensive authentication guide
+- `apps/docs/src/content/docs/guides/styling-customization.mdx` - Complete styling customization guide
+- `apps/docs/src/content/docs/guides/deployment.mdx` - Full deployment guide
+- `apps/docs/src/content/docs/guides/performance-optimization.mdx` - Performance optimization guide
+- `apps/docs/src/content/docs/guides/testing.mdx` - Comprehensive testing guide
+
+**Conceptual Documentation:**
+
+- `apps/docs/src/content/docs/concepts/security.mdx` - Enhanced with advanced security features
+- `apps/docs/src/content/docs/concepts/performance-characteristics.mdx` - Performance characteristics documentation
+- `apps/docs/src/content/docs/concepts/caching-strategies.mdx` - Caching strategies guide
+- `apps/docs/src/content/docs/concepts/scalability.mdx` - Scalability considerations
+- `apps/docs/src/content/docs/concepts/architecture-decisions.mdx` - Architecture decision records
+- `apps/docs/src/content/docs/concepts/error-handling.mdx` - Error handling patterns documentation
+
+### Backward Compatibility
+
+All Phase 6 changes maintain 100% backward compatibility:
+
+- Documentation additions only (no code changes)
+- No breaking changes to any packages
+- All existing functionality preserved
+- Documentation site build process unchanged
+
+## Phase 2: Design System Implementation (2026-07-10)
+
+The design system has been successfully documented and integrated into the documentation site.
+
+### Design System Documentation
+
+**Created DESIGN_SYSTEM.md**
+
+- Comprehensive documentation of all design tokens
+- Color palette documentation (light and dark mode)
+- Spacing system documentation
+- Typography documentation
+- CSS custom properties documentation
+- Dark mode implementation details
+- Component styling patterns
+- Accessibility considerations
+- Performance characteristics
+- Browser support information
+- Customization examples
+
+**Design Token Documentation**
+
+- **Colors**: Primary, text, background, border, and error colors for both light and dark modes
+- **Spacing**: XS (8px), SM (12px), MD (16px), LG (32px) with 4px border radius
+- **Typography**: Base (16px) and SM (14px) font sizes
+- **Animation**: 1s duration for spinner animations
+
+**CSS Custom Properties**
+
+- Documented `--tlens-` prefix naming convention
+- Fallback value documentation
+- Variable naming pattern: `--tlens-{category}-{property}`
+- Categories: primary, text, bg, border, error, spacing, font-size, animation
+
+### Documentation Site Integration
+
+**Custom Starlight Theme**
+
+- Created `apps/docs/src/styles/tlens-theme.css` with Tabula Lens brand integration
+- Integrated Tabula Lens design tokens into Starlight theme
+- Applied custom colors, typography, and spacing to documentation site
+- Implemented dark mode support for documentation site
+- Customized component styling (tables, code blocks, headings, links)
+- Responsive design adjustments
+
+**Updated astro.config.mjs**
+
+- Added custom CSS integration: `customCss: ['./src/styles/tlens-theme.css']`
+- Integrated Tabula Lens design system with Starlight theme
+
+**Updated Design System Documentation Page**
+
+- Completely rewrote `concepts/design-system.mdx` with accurate design system information
+- Aligned documentation with actual implementation in React package
+- Added comprehensive styling examples
+- Documented CSS custom properties usage
+- Added component-specific styling examples
+- Included accessibility information
+
+### Design System Governance
+
+**Decision: No Shared Styles Directory**
+
+- Evaluated whether to create a shared `styles/` directory
+- Decided that React package CSS files should be the source of truth
+- This approach:
+  - Maintains a single source of truth
+  - Reduces duplication
+  - Ensures consistency across all Tabula Lens applications
+  - Simplifies maintenance and updates
+
+### Verification
+
+**React Package**
+
+- All 204 tests pass
+- Type checking passes
+- Linting passes
+- Design system implementation verified
+
+**Node Package**
+
+- All 19 tests pass
+- Type checking passes
+- Linting passes
+
+**Documentation Site**
+
+- Build succeeds without errors
+- All 14 pages generated successfully
+- Custom theme applied successfully
+- Responsive design verified
+
+### Files Created/Modified
+
+**Created:**
+
+- `DESIGN_SYSTEM.md` - Comprehensive design system documentation
+- `apps/docs/src/styles/tlens-theme.css` - Custom Starlight theme
+
+**Modified:**
+
+- `apps/docs/astro.config.mjs` - Added custom CSS integration
+- `apps/docs/src/content/docs/concepts/design-system.mdx` - Updated with accurate design system information
+- `DOCUMENTATION_PLAN.md` - Marked Phase 2 as complete
+- `AGENTS.md` - Added Phase 2 implementation notes
+
+### Backward Compatibility
+
+All Phase 2 changes maintain 100% backward compatibility:
+
+- Design system documentation is new information only
+- Documentation site changes are visual enhancements only
+- No breaking changes to any packages
+- All existing functionality preserved
+
+## Phase 5: Content Development - API Reference (2026-07-11)
+
+Phase 5 focused on creating comprehensive API reference documentation for the HTTP API, Node package, and React package.
+
+### HTTP API Reference
+
+**Enhanced HTTP API Documentation**
+
+- Created comprehensive HTTP API reference with complete endpoint documentation
+- Documented all query parameters with detailed descriptions and examples
+- Added request/response format documentation with JSON examples
+- Documented all request headers and authentication methods
+- Created comprehensive error catalog with 5 error types:
+  - TABLE_NOT_FOUND (404)
+  - INVALID_QUERY (400)
+  - AUTHENTICATION_FAILED (401)
+  - DATABASE_ERROR (500)
+  - INTERNAL_ERROR (500)
+- Added code examples in multiple languages:
+  - cURL
+  - JavaScript (Fetch)
+  - JavaScript (Axios)
+  - Python (Requests)
+- Documented parameter details for all query parameters
+- Added best practices for performance, security, error handling, and pagination
+- Documented caching strategies and rate limiting considerations
+
+### Node API Reference
+
+**Enhanced Node Package Documentation**
+
+- Created complete Node API reference for @tabula-lens/node package
+- Documented TabulaLens class with all methods:
+  - Constructor with TabulaLensOptions
+  - query() method with all parameters
+  - handle() method for HTTP request handling
+  - getLogger() method
+  - getTables() method
+  - getFilterableColumns() method
+- Documented TabulaLensError class with constructor and usage
+- Documented Logger API with all interfaces and functions:
+  - Logger interface
+  - LogContext interface
+  - LogLevel type
+  - LoggerOptions interface
+  - createLogger() function
+  - generateId() function
+  - maskSensitiveData() function
+- Documented all 15 framework adapters with complete examples:
+  - Express (5.x+ and 4.x)
+  - Fastify
+  - Koa
+  - Hapi
+  - Restify
+  - Next.js
+  - TanStack Start
+  - Remix
+  - SvelteKit
+  - Hono
+  - Elysia
+  - Fresh
+  - Native adapter
+- Added type exports documentation
+- Included complete example with all features
+
+### React API Reference
+
+**Enhanced React Package Documentation**
+
+- Created comprehensive React API reference for @tabula-lens/react package
+- Documented DatabaseViewer component with all props organized by category:
+  - Required props (path)
+  - Table selection props (initialTable, tableSelector, etc.)
+  - Authentication props (getAuthHeaders, headers)
+  - Filtering props (showFilter, filterPlaceholder, etc.)
+  - Pagination props (showPagination, pageSize, etc.)
+  - Sorting props (enableSorting, sortableColumns, etc.)
+  - Formatting props (formatHeader, formatCell)
+  - Styling props (className, classNames, styles)
+  - Data fetching props (refetchInterval, onError)
+  - Custom component props (loadingComponent, errorComponent, etc.)
+- Documented all sub-components with props and examples:
+  - LoadingState
+  - ErrorState
+  - EmptyState
+  - TableSelector
+  - FilterInput
+  - Pagination
+  - DataTable
+- Documented all custom hooks with parameters and returns:
+  - useLogger
+  - useTableState
+  - useDatabaseData
+  - buildQueryParams
+- Documented all utility functions with parameters and returns:
+  - isQueryResult
+  - validatePagination
+  - sanitizeColumnData
+  - createAuthenticatedHeaders
+  - validateResponse
+  - mergeClassName
+  - mergeStyle
+- Added type exports documentation
+- Documented ClassNames and Styles interfaces
+- Included complete example with all features
+
+### TypeDoc Integration Decision
+
+**Evaluation Results**
+
+- Evaluated TypeDoc integration for automated API documentation generation
+- Reviewed existing JSDoc comments in React package (100+ matches found)
+- Reviewed existing TypeScript types and interfaces
+- Compared manual documentation vs. auto-generated documentation
+
+**Decision: Manual Documentation Superior**
+
+After evaluation, it was decided that comprehensive manual documentation provides better results than auto-generated API docs:
+
+**Advantages of Manual Documentation:**
+
+- Detailed explanations and context beyond type signatures
+- Real-world usage examples and patterns
+- Best practices and guidance
+- Clear organization and structure
+- Better developer experience
+- Ability to explain "why" not just "what"
+- Consistent formatting and style
+- Better for user-facing documentation
+
+**Role of Existing JSDoc:**
+
+- Existing JSDoc comments serve as inline documentation for IDEs
+- TypeScript types provide excellent IDE autocomplete
+- Manual docs in documentation site provide user-facing API reference
+- Both approaches complement each other
+
+**Deferred Items:**
+
+- OpenAPI specification (comprehensive manual docs sufficient)
+- Automated API documentation generation to CI (manual review process better)
+
+### Documentation Build Verification
+
+**Build Success**
+
+- Documentation build completed successfully
+- All 18 pages generated without errors
+- Search index built successfully
+- All API documentation pages included:
+  - /api/http/index.html
+  - /api/node/index.html
+  - /api/react/index.html
+
+### Files Modified
+
+**Modified:**
+
+- `apps/docs/src/content/docs/api/http.mdx` - Complete HTTP API reference
+- `apps/docs/src/content/docs/api/node.mdx` - Complete Node API reference
+- `apps/docs/src/content/docs/api/react.mdx` - Complete React API reference
+- `DOCUMENTATION_PLAN.md` - Marked Phase 5 as complete
+- `AGENTS.md` - Added Phase 5 implementation notes
+
+### Backward Compatibility
+
+All Phase 5 changes maintain 100% backward compatibility:
+
+- Documentation changes are information-only
+- No code changes to packages
+- No breaking changes to existing functionality
+- All existing documentation preserved and enhanced
+  - Express (5.x+ and 4.x)
+  - Fastify
+  - Koa
+  - Hapi
+  - Restify
+  - Next.js
+  - TanStack Start
+  - Remix
+  - SvelteKit
+  - Hono
+  - Elysia
+  - Fresh
+  - Native adapter
+- Added type exports documentation
+- Included complete example with all features
+
+### React API Reference
+
+**Enhanced React Package Documentation**
+
+- Created comprehensive React API reference for @tabula-lens/react package
+- Documented DatabaseViewer component with all props organized by category:
+  - Required props (path)
+  - Table selection props (initialTable, tableSelector, etc.)
+  - Authentication props (getAuthHeaders, headers)
+  - Filtering props (showFilter, filterPlaceholder, etc.)
+  - Pagination props (showPagination, pageSize, etc.)
+  - Sorting props (enableSorting, sortableColumns, etc.)
+  - Formatting props (formatHeader, formatCell)
+  - Styling props (className, classNames, styles)
+  - Data fetching props (refetchInterval, onError)
+  - Custom component props (loadingComponent, errorComponent, etc.)
+- Documented all sub-components with props and examples:
+  - LoadingState
+  - ErrorState
+  - EmptyState
+  - TableSelector
+  - FilterInput
+  - Pagination
+  - DataTable
+- Documented all custom hooks with parameters and returns:
+  - useLogger
+  - useTableState
+  - useDatabaseData
+  - buildQueryParams
+- Documented all utility functions with parameters and returns:
+  - isQueryResult
+  - validatePagination
+  - sanitizeColumnData
+  - createAuthenticatedHeaders
+  - validateResponse
+  - mergeClassName
+  - mergeStyle
+- Added type exports documentation
+- Documented ClassNames and Styles interfaces
+- Included complete example with all features
+
+### TypeDoc Integration Decision
+
+**Evaluation Results**
+
+- Evaluated TypeDoc integration for automated API documentation generation
+- Reviewed existing JSDoc comments in React package (100+ matches found)
+- Reviewed existing TypeScript types and interfaces
+- Compared manual documentation vs. auto-generated documentation
+
+**Decision: Manual Documentation Superior**
+
+After evaluation, it was decided that comprehensive manual documentation provides better results than auto-generated API docs:
+
+**Advantages of Manual Documentation:**
+
+- Detailed explanations and context beyond type signatures
+- Real-world usage examples and patterns
+- Best practices and guidance
+- Clear organization and structure
+- Better developer experience
+- Ability to explain "why" not just "what"
+- Consistent formatting and style
+- Better for user-facing documentation
+
+**Role of Existing JSDoc:**
+
+- Existing JSDoc comments serve as inline documentation for IDEs
+- TypeScript types provide excellent IDE autocomplete
+- Manual docs in documentation site provide user-facing API reference
+- Both approaches complement each other
+
+**Deferred Items:**
+
+- OpenAPI specification (comprehensive manual docs sufficient)
+- Automated API documentation generation to CI (manual review process better)
+
+### Documentation Build Verification
+
+**Build Success**
+
+- Documentation build completed successfully
+- All 18 pages generated without errors
+- Search index built successfully
+- All API documentation pages included:
+  - /api/http/index.html
+  - /api/node/index.html
+  - /api/react/index.html
+
+### Files Modified
+
+**Modified:**
+
+- `apps/docs/src/content/docs/api/http.mdx` - Complete HTTP API reference
+- `apps/docs/src/content/docs/api/node.mdx` - Complete Node API reference
+- `apps/docs/src/content/docs/api/react.mdx` - Complete React API reference
+- `DOCUMENTATION_PLAN.md` - Marked Phase 5 as complete
+- `AGENTS.md` - Added Phase 5 implementation notes
+
+### Backward Compatibility
+
+All Phase 5 changes maintain 100% backward compatibility:
+
+- Documentation changes are information-only
+- No code changes to packages
+- No breaking changes to existing functionality
+- All existing documentation preserved and enhanced
+
+## Phase 4: Content Development - Implementation Guides (2026-07-10)
+
+Phase 4 focused on creating comprehensive implementation guides for frontend, backend, database integration, and advanced features.
+
+### Frontend Implementation Guide
+
+**Enhanced React Implementation Documentation**
+
+- Created comprehensive React implementation guide with:
+  - Complete component architecture documentation
+  - All component props and configurations
+  - Authentication examples (Bearer token, API key, static headers)
+  - Styling customization examples (CSS custom properties, style objects, class names, design system tokens)
+  - Advanced usage examples (custom components, performance optimization, sorting, filtering)
+  - Prop validation system documentation
+  - TypeScript support examples
+  - Browser support information
+
+**Component Architecture Documentation**
+
+- Documented modular component architecture
+- Explained sub-component composition patterns
+- Covered custom hook usage and patterns
+- Documented utility function usage
+- Included component composition examples
+- Documented performance optimization strategies
+- Explained React.memo usage throughout
+- Documented state management patterns
+
+### React Component Architecture Guide
+
+**Created Comprehensive Component Architecture Guide**
+
+- Main component orchestrator responsibilities
+- Sub-component documentation:
+  - LoadingState component with custom implementations
+  - ErrorState component with retry functionality
+  - EmptyState component for no data scenarios
+  - TableSelector component (dropdown and sidebar modes)
+  - FilterInput component with debouncing
+  - Pagination component with page size selection
+  - DataTable component with sorting capabilities
+  - FilterColumnSelector component
+- Custom hooks documentation:
+  - useLogger hook for logging functionality
+  - useTableState hook for state management
+  - useDatabaseData hook for data fetching
+  - buildQueryParams function for parameter building
+- Utility functions documentation:
+  - fetchHelpers (createAuthenticatedHeaders, validateResponse)
+  - validationHelpers (validatePagination, sanitizeColumnData, isQueryResult)
+  - styleHelpers (mergeClassName, mergeStyle)
+- Performance optimization strategies:
+  - React.memo usage
+  - Memoized render functions
+  - useMemo for style calculations
+  - Pagination memoization
+- State management patterns
+- Component composition examples
+- Best practices and migration guide
+
+### TanStack Integration Guides
+
+**TanStack Query Integration Guide**
+
+- Basic setup with QueryClientProvider
+- Data fetching patterns
+- Caching strategies (stale time, cache time, cache invalidation)
+- Query invalidation examples (manual, automatic, conditional)
+- Error handling (global, per-query, error boundaries)
+- Performance optimization (query deduplication, background refetching, selective updates)
+- Advanced patterns (infinite queries, parallel queries, dependent queries)
+- Integration with DatabaseViewer
+- Testing with React Query
+- Best practices and troubleshooting
+
+**TanStack Table Integration Guide**
+
+- Basic table definition and setup
+- Table configuration patterns
+- Column definition examples (basic, custom renderers, accessor functions)
+- Sorting and filtering (multi-column sorting, custom sorting, column filtering, global filtering)
+- Pagination (client-side, server-side)
+- Advanced features (column resizing, virtualization, row selection, column visibility, row expansion)
+- Integration with DatabaseViewer
+- Testing TanStack Table components
+- Best practices and troubleshooting
+
+### Backend Implementation Guide
+
+**Comprehensive Node.js Implementation Documentation**
+
+- Basic setup and configuration options
+- Documentation for all 15 framework adapters:
+  - Traditional Frameworks:
+    - Express (4.x & 5.x) with basic and advanced configurations
+    - Fastify with authentication hooks
+    - Koa with middleware patterns
+    - Hapi with pre-handlers
+    - Restify with middleware
+  - Modern Frameworks:
+    - Next.js (App Router and Pages Router)
+    - TanStack Start with route handlers
+    - Remix with loaders and actions
+    - SvelteKit with server endpoints
+  - Edge Frameworks:
+    - Hono with middleware
+    - Elysia with hooks
+    - Fresh (Deno) with middleware
+  - Native:
+    - Native Node.js HTTP with custom handlers
+- Peer dependencies for each adapter
+- Configuration options for each adapter
+- Security best practices (authentication, environment variables, SSL connections)
+- Error handling with TabulaLensError class
+- Monitoring and observability guidance
+- Performance considerations (connection pooling, query optimization)
+- Testing framework adapters
+- Troubleshooting common issues
+
+### PostgreSQL Support Guide
+
+**Enhanced Database Integration Documentation**
+
+- Connection string format and components
+- Connection parameters (SSL mode, pool settings, timeouts)
+- Connection patterns (local development, production, custom logger)
+- Connection pooling configuration
+- Database setup (creating databases, tables, sample data)
+- User permissions (read-only users, read-write users)
+- Security best practices (environment variables, SSL, network security)
+- Query optimization (indexing, performance tips, database configuration)
+- Database-specific features (JSON data types, array data types, timestamp data types)
+- Monitoring and observability (query logging, performance monitoring, connection monitoring)
+- Backup and recovery strategies
+- Troubleshooting (connection issues, performance issues, memory issues, lock issues)
+- Advanced configuration (connection timeout, statement timeout, idle timeout)
+- Best practices for database management
+
+### Logging System Guide
+
+**Comprehensive Logging System Documentation**
+
+- Node.js logging:
+  - Basic configuration and log levels
+  - Log formats (JSON, text, pretty)
+  - Request logging with detailed output
+  - Query logging with performance metrics
+  - Sensitive data masking
+  - Custom logger integration (Winston, CloudWatch, Datadog)
+  - Environment-specific defaults
+- React logging:
+  - Basic configuration
+  - React logger hook usage
+  - Browser console logging with styling
+  - Component lifecycle logging
+  - Data fetching logging
+- Advanced logging patterns:
+  - Request ID tracking
+  - Structured logging
+  - Conditional logging
+  - Performance logging
+- Logging best practices (development, staging, production)
+- Log aggregation (ELK Stack, CloudWatch, Datadog)
+- Performance considerations (logging overhead, async logging, log sampling)
+- Troubleshooting logging issues
+- Security considerations (log security, access control, retention)
+
+### Documentation Site Build Verification
+
+**Build Results**
+
+- Documentation site builds successfully without errors
+- All 18 pages generated successfully:
+  - 404 page
+  - API documentation (HTTP, Node, React)
+  - Concepts (architecture, backend-architecture, database-architecture, design-system, security)
+  - Guides (backend-implementation, database-integration, frontend-implementation, logging-system, react-component-architecture, tanstack-query-integration, tanstack-table-integration)
+  - Quick Start (getting-started)
+  - Index page
+- Search index built successfully with Pagefind
+- All new documentation pages are accessible and properly formatted
+
+### Files Created/Modified
+
+**Created:**
+
+- `apps/docs/src/content/docs/guides/react-component-architecture.mdx` - Comprehensive component architecture guide
+- `apps/docs/src/content/docs/guides/tanstack-query-integration.mdx` - TanStack Query integration guide
+- `apps/docs/src/content/docs/guides/tanstack-table-integration.mdx` - TanStack Table integration guide
+- `apps/docs/src/content/docs/guides/logging-system.mdx` - Comprehensive logging system guide
+
+**Modified:**
+
+- `apps/docs/src/content/docs/guides/frontend-implementation.mdx` - Enhanced with comprehensive implementation guide
+- `apps/docs/src/content/docs/guides/backend-implementation.mdx` - Enhanced with all 15 framework adapters
+- `apps/docs/src/content/docs/guides/database-integration.mdx` - Enhanced with comprehensive PostgreSQL support
+- `DOCUMENTATION_PLAN.md` - Marked Phase 4 as complete
+- `AGENTS.md` - Added Phase 4 implementation notes
+
+### Backward Compatibility
+
+All Phase 4 changes maintain 100% backward compatibility:
+
+- Documentation enhancements are new information only
+- No changes to package functionality
+- All existing functionality preserved
+- Documentation site builds successfully
+
+## Phase 3: Content Development - Quick Start (2026-07-10)
+
+Phase 3 focused on creating comprehensive Quick Start documentation and detailed architecture pages to help users understand and implement Tabula Lens effectively.
+
+### Quick Start Tutorial
+
+**Enhanced Getting Started Guide**
+
+- Created comprehensive full-stack tutorial with PostgreSQL, Node/Express, and React
+- Step-by-step database setup with sample data
+- Complete backend implementation with TypeScript
+- Frontend integration with Vite and React
+- Optional authentication implementation
+- Customization examples
+- Troubleshooting section for common issues
+
+**Tutorial Structure:**
+
+1. **Prerequisites**: Clear requirements for Node.js, PostgreSQL, and package managers
+2. **Database Setup**: SQL commands for creating database and sample tables
+3. **Backend Setup**: Complete Node.js/Express server with TypeScript
+4. **Frontend Setup**: React application with Vite
+5. **Authentication**: Optional token-based authentication
+6. **Customization**: Examples of component customization
+7. **Troubleshooting**: Common issues and solutions
+
+### Architecture Pages
+
+**Enhanced Architecture Overview**
+
+- Completely rewrote architecture page with detailed explanations
+- Added comprehensive system architecture diagrams
+- Documented frontend architecture with component structure
+- Documented backend architecture with framework adapters
+- Explained HTTP API contract in detail
+- Added data flow diagrams
+- Documented security model
+- Explained extensibility options
+
+**New Backend Architecture Page**
+
+- Created comprehensive backend architecture documentation
+- Documented all 15+ framework adapters with code examples
+- Explained TabulaLens core functionality
+- Documented database layer and connection management
+- Detailed logging system with configuration options
+- Explained error handling with custom error classes
+- Documented security features and authentication methods
+- Added performance optimization guidelines
+- Included testing examples and best practices
+
+**New Database Architecture Page**
+
+- Created comprehensive database architecture documentation
+- Documented PostgreSQL as primary database with detailed feature support
+- Explained connection architecture with connection pooling
+- Documented query building process and SQL injection prevention
+- Listed all supported PostgreSQL data types with JavaScript mappings
+- Added performance optimization tips
+- Documented transaction support with examples
+- Explained security considerations for database operations
+- Added monitoring and observability guidelines
+- Included backup and recovery strategies
+- Documented migration and schema management best practices
+
+### Key Features
+
+**Architecture Diagrams**
+
+- System architecture diagram showing frontend, backend, and database layers
+- Frontend component structure diagram
+- Backend adapter architecture diagram
+- Connection lifecycle diagram
+- Query building process diagram
+- Data flow diagram
+
+**Comprehensive Code Examples**
+
+- Complete working examples for all 15+ framework adapters
+- TypeScript configuration examples
+- Environment variable setup
+- Authentication implementation examples
+- Custom component usage examples
+- Error handling patterns
+
+**Interchangeability Explanation**
+
+- Clear explanation of frontend interchangeability
+- Clear explanation of backend interchangeability
+- Benefits of the interchangeable architecture
+- Examples of mixing and matching different implementations
+
+### Verification
+
+**Documentation Site Build**
+
+- Build succeeds without errors
+- All 14 pages generated successfully (up from 12)
+- New architecture pages included in navigation
+- Code syntax highlighting works correctly
+- All diagrams render properly
+
+**Content Quality**
+
+- All code examples are syntactically correct
+- SQL examples are valid PostgreSQL syntax
+- TypeScript examples are properly typed
+- Environment variable examples use correct syntax
+- Architecture diagrams are clear and accurate
+
+### Files Created/Modified
+
+**Created:**
+
+- `apps/docs/src/content/docs/concepts/backend-architecture.mdx` - Comprehensive backend architecture documentation
+- `apps/docs/src/content/docs/concepts/database-architecture.mdx` - Comprehensive database architecture documentation
+
+**Modified:**
+
+- `apps/docs/src/content/docs/quick-start/getting-started.mdx` - Enhanced with comprehensive tutorial
+- `apps/docs/src/content/docs/concepts/architecture.mdx` - Completely rewritten with detailed explanations
+- `apps/docs/astro.config.mjs` - Added new architecture pages to navigation
+- `DOCUMENTATION_PLAN.md` - Marked Phase 3 as complete
+- `AGENTS.md` - Added Phase 3 implementation notes
+
+### Backward Compatibility
+
+All Phase 3 changes maintain 100% backward compatibility:
+
+- Documentation additions only
+- No changes to package code
+- No breaking changes to existing functionality
+- All existing documentation preserved and enhanced

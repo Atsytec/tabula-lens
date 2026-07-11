@@ -1,0 +1,145 @@
+name: Documentation CI
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - 'apps/docs/**'
+      - '.github/workflows/docs-ci.yml'
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - 'apps/docs/**'
+      - '.github/workflows/docs-ci.yml'
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Set explicit permissions for security
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+jobs:
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm --filter @tabula-lens/docs run check-types
+
+      - name: Lint
+        run: pnpm --filter @tabula-lens/docs run lint
+
+      - name: Build
+        run: pnpm --filter @tabula-lens/docs run build
+
+      - name: Check build output
+        run: |
+          if [ ! -d "apps/docs/dist" ]; then
+            echo "Build output directory not found"
+            exit 1
+          fi
+          if [ ! -f "apps/docs/dist/index.html" ]; then
+            echo "index.html not found in build output"
+            exit 1
+          fi
+          echo "Build output validated successfully"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-build
+          path: apps/docs/dist
+          retention-days: 7
+
+      - name: Check for broken internal links
+        run: |
+          # Create a temporary script file
+          cat > /tmp/check-links.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          const distDir = 'apps/docs/dist';
+          
+          // Recursively find all HTML files
+          function findHtmlFiles(dir, files = []) {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const entry of entries) {
+              const fullPath = path.join(dir, entry.name);
+              if (entry.isDirectory()) {
+                findHtmlFiles(fullPath, files);
+              } else if (entry.name.endsWith('.html')) {
+                files.push(fullPath);
+              }
+            }
+            return files;
+          }
+          
+          const htmlFiles = findHtmlFiles(distDir);
+          let brokenLinks = [];
+          
+          htmlFiles.forEach(filePath => {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const dir = path.dirname(filePath);
+            const relativePath = path.relative(distDir, filePath);
+            
+            // Find all href attributes
+            const hrefRegex = /href="([^"]+)"/g;
+            let match;
+            
+            while ((match = hrefRegex.exec(content)) !== null) {
+              const link = match[1];
+              
+              // Skip external links, anchors, and mailto
+              if (link.startsWith('http') || link.startsWith('#') || link.startsWith('mailto:')) {
+                continue;
+              }
+              
+              // Resolve the target path
+              let targetPath = path.resolve(dir, link);
+              
+              // Handle directory paths (append index.html)
+              if (!link.endsWith('.html') && !link.includes('.')) {
+                targetPath = path.join(targetPath, 'index.html');
+              }
+              
+              // Check if file exists
+              if (!fs.existsSync(targetPath)) {
+                brokenLinks.push('In ' + relativePath + ': ' + link);
+              }
+            }
+          });
+          
+          if (brokenLinks.length > 0) {
+            console.error('Broken internal links found:');
+            brokenLinks.forEach(link => console.error('  -', link));
+            process.exit(1);
+          } else {
+            console.log('No broken internal links found.');
+          }
+          EOF
+          
+          node /tmp/check-links.js
+        continue-on-error: true

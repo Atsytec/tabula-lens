@@ -1,0 +1,711 @@
+---
+title: Styling Customization Guide
+description: Learn how to customize Tabula Lens components using CSS custom properties, style objects, and class names.
+---
+
+# Styling Customization Guide
+
+Tabula Lens provides multiple layers of styling customization to match your brand identity while maintaining a consistent, accessible design system.
+
+## Overview
+
+The styling system is built on three layers:
+
+1. **CSS Custom Properties** - Global design tokens for theming
+2. **Style Objects** - Component-level inline style customization
+3. **Class Names** - CSS class overrides for advanced styling
+
+## CSS Custom Properties
+
+CSS custom properties (CSS variables) are the foundation of the Tabula Lens design system. They enable:
+
+- Runtime theming without JavaScript
+- Dark mode support through media queries
+- Consistent styling across all components
+- Easy brand customization
+
+### Available Design Tokens
+
+#### Color Tokens
+
+```css
+:root {
+  /* Primary Colors */
+  --tlens-primary: #3498db;
+  --tlens-primary-hover: #2980b9;
+  
+  /* Text Colors */
+  --tlens-text-primary: #333;
+  --tlens-text-secondary: #666;
+  
+  /* Background Colors */
+  --tlens-bg-white: #ffffff;
+  --tlens-bg-header: #f8f9fa;
+  --tlens-bg-hover: #f8f9fa;
+  --tlens-bg-sorted: #e9ecef;
+  --tlens-bg-error: #fee;
+  --tlens-bg-spinner-track: #f3f3f3;
+  
+  /* Border Colors */
+  --tlens-border: #ddd;
+  --tlens-border-error: #fcc;
+  
+  /* Error Colors */
+  --tlens-error: #c33;
+  --tlens-error-hover: #a33;
+}
+```
+
+#### Spacing Tokens
+
+```css
+:root {
+  --tlens-radius: 4px;
+  --tlens-spacing-xs: 0.5rem;  /* 8px */
+  --tlens-spacing-sm: 0.75rem; /* 12px */
+  --tlens-spacing-md: 1rem;    /* 16px */
+  --tlens-spacing-lg: 2rem;     /* 32px */
+}
+```
+
+#### Typography Tokens
+
+```css
+:root {
+  --tlens-font-size-base: 1rem;   /* 16px */
+  --tlens-font-size-sm: 0.875rem; /* 14px */
+}
+```
+
+#### Animation Tokens
+
+```css
+:root {
+  --tlens-animation-duration: 1s;
+}
+```
+
+### Custom Theme Example
+
+Create a custom theme by overriding CSS custom properties in your application:
+
+```css
+/* Your application's global CSS */
+:root {
+  /* Custom brand colors */
+  --tlens-primary: #6366f1;       /* Indigo */
+  --tlens-primary-hover: #4f46e5;  /* Darker indigo */
+  
+  /* Custom text colors */
+  --tlens-text-primary: #1f2937;
+  --tlens-text-secondary: #6b7280;
+  
+  /* Custom background colors */
+  --tlens-bg-white: #ffffff;
+  --tlens-bg-header: #f9fafb;
+  --tlens-bg-hover: #f3f4f6;
+  --tlens-bg-sorted: #e5e7eb;
+  
+  /* Custom border colors */
+  --tlens-border: #e5e7eb;
+  
+  /* Custom spacing */
+  --tlens-radius: 8px;  /* Larger radius for softer look */
+  --tlens-spacing-md: 1.25rem;  /* More generous spacing */
+}
+```
+
+### Dark Mode Implementation
+
+Dark mode is automatically supported through CSS media queries:
+
+```css
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark mode color overrides */
+    --tlens-primary: #5dade2;
+    --tlens-primary-hover: #3498db;
+    --tlens-text-primary: #e0e0e0;
+    --tlens-text-secondary: #b0b0b0;
+    --tlens-bg-white: #1e1e1e;
+    --tlens-bg-header: #2d2d2d;
+    --tlens-bg-hover: #3d3d3d;
+    --tlens-bg-sorted: #4d4d4d;
+    --tlens-bg-error: #3d1a1a;
+    --tlens-bg-spinner-track: #2d2d2d;
+    --tlens-border: #4d4d4d;
+    --tlens-border-error: #8b3a3a;
+    --tlens-error: #e74c3c;
+    --tlens-error-hover: #c0392b;
+  }
+}
+```
+
+### Manual Dark Mode Control
+
+For manual dark mode toggling, you can use a data attribute:
+
+```css
+[data-theme="dark"] {
+  --tlens-primary: #5dade2;
+  --tlens-primary-hover: #3498db;
+  --tlens-text-primary: #e0e0e0;
+  --tlens-text-secondary: #b0b0b0;
+  --tlens-bg-white: #1e1e1e;
+  --tlens-bg-header: #2d2d2d;
+  --tlens-bg-hover: #3d3d3d;
+  --tlens-bg-sorted: #4d4d4d;
+  --tlens-bg-error: #3d1a1a;
+  --tlens-bg-spinner-track: #2d2d2d;
+  --tlens-border: #4d4d4d;
+  --tlens-border-error: #8b3a3a;
+  --tlens-error: #e74c3c;
+  --tlens-error-hover: #c0392b;
+}
+```
+
+```jsx
+// Toggle dark mode
+function toggleDarkMode() {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+}
+```
+
+## Style Object Customization
+
+The `DatabaseViewer` component accepts a `styles` prop for component-level style customization.
+
+### Basic Style Override
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  const customStyles = {
+    container: {
+      fontFamily: 'Inter, sans-serif',
+      maxWidth: '1200px',
+      margin: '0 auto',
+    },
+    table: {
+      fontSize: '14px',
+    },
+  };
+
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      styles={customStyles}
+    />
+  );
+}
+```
+
+### Complete Style Object Reference
+
+```typescript
+interface Styles {
+  // Container styles
+  container?: React.CSSProperties;
+  
+  // Loading state styles
+  loading?: React.CSSProperties;
+  spinner?: React.CSSProperties;
+  
+  // Error state styles
+  error?: React.CSSProperties;
+  retry?: React.CSSProperties;
+  
+  // Empty state styles
+  empty?: React.CSSProperties;
+  
+  // Filter styles
+  filter?: React.CSSProperties;
+  filterInput?: React.CSSProperties;
+  
+  // Table styles
+  tableWrapper?: React.CSSProperties;
+  table?: React.CSSProperties;
+  th?: React.CSSProperties;
+  td?: React.CSSProperties;
+  
+  // Sorting styles
+  sortable?: React.CSSProperties;
+  sorted?: React.CSSProperties;
+  sortableHover?: React.CSSProperties;
+  
+  // Pagination styles
+  pagination?: React.CSSProperties;
+  paginationButton?: React.CSSProperties;
+  paginationButtonActive?: React.CSSProperties;
+  paginationButtonDisabled?: React.CSSProperties;
+  
+  // Table selector styles
+  tableSelector?: React.CSSProperties;
+  tableSelectorLabel?: React.CSSProperties;
+  tableSelectorButton?: React.CSSProperties;
+  tableSelectorButtonActive?: React.CSSProperties;
+  tableSelectorSidebar?: React.CSSProperties;
+  tableSelectorSidebarLabel?: React.CSSProperties;
+  tableSelectorSidebarButton?: React.CSSProperties;
+  tableSelectorSidebarButtonActive?: React.CSSProperties;
+}
+```
+
+### Advanced Style Customization
+
+```jsx
+const advancedStyles = {
+  // Custom container with gradient background
+  container: {
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    padding: '2rem',
+    borderRadius: '12px',
+    boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+  },
+  
+  // Custom table styling
+  table: {
+    fontSize: '0.875rem',
+    borderCollapse: 'separate',
+    borderSpacing: '0',
+  },
+  
+  // Custom header styling
+  th: {
+    background: 'linear-gradient(to bottom, #f8f9fa, #e9ecef)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    fontSize: '0.75rem',
+  },
+  
+  // Custom cell styling
+  td: {
+    transition: 'background-color 0.2s ease',
+  },
+  
+  // Custom pagination
+  pagination: {
+    gap: '0.5rem',
+  },
+  paginationButton: {
+    border: '2px solid #e5e7eb',
+    borderRadius: '8px',
+    padding: '0.5rem 1rem',
+    fontWeight: '600',
+    transition: 'all 0.2s ease',
+  },
+  paginationButtonActive: {
+    background: '#6366f1',
+    borderColor: '#6366f1',
+    color: 'white',
+  },
+};
+
+<DatabaseViewer
+  path="/api/tabula-lens"
+  styles={advancedStyles}
+/>
+```
+
+## Class Name Customization
+
+For advanced styling with CSS frameworks (Tailwind, Bootstrap, etc.), use the `className` prop.
+
+### Basic Class Override
+
+```jsx
+<DatabaseViewer
+  path="/api/tabula-lens"
+  className="my-custom-class"
+/>
+```
+
+```css
+/* Your CSS */
+.my-custom-class {
+  font-family: 'Your Custom Font', sans-serif;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+```
+
+### Tailwind CSS Integration
+
+```jsx
+<DatabaseViewer
+  path="/api/tabula-lens"
+  className="max-w-7xl mx-auto p-6 bg-white rounded-xl shadow-lg"
+/>
+```
+
+### Bootstrap Integration
+
+```jsx
+<DatabaseViewer
+  path="/api/tabula-lens"
+  className="container mt-4 p-4 bg-light rounded shadow"
+/>
+```
+
+## Component-Level Styling
+
+### Custom Loading Component
+
+```jsx
+const CustomLoading = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+    <p className="ml-4 text-gray-600">Loading data...</p>
+  </div>
+);
+
+<DatabaseViewer
+  path="/api/tabula-lens"
+  loadingComponent={CustomLoading}
+/>
+```
+
+### Custom Error Component
+
+```jsx
+const CustomError = ({ error, onRetry }) => (
+  <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+    <h3 className="text-lg font-semibold text-red-800 mb-2">
+      Error Loading Data
+    </h3>
+    <p className="text-red-600 mb-4">{error.message}</p>
+    <button
+      onClick={onRetry}
+      className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+    >
+      Try Again
+    </button>
+  </div>
+);
+
+<DatabaseViewer
+  path="/api/tabula-lens"
+  errorComponent={CustomError}
+/>
+```
+
+### Custom Empty State Component
+
+```jsx
+const CustomEmpty = () => (
+  <div className="text-center py-12">
+    <div className="text-6xl mb-4">📭</div>
+    <h3 className="text-xl font-semibold text-gray-700 mb-2">
+      No Data Available
+    </h3>
+    <p className="text-gray-500">
+      There are no records to display in this table.
+    </p>
+  </div>
+);
+
+<DatabaseViewer
+  path="/api/tabula-lens"
+  emptyComponent={CustomEmpty}
+/>
+```
+
+## Design Token Overrides
+
+### Scoped Theme Overrides
+
+Apply theme overrides to specific components:
+
+```css
+/* Override for specific container */
+.my-database-viewer {
+  --tlens-primary: #8b5cf6;      /* Purple */
+  --tlens-primary-hover: #7c3aed;
+  --tlens-text-primary: #1f2937;
+  --tlens-bg-header: #f5f3ff;
+}
+
+<DatabaseViewer
+  path="/api/tabula-lens"
+  className="my-database-viewer"
+/>
+```
+
+### Component-Specific Overrides
+
+```css
+/* Custom table styling */
+.custom-table {
+  --tlens-bg-header: #1e293b;
+  --tlens-text-primary: #f8fafc;
+  --tlens-border: #334155;
+}
+
+<DatabaseViewer
+  path="/api/tabula-lens"
+  className="custom-table"
+/>
+```
+
+## Theming Examples
+
+### Corporate Brand Theme
+
+```css
+:root {
+  /* Corporate blue theme */
+  --tlens-primary: #0056b3;
+  --tlens-primary-hover: #004494;
+  --tlens-text-primary: #212529;
+  --tlens-text-secondary: #6c757d;
+  --tlens-bg-header: #f8f9fa;
+  --tlens-border: #dee2e6;
+  --tlens-radius: 2px;  /* Sharper corners for corporate look */
+  --tlens-spacing-md: 0.75rem;  /* Tighter spacing */
+}
+```
+
+### Modern SaaS Theme
+
+```css
+:root {
+  /* Modern purple/indigo theme */
+  --tlens-primary: #6366f1;
+  --tlens-primary-hover: #4f46e5;
+  --tlens-text-primary: #111827;
+  --tlens-text-secondary: #6b7280;
+  --tlens-bg-header: #f9fafb;
+  --tlens-border: #e5e7eb;
+  --tlens-radius: 8px;  /* Rounded corners */
+  --tlens-spacing-md: 1.25rem;  /* Generous spacing */
+}
+```
+
+### Minimalist Theme
+
+```css
+:root {
+  /* Minimalist black and white */
+  --tlens-primary: #000000;
+  --tlens-primary-hover: #333333;
+  --tlens-text-primary: #000000;
+  --tlens-text-secondary: #666666;
+  --tlens-bg-header: #fafafa;
+  --tlens-border: #e0e0e0;
+  --tlens-radius: 0;  /* No border radius */
+  --tlens-spacing-md: 1rem;
+}
+```
+
+### Playful Theme
+
+```css
+:root {
+  /* Playful colorful theme */
+  --tlens-primary: #f59e0b;  /* Amber */
+  --tlens-primary-hover: #d97706;
+  --tlens-text-primary: #1f2937;
+  --tlens-text-secondary: #6b7280;
+  --tlens-bg-header: #fef3c7;
+  --tlens-border: #fcd34d;
+  --tlens-radius: 12px;  /* Very rounded */
+  --tlens-spacing-md: 1.5rem;  /* Extra spacing */
+}
+```
+
+## Responsive Design
+
+### Mobile-First Styling
+
+```css
+/* Mobile styles */
+.database-viewer {
+  --tlens-spacing-md: 0.75rem;
+  --tlens-font-size-base: 0.875rem;
+}
+
+/* Tablet and up */
+@media (min-width: 768px) {
+  .database-viewer {
+    --tlens-spacing-md: 1rem;
+    --tlens-font-size-base: 1rem;
+  }
+}
+
+/* Desktop and up */
+@media (min-width: 1024px) {
+  .database-viewer {
+    --tlens-spacing-md: 1.25rem;
+    --tlens-font-size-base: 1rem;
+  }
+}
+```
+
+```jsx
+<DatabaseViewer
+  path="/api/tabula-lens"
+  className="database-viewer"
+/>
+```
+
+## Accessibility Considerations
+
+### High Contrast Mode
+
+```css
+@media (prefers-contrast: high) {
+  :root {
+    --tlens-primary: #0000ff;
+    --tlens-text-primary: #000000;
+    --tlens-bg-white: #ffffff;
+    --tlens-border: #000000;
+    --tlens-radius: 0;
+  }
+}
+```
+
+### Reduced Motion
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --tlens-animation-duration: 0s;
+  }
+}
+```
+
+## Best Practices
+
+### 1. Use CSS Custom Properties First
+
+CSS custom properties should be your first choice for theming:
+
+```css
+/* ✅ Good: Use CSS custom properties */
+:root {
+  --tlens-primary: #your-color;
+}
+
+/* ❌ Avoid: Hardcoded styles in components */
+const styles = {
+  color: '#your-color',  /* Hardcoded */
+};
+```
+
+### 2. Maintain Contrast Ratios
+
+Ensure your custom colors meet WCAG AA standards:
+
+```css
+/* ✅ Good: High contrast */
+--tlens-text-primary: #1f2937;  /* Dark gray on white */
+--tlens-bg-white: #ffffff;
+
+/* ❌ Avoid: Low contrast */
+--tlens-text-primary: #cccccc;  /* Light gray on white */
+--tlens-bg-white: #ffffff;
+```
+
+### 3. Test Dark Mode
+
+Always test your custom theme in both light and dark modes:
+
+```css
+/* Light mode */
+:root {
+  --tlens-text-primary: #1f2937;
+  --tlens-bg-white: #ffffff;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tlens-text-primary: #f9fafb;
+    --tlens-bg-white: #1f2937;
+  }
+}
+```
+
+### 4. Use Semantic Spacing
+
+Use the provided spacing tokens for consistency:
+
+```css
+/* ✅ Good: Use spacing tokens */
+padding: var(--tlens-spacing-md, 1rem);
+
+/* ❌ Avoid: Arbitrary values */
+padding: 13px;  /* Inconsistent with design system */
+```
+
+## Troubleshooting
+
+### Styles Not Applying
+
+**Issue:** Custom styles not appearing
+
+**Solution:** Ensure CSS custom properties are defined in the correct scope:
+
+```css
+/* ✅ Correct: Global scope */
+:root {
+  --tlens-primary: #your-color;
+}
+
+/* ❌ Incorrect: Component scope without class */
+.my-component {
+  --tlens-primary: #your-color;  /* Won't affect Tabula Lens */
+}
+```
+
+### Dark Mode Not Working
+
+**Issue:** Dark mode colors not applying
+
+**Solution:** Ensure dark mode media query is properly defined:
+
+```css
+/* ✅ Correct: Media query with overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tlens-text-primary: #e0e0e0;
+    --tlens-bg-white: #1e1e1e;
+  }
+}
+
+/* ❌ Incorrect: Missing media query */
+:root {
+  --tlens-text-primary: #e0e0e0;  /* Always applied */
+}
+```
+
+### Class Name Conflicts
+
+**Issue:** CSS framework classes conflicting with component styles
+
+**Solution:** Use more specific class names or CSS modules:
+
+```jsx
+/* ✅ Good: Specific class name */
+<DatabaseViewer
+  path="/api/tabula-lens"
+  className="app-database-viewer-2024"
+/>
+
+/* ❌ Avoid: Generic class name */
+<DatabaseViewer
+  path="/api/tabula-lens"
+  className="table"  /* Too generic */
+/>
+```
+
+## Next Steps
+
+- Explore the [Design System](/contributor-docs/internal-systems/design-system) for comprehensive design token documentation
+- Review [Frontend Implementation](/user-guides/frontend/frontend-implementation) for component architecture details
+- Check [Security Model](/contributor-docs/security/security) for security considerations in custom styling
+- See [React Component Architecture](/contributor-docs/component-architecture/react-component-architecture) for advanced component patterns

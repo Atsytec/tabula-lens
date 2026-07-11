@@ -1,37 +1,20 @@
 ---
-title: Welcome to Tabula Lens
-description: A React component library for viewing database data with a secure, backend-agnostic architecture.
+title: Tabula Lens
+description: A secure, drop-in database viewer for React. View your PostgreSQL data with pagination, sorting, and filtering — credentials stay on the server.
 template: splash
 hero:
-  tagline: Secure database viewing for React applications
+  tagline: Add an interactive database table to any React app. Credentials stay on the server.
   actions:
     - text: Get Started
-      link: /guides/getting-started/
+      link: /quick-start/getting-started/
       icon: right-arrow
+      variant: primary
     - text: View on GitHub
-      link: https://github.com/viti-mg/tabula-lens
+      link: https://github.com/Atsytec/tabula-lens
       icon: external
       variant: minimal
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import LandingContent from '../../components/landing/LandingContent.astro';
 
-## Key Features
-
-<CardGrid stagger>
-	<Card title="Security First" icon="lock">
-		Database credentials never leave the backend. Your connection strings stay secure.
-	</Card>
-	<Card title="Backend Agnostic" icon="server">
-		Works with any Node.js backend framework - Express, Fastify, Next.js, TanStack Start, and more.
-	</Card>
-	<Card title="Feature Rich" icon="layers">
-		Built-in pagination, sorting, and filtering out of the box.
-	</Card>
-	<Card title="Type Safe" icon="code">
-		Full TypeScript support with strict type checking for better developer experience.
-	</Card>
-	<Card title="Zero Config" icon="settings">
-		Minimal setup required. Get started in minutes.
-	</Card>
-</CardGrid>
+<LandingContent />

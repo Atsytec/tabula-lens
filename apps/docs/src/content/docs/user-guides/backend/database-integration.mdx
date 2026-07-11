@@ -1,0 +1,661 @@
+---
+title: PostgreSQL Support
+description: Learn how to connect Tabula Lens to your PostgreSQL database with comprehensive configuration and optimization guides.
+---
+
+# PostgreSQL Support
+
+This guide covers how to connect Tabula Lens to your PostgreSQL database with comprehensive configuration, optimization, and troubleshooting information.
+
+## Supported Databases
+
+Currently, Tabula Lens supports PostgreSQL databases through Knex.js, a powerful SQL query builder for Node.js.
+
+## Database Connection
+
+### Connection String Format
+
+Set your database connection string as an environment variable:
+
+```bash
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
+```
+
+### Connection String Components
+
+A PostgreSQL connection string has the following format:
+
+```
+postgresql://[user[:password]@][host][:port][/database][?parameters]
+```
+
+**Components:**
+
+- `user` - Database username
+- `password` - Database password (optional)
+- `host` - Database host (default: localhost)
+- `port` - Database port (default: 5432)
+- `database` - Database name
+- `parameters` - Additional connection parameters
+
+### Connection Parameters
+
+Common connection parameters:
+
+```bash
+# SSL mode
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?sslmode=require"
+
+# Connection pool settings
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?pool_min=2&pool_max=10"
+
+# Connection timeout
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?connect_timeout=10"
+
+# Statement timeout
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?statement_timeout=30000"
+```
+
+## Connection Patterns
+
+### Local Development
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Test connection
+const tables = await tabulaLens.getTables();
+console.log('Available tables:', tables);
+```
+
+### Production
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### With Custom Logger
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import winston from 'winston';
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'database.log' }),
+  ],
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+## Connection Pooling
+
+Tabula Lens automatically manages connection pooling through Knex.js for optimal performance.
+
+### Default Pool Configuration
+
+```typescript
+// Default pool settings (handled by Knex.js)
+{
+  min: 2,
+  max: 10,
+}
+```
+
+### Custom Pool Configuration
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  // Connection pool settings in connection string
+  // DATABASE_URL="postgresql://user:password@localhost:5432/mydb?pool_min=5&pool_max=20"
+});
+```
+
+### Pool Configuration Options
+
+```bash
+# Minimum connections
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?pool_min=5"
+
+# Maximum connections
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?pool_max=20"
+
+# Connection timeout (seconds)
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?pool_idle_timeout=30000"
+```
+
+## Database Setup
+
+### Creating a Database
+
+```sql
+-- Create database
+CREATE DATABASE tabula_lens_db;
+
+-- Connect to database
+\c tabula_lens_db;
+
+-- Create schema
+CREATE SCHEMA IF NOT EXISTS public;
+```
+
+### Creating Tables
+
+```sql
+-- Create users table
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create products table
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  price DECIMAL(10, 2) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create orders table
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  total DECIMAL(10, 2) NOT NULL,
+  status VARCHAR(50) DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Adding Sample Data
+
+```sql
+-- Insert sample users
+INSERT INTO users (name, email) VALUES
+  ('John Doe', 'john@example.com'),
+  ('Jane Smith', 'jane@example.com'),
+  ('Bob Johnson', 'bob@example.com');
+
+-- Insert sample products
+INSERT INTO products (name, price, description) VALUES
+  ('Product A', 29.99, 'Description for Product A'),
+  ('Product B', 49.99, 'Description for Product B'),
+  ('Product C', 19.99, 'Description for Product C');
+
+-- Insert sample orders
+INSERT INTO orders (user_id, total, status) VALUES
+  (1, 29.99, 'completed'),
+  (2, 49.99, 'pending'),
+  (1, 19.99, 'shipped');
+```
+
+## User Permissions
+
+### Creating Read-Only User
+
+```sql
+-- Create read-only user
+CREATE USER tabula_lens_readonly WITH PASSWORD 'secure_password';
+
+-- Grant connection permission
+GRANT CONNECT ON DATABASE tabula_lens_db TO tabula_lens_readonly;
+
+-- Grant usage on schema
+GRANT USAGE ON SCHEMA public TO tabula_lens_readonly;
+
+-- Grant select on all tables
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO tabula_lens_readonly;
+
+-- Grant select on future tables
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT ON TABLES TO tabula_lens_readonly;
+```
+
+### Creating Read-Write User
+
+```sql
+-- Create read-write user
+CREATE USER tabula_lens_user WITH PASSWORD 'secure_password';
+
+-- Grant connection permission
+GRANT CONNECT ON DATABASE tabula_lens_db TO tabula_lens_user;
+
+-- Grant usage on schema
+GRANT USAGE ON SCHEMA public TO tabula_lens_user;
+
+-- Grant select, insert, update, delete on all tables
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO tabula_lens_user;
+
+-- Grant usage on sequences
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO tabula_lens_user;
+
+-- Grant permissions for future objects
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO tabula_lens_user;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT USAGE, SELECT ON SEQUENCES TO tabula_lens_user;
+```
+
+## Security Best Practices
+
+### Environment Variables
+
+Use environment variables for connection strings:
+
+```bash
+# .env file
+DATABASE_URL=postgresql://user:password@localhost:5432/mydb
+```
+
+```typescript
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config();
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+```
+
+### SSL Connections
+
+Use SSL connections in production:
+
+```bash
+# Require SSL
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?sslmode=require"
+
+# Prefer SSL but allow non-SSL
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?sslmode=prefer"
+
+# Allow SSL (no verification)
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?sslmode=allow"
+```
+
+### Connection Security
+
+```typescript
+// Production configuration with security
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### Network Security
+
+- Use firewall rules to restrict database access
+- Use VPNs for remote database access
+- Implement IP whitelisting for database connections
+- Use strong passwords for database users
+- Rotate database credentials regularly
+
+## Query Optimization
+
+### Indexing
+
+Create indexes for frequently queried columns:
+
+```sql
+-- Create index on email column
+CREATE INDEX idx_users_email ON users(email);
+
+-- Create index on created_at column
+CREATE INDEX idx_users_created_at ON users(created_at);
+
+-- Create composite index
+CREATE INDEX idx_orders_user_status ON orders(user_id, status);
+
+-- Create index for text search
+CREATE INDEX idx_users_name_trgm ON users USING gin(name gin_trgm_ops);
+```
+
+### Query Performance
+
+Optimize queries for better performance:
+
+```typescript
+// Select only needed columns
+const result = await tabulaLens.query({
+  table: 'users',
+  columns: ['id', 'name', 'email'], // Only select needed columns
+  page: 1,
+  limit: 20,
+});
+
+// Use appropriate page sizes
+const result = await tabulaLens.query({
+  table: 'users',
+  page: 1,
+  limit: 50, // Balance between data transfer and number of requests
+});
+
+// Use filtering to reduce data transfer
+const result = await tabulaLens.query({
+  table: 'users',
+  filter: 'john', // Filter results
+  page: 1,
+  limit: 20,
+});
+```
+
+### Database Configuration
+
+Optimize PostgreSQL configuration:
+
+```sql
+-- Increase shared_buffers
+ALTER SYSTEM SET shared_buffers = '256MB';
+
+-- Increase effective_cache_size
+ALTER SYSTEM SET effective_cache_size = '1GB';
+
+-- Increase work_mem
+ALTER SYSTEM SET work_mem = '16MB';
+
+-- Increase maintenance_work_mem
+ALTER SYSTEM SET maintenance_work_mem = '128MB';
+
+-- Reload configuration
+SELECT pg_reload_conf();
+```
+
+## Database-Specific Features
+
+### JSON Data Types
+
+Tabula Lens supports PostgreSQL JSON data types:
+
+```sql
+-- Create table with JSON column
+CREATE TABLE user_profiles (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  profile JSONB NOT NULL
+);
+
+-- Insert JSON data
+INSERT INTO user_profiles (user_id, profile) VALUES
+  (1, '{"age": 30, "city": "New York", "interests": ["coding", "music"]}'::jsonb);
+```
+
+### Array Data Types
+
+PostgreSQL array data types are supported:
+
+```sql
+-- Create table with array column
+CREATE TABLE products (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  tags TEXT[] NOT NULL
+);
+
+-- Insert array data
+INSERT INTO products (name, tags) VALUES
+  ('Product A', ARRAY['electronics', 'gadgets']),
+  ('Product B', ARRAY['books', 'education']);
+```
+
+### Timestamp Data Types
+
+PostgreSQL timestamp data types are fully supported:
+
+```sql
+-- Create table with timestamp columns
+CREATE TABLE events (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  event_date TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## Monitoring and Observability
+
+### Query Logging
+
+Enable query logging for monitoring:
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'debug',
+  enableQueryLogging: true,
+  logFormat: 'json',
+});
+```
+
+### Performance Monitoring
+
+Monitor database performance:
+
+```sql
+-- Enable query logging
+ALTER SYSTEM SET log_statement = 'all';
+ALTER SYSTEM SET log_duration = on;
+SELECT pg_reload_conf();
+
+-- Monitor slow queries
+SELECT query, mean_exec_time, calls
+FROM pg_stat_statements
+ORDER BY mean_exec_time DESC
+LIMIT 10;
+```
+
+### Connection Monitoring
+
+Monitor database connections:
+
+```sql
+-- View active connections
+SELECT * FROM pg_stat_activity;
+
+-- View connection statistics
+SELECT * FROM pg_stat_database;
+```
+
+## Backup and Recovery
+
+### Database Backup
+
+```bash
+# Create backup
+pg_dump -U user -h localhost -d tabula_lens_db > backup.sql
+
+# Create compressed backup
+pg_dump -U user -h localhost -d tabula_lens_db | gzip > backup.sql.gz
+
+# Create schema-only backup
+pg_dump -U user -h localhost -d tabula_lens_db --schema-only > schema.sql
+```
+
+### Database Restore
+
+```bash
+# Restore from backup
+psql -U user -h localhost -d tabula_lens_db < backup.sql
+
+# Restore from compressed backup
+gunzip -c backup.sql.gz | psql -U user -h localhost -d tabula_lens_db
+```
+
+## Troubleshooting
+
+### Connection Issues
+
+If you encounter connection issues:
+
+```typescript
+// Verify connection string
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
+
+// Test connection
+try {
+  const tables = await tabulaLens.getTables();
+  console.log('Connected successfully. Tables:', tables);
+} catch (error) {
+  console.error('Connection failed:', error);
+}
+```
+
+**Common connection issues:**
+
+1. **Incorrect connection string**
+   ```bash
+   # Verify format
+   postgresql://user:password@host:port/database
+   ```
+
+2. **Database server not running**
+   ```bash
+   # Check PostgreSQL status
+   sudo systemctl status postgresql
+   ```
+
+3. **Network connectivity issues**
+   ```bash
+   # Test network connectivity
+   ping localhost
+   telnet localhost 5432
+   ```
+
+4. **Authentication issues**
+   ```bash
+   # Verify user permissions
+   psql -U user -d database -c "SELECT current_user;"
+   ```
+
+### Performance Issues
+
+For performance optimization:
+
+1. **Check query performance**
+   ```sql
+   EXPLAIN ANALYZE SELECT * FROM users WHERE email = 'john@example.com';
+   ```
+
+2. **Check index usage**
+   ```sql
+   SELECT * FROM pg_stat_user_indexes;
+   ```
+
+3. **Check table statistics**
+   ```sql
+   ANALYZE users;
+   SELECT * FROM pg_stats WHERE tablename = 'users';
+   ```
+
+4. **Check database size**
+   ```sql
+   SELECT pg_size_pretty(pg_database_size('tabula_lens_db'));
+   ```
+
+### Memory Issues
+
+If you encounter memory issues:
+
+1. **Increase work_mem**
+   ```sql
+   ALTER SYSTEM SET work_mem = '32MB';
+   SELECT pg_reload_conf();
+   ```
+
+2. **Increase shared_buffers**
+   ```sql
+   ALTER SYSTEM SET shared_buffers = '512MB';
+   SELECT pg_reload_conf();
+   ```
+
+3. **Increase effective_cache_size**
+   ```sql
+   ALTER SYSTEM SET effective_cache_size = '2GB';
+   SELECT pg_reload_conf();
+   ```
+
+### Lock Issues
+
+If you encounter lock issues:
+
+```sql
+-- View active locks
+SELECT * FROM pg_locks;
+
+-- View blocked queries
+SELECT * FROM pg_stat_activity WHERE wait_event_type = 'Lock';
+
+-- Kill specific query
+SELECT pg_cancel_backend(pid);
+
+-- Kill specific connection
+SELECT pg_terminate_backend(pid);
+```
+
+## Advanced Configuration
+
+### Connection Timeout
+
+```bash
+# Set connection timeout
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?connect_timeout=10"
+```
+
+### Statement Timeout
+
+```bash
+# Set statement timeout
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?statement_timeout=30000"
+```
+
+### Idle Timeout
+
+```bash
+# Set idle timeout
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?idle_in_transaction_session_timeout=30000"
+```
+
+### Application Name
+
+```bash
+# Set application name for monitoring
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?application_name=tabula_lens"
+```
+
+## Best Practices
+
+1. **Use environment variables** for connection strings
+2. **Use read-only users** when possible
+3. **Implement proper indexing** for frequently queried columns
+4. **Use SSL connections** in production
+5. **Monitor query performance** regularly
+6. **Implement backup strategies** for data protection
+7. **Use connection pooling** for optimal performance
+8. **Rotate database credentials** regularly
+9. **Implement firewall rules** for database access
+10. **Use strong passwords** for database users
+
+PostgreSQL provides a robust, feature-rich database platform for Tabula Lens. Follow these best practices to ensure optimal performance, security, and reliability.

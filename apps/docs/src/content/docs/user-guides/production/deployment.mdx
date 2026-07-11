@@ -1,0 +1,825 @@
+---
+title: Deployment Guide
+description: Learn how to deploy Tabula Lens applications to production environments.
+---
+
+# Deployment Guide
+
+This guide covers deployment strategies for Tabula Lens applications, including backend API deployment, frontend application deployment, and database considerations.
+
+## Overview
+
+A typical Tabula Lens deployment consists of three components:
+
+1. **Database** - PostgreSQL database
+2. **Backend API** - Node.js server with @tabula-lens/node
+3. **Frontend Application** - React application with @tabula-lens/react
+
+## Database Deployment
+
+### PostgreSQL Setup
+
+#### Option 1: Managed PostgreSQL Service
+
+**Recommended for production**
+
+- **AWS RDS**: Fully managed PostgreSQL service
+- **Google Cloud SQL**: Managed PostgreSQL with automatic backups
+- **Azure Database for PostgreSQL**: Enterprise-grade PostgreSQL
+- **Heroku Postgres**: Easy-to-use managed PostgreSQL
+- **Neon**: Serverless PostgreSQL with auto-scaling
+- **Supabase**: PostgreSQL with real-time capabilities
+
+**Example: AWS RDS Setup**
+
+```bash
+# Using AWS CLI
+aws rds create-db-instance \
+  --db-instance-identifier tabula-lens-db \
+  --db-instance-class db.t3.micro \
+  --engine postgres \
+  --master-username admin \
+  --master-user-password your-secure-password \
+  --allocated-storage 20 \
+  --vpc-security-group-ids sg-12345678
+```
+
+#### Option 2: Self-Hosted PostgreSQL
+
+**For cost optimization or specific requirements**
+
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+
+# Start PostgreSQL
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+
+# Secure PostgreSQL
+sudo -u postgres psql
+```
+
+```sql
+-- Create database and user
+CREATE DATABASE tabula_lens;
+CREATE USER tabula_lens_user WITH PASSWORD 'secure_password';
+GRANT ALL PRIVILEGES ON DATABASE tabula_lens TO tabula_lens_user;
+```
+
+### Database Security
+
+**SSL/TLS Configuration**
+
+SSL is configured via the PostgreSQL connection string, not through TabulaLens constructor options:
+
+```bash
+# Require SSL via connection string
+DATABASE_URL="postgresql://user:password@host:5432/mydb?sslmode=require"
+
+# Require SSL with certificate verification
+DATABASE_URL="postgresql://user:password@host:5432/mydb?sslmode=verify-full"
+```
+
+```javascript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+```
+
+**Connection Pooling**
+
+Connection pool settings are also configured through the connection string parameters:
+
+```bash
+# Configure pool size via connection string
+DATABASE_URL="postgresql://user:password@host:5432/mydb?pool_min=2&pool_max=20"
+```
+
+```javascript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+```
+
+**Database Backups**
+
+```bash
+# Automated backup script
+#!/bin/bash
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="/backups/postgresql"
+DB_NAME="tabula_lens"
+
+pg_dump -U postgres -h localhost -d $DB_NAME > $BACKUP_DIR/backup_$DATE.sql
+
+# Keep only last 7 days of backups
+find $BACKUP_DIR -name "backup_*.sql" -mtime +7 -delete
+```
+
+## Backend Deployment
+
+### Environment Variables
+
+Create a `.env` file for production:
+
+```bash
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/database
+DATABASE_POOL_SIZE=20
+
+# Server
+PORT=3000
+NODE_ENV=production
+
+# Authentication
+JWT_SECRET=your-secure-jwt-secret
+JWT_EXPIRES_IN=15m
+REFRESH_SECRET=your-secure-refresh-secret
+REFRESH_EXPIRES_IN=7d
+
+# Logging
+LOG_LEVEL=info
+LOG_FORMAT=json
+
+# CORS
+CORS_ORIGIN=https://your-frontend.com
+```
+
+### Option 1: Vercel Deployment
+
+**Recommended for Node.js backends**
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel --prod
+```
+
+**vercel.json Configuration**
+
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/server.js"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": "@database-url",
+    "JWT_SECRET": "@jwt-secret"
+  }
+}
+```
+
+### Option 2: Railway Deployment
+
+**Simple deployment with built-in PostgreSQL**
+
+```bash
+# Install Railway CLI
+npm i -g @railway/cli
+
+# Login
+railway login
+
+# Initialize project
+railway init
+
+# Add PostgreSQL
+railway add postgresql
+
+# Deploy
+railway up
+```
+
+### Option 3: AWS EC2 Deployment
+
+**Full control over infrastructure**
+
+```bash
+# Launch EC2 instance
+aws ec2 run-instances \
+  --image-id ami-0c55b159cbfafe1f0 \
+  --instance-type t3.micro \
+  --key-name your-key-pair \
+  --security-group-ids sg-12345678
+
+# SSH into instance
+ssh -i your-key.pem ubuntu@your-instance-ip
+
+# Install Node.js
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Clone repository
+git clone https://github.com/your-username/your-repo.git
+cd your-repo
+
+# Install dependencies
+npm install --production
+
+# Setup PM2 for process management
+npm install -g pm2
+pm2 start server.js --name tabula-lens-api
+pm2 startup
+pm2 save
+```
+
+### Option 4: Docker Deployment
+
+**Containerized deployment**
+
+**Dockerfile**
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Start application
+CMD ["node", "server.js"]
+```
+
+**docker-compose.yml**
+
+```yaml
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/tabula_lens
+      - NODE_ENV=production
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=tabula_lens
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+```
+
+```bash
+# Build and run
+docker-compose up -d
+
+# View logs
+docker-compose logs -f api
+```
+
+### Option 5: Kubernetes Deployment
+
+**For large-scale deployments**
+
+**deployment.yaml**
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tabula-lens-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tabula-lens-api
+  template:
+    metadata:
+      labels:
+        app: tabula-lens-api
+    spec:
+      containers:
+      - name: api
+        image: your-registry/tabula-lens-api:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: url
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: auth-secret
+              key: jwt-secret
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+```
+
+**service.yaml**
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: tabula-lens-api
+spec:
+  selector:
+    app: tabula-lens-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 3000
+  type: LoadBalancer
+```
+
+```bash
+# Deploy to Kubernetes
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+
+# Check deployment status
+kubectl get deployments
+kubectl get pods
+kubectl get services
+```
+
+## Frontend Deployment
+
+### Environment Variables
+
+Create a `.env.production` file:
+
+```bash
+# API endpoint
+VITE_API_URL=https://api.yourdomain.com/api/tabula-lens
+
+# Feature flags
+VITE_ENABLE_ANALYTICS=true
+VITE_ENABLE_ERROR_REPORTING=true
+```
+
+### Option 1: Vercel Deployment
+
+**Recommended for React applications**
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel --prod
+```
+
+**vercel.json Configuration**
+
+```json
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "env": {
+    "VITE_API_URL": "https://api.yourdomain.com/api/tabula-lens"
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+### Option 2: Netlify Deployment
+
+**Simple deployment with continuous deployment**
+
+```bash
+# Install Netlify CLI
+npm i -g netlify-cli
+
+# Deploy
+netlify deploy --prod
+```
+
+**netlify.toml Configuration**
+
+```toml
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  VITE_API_URL = "https://api.yourdomain.com/api/tabula-lens"
+```
+
+### Option 3: AWS S3 + CloudFront
+
+**Static site hosting with CDN**
+
+```bash
+# Build application
+npm run build
+
+# Deploy to S3
+aws s3 sync dist/ s3://your-bucket-name --delete
+
+# Invalidate CloudFront cache
+aws cloudfront create-invalidation \
+  --distribution-id YOUR_DISTRIBUTION_ID \
+  --paths "/*"
+```
+
+### Option 4: Docker Deployment
+
+**Containerized frontend deployment**
+
+**Dockerfile**
+
+```dockerfile
+# Build stage
+FROM node:18-alpine as build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+**nginx.conf**
+
+```nginx
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api {
+        proxy_pass https://api.yourdomain.com;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+## CI/CD Pipeline
+
+### GitHub Actions
+
+**.github/workflows/deploy.yml**
+
+```yaml
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+
+  deploy-backend:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm ci --production
+      - uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.ORG_ID }}
+          vercel-project-id: ${{ secrets.PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./backend
+
+  deploy-frontend:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm ci
+      - run: npm run build
+      - uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.ORG_ID }}
+          vercel-project-id: ${{ secrets.PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./frontend
+```
+
+## Monitoring and Logging
+
+### Application Monitoring
+
+**Sentry Integration**
+
+```javascript
+import * as Sentry from "@sentry/node";
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV,
+});
+
+// Wrap Tabula Lens queries
+app.get('/api/tabula-lens', async (req, res) => {
+  try {
+    const result = await tabulaLens.query(req.query);
+    res.json(result);
+  } catch (error) {
+    Sentry.captureException(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+### Logging
+
+**Structured Logging with Winston**
+
+```javascript
+const winston = require('winston');
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' }),
+  ],
+});
+
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.simple()
+  }));
+}
+
+// Use with Tabula Lens
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    info: logger.info.bind(logger),
+    error: logger.error.bind(logger),
+    warn: logger.warn.bind(logger),
+    debug: logger.debug.bind(logger),
+  }
+});
+```
+
+### Health Checks
+
+**Health Endpoint**
+
+```javascript
+app.get('/health', async (req, res) => {
+  try {
+    // Check database connection
+    await tabulaLens.query({ table: 'test', limit: 1 });
+    
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: 'connected'
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: 'Database connection failed'
+    });
+  }
+});
+```
+
+## Security Best Practices
+
+### 1. Environment Variables
+
+Never commit secrets to version control:
+
+```bash
+# .gitignore
+.env
+.env.local
+.env.production
+```
+
+### 2. API Security
+
+**Rate Limiting**
+
+```javascript
+const rateLimit = require('express-rate-limit');
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP'
+});
+
+app.use('/api/tabula-lens', limiter);
+```
+
+**CORS Configuration**
+
+```javascript
+const cors = require('cors');
+
+app.use(cors({
+  origin: process.env.CORS_ORIGIN,
+  credentials: true,
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+```
+
+### 3. Database Security
+
+**Read-Only Database User**
+
+```sql
+-- Create read-only user for production
+CREATE USER tabula_lens_readonly WITH PASSWORD 'secure-password';
+GRANT CONNECT ON DATABASE tabula_lens TO tabula_lens_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO tabula_lens_readonly;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO tabula_lens_readonly;
+```
+
+## Performance Optimization
+
+### 1. Database Connection Pooling
+
+```javascript
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 20, // Maximum pool size
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+const tabulaLens = new TabulaLens(pool);
+```
+
+### 2. Response Caching
+
+```javascript
+const NodeCache = require('node-cache');
+const cache = new NodeCache({ stdTTL: 300 }); // 5 minutes
+
+app.get('/api/tabula-lens', async (req, res) => {
+  const cacheKey = JSON.stringify(req.query);
+  const cached = cache.get(cacheKey);
+  
+  if (cached) {
+    return res.json(cached);
+  }
+  
+  const result = await tabulaLens.query(req.query);
+  cache.set(cacheKey, result);
+  res.json(result);
+});
+```
+
+### 3. CDN for Frontend
+
+Deploy your frontend to a CDN for faster content delivery:
+
+- **Vercel Edge Network**
+- **CloudFront**
+- **Cloudflare Workers**
+
+## Troubleshooting
+
+### Common Deployment Issues
+
+**Issue: Database connection timeout**
+
+```bash
+# Solution: Check security group/firewall settings
+# Ensure your backend can reach the database
+telnet database-host 5432
+```
+
+**Issue: CORS errors**
+
+```javascript
+// Solution: Verify CORS configuration
+app.use(cors({
+  origin: process.env.CORS_ORIGIN, // Must match frontend domain
+  credentials: true
+}));
+```
+
+**Issue: Environment variables not loading**
+
+```bash
+# Solution: Verify environment variables are set
+printenv | grep DATABASE_URL
+
+# Or in Node.js
+console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+```
+
+**Issue: Frontend API calls failing**
+
+```javascript
+// Solution: Check API URL configuration
+console.log('API URL:', import.meta.env.VITE_API_URL);
+
+// Ensure proxy configuration in development
+// vite.config.js
+export default {
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true
+      }
+    }
+  }
+}
+```
+
+## Next Steps
+
+- Set up monitoring and alerting for your deployed applications
+- Configure automated backups for your database
+- Implement log aggregation and analysis
+- Review [Performance Optimization Guide](/user-guides/production/performance-optimization) for performance tuning
+- Check [Security Model](/contributor-docs/security/security) for security best practices

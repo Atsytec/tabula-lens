@@ -1,0 +1,236 @@
+---
+title: Getting Started
+description: Integrate Tabula Lens into your existing full-stack application in minutes.
+---
+
+This guide will help you integrate Tabula Lens into your existing full-stack application. Tabula Lens provides a secure, interactive database viewer that works with your current database, backend framework, and React frontend.
+
+> 💡 **Quick Reference**: For installation and basic usage examples, check out the package READMEs:
+> - [@tabula-lens/node README](https://github.com/Atsytec/tabula-lens/blob/main/packages/node/README.md)
+> - [@tabula-lens/react README](https://github.com/Atsytec/tabula-lens/blob/main/packages/react/README.md)
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- An existing **full-stack application** with:
+  - A **PostgreSQL** database
+  - A backend server (Express, Fastify, Koa, Hono, etc.)
+  - A React frontend application
+- **Node.js 18+** installed
+- **npm** or **pnpm** package manager
+
+## What You'll Add
+
+You'll add:
+- A backend API endpoint that securely queries your database
+- A React component that displays an interactive database viewer
+
+## Step 1: Install Backend Package
+
+Install the Tabula Lens backend package in your backend project:
+
+```bash
+npm install @tabula-lens/node
+```
+
+## Step 2: Add Backend API Endpoint
+
+Add an API endpoint to your backend server using one of the provided middleware adapters.
+
+### Express Example
+
+```typescript
+import express from 'express';
+import TabulaLens, { expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+
+// Initialize Tabula Lens with your database connection
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Add the Tabula Lens middleware
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
+```
+
+### Fastify Example
+
+```typescript
+import Fastify from 'fastify';
+import TabulaLens, { fastifyAdapter } from '@tabula-lens/node';
+
+const fastify = Fastify();
+
+// Initialize Tabula Lens
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Add the Tabula Lens route
+fastify.route({
+  method: 'GET',
+  url: '/api/tabula-lens',
+  handler: fastifyAdapter(tabulaLens),
+});
+```
+
+### Koa Example
+
+```typescript
+import Koa from 'koa';
+import TabulaLens, { koaAdapter } from '@tabula-lens/node';
+
+const app = new Koa();
+
+// Initialize Tabula Lens
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Add the Tabula Lens middleware
+app.use(koaAdapter(tabulaLens));
+```
+
+> **Note:** Tabula Lens supports Express, Fastify, Koa, Hapi, Restify, Hono, Elysia, Next.js, Remix, SvelteKit, TanStack Start, and Fresh. See the [Backend Architecture](/contributor-docs/architecture/backend-architecture/) page for the full list.
+
+## Step 3: Install Frontend Package
+
+Install the Tabula Lens React package in your frontend project:
+
+```bash
+npm install @tabula-lens/react
+```
+
+## Step 4: Add Database Viewer Component
+
+Add the `DatabaseViewer` component to your React application.
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer 
+      path="/api/tabula-lens"
+      initialTable="users"
+    />
+  );
+}
+```
+
+## Step 5: Add Authentication (Optional)
+
+To secure your API endpoint, add authentication using your existing auth system.
+
+### Backend Authentication
+
+Add authentication middleware before the Tabula Lens adapter. Here's a simple API key example:
+
+```typescript
+// Express example with API key authentication
+const authenticate = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  if (apiKey === process.env.API_KEY) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+};
+
+// Apply authentication before the Tabula Lens adapter
+app.use('/api/tabula-lens', authenticate, expressAdapter(tabulaLens));
+```
+
+You can also integrate with your existing authentication system (JWT, session-based, OAuth, etc.).
+
+### Frontend Authentication
+
+Pass authentication headers to the `DatabaseViewer` component:
+
+```jsx
+<DatabaseViewer 
+  path="/api/tabula-lens"
+  initialTable="users"
+  getAuthHeaders={async () => ({
+    'X-API-Key': 'your-secret-api-key'
+    // or 'Authorization': `Bearer ${token}`
+  })}
+/>
+```
+
+## Step 6: Customize the Viewer
+
+You can customize the `DatabaseViewer` component with various options:
+
+```jsx
+<DatabaseViewer 
+  path="/api/tabula-lens"
+  initialTable="users"
+  // Enable table selector
+  tableSelector="dropdown"
+  // Add filtering
+  filterPosition="top"
+  // Add pagination
+  paginationPosition="bottom"
+  pageSize={10}
+  // Custom styling
+  styles={{
+    container: { padding: '1rem' }
+  }}
+/>
+```
+
+See the [Frontend Implementation](/user-guides/frontend/frontend-implementation/) guide for more customization options.
+
+## Troubleshooting
+
+### Database Connection Issues
+
+**Problem**: `Connection refused` or `database does not exist`
+
+**Solution**:
+- Ensure your database is running
+- Verify your `DATABASE_URL` environment variable is correct
+- Check that the database exists and is accessible
+- Verify your database credentials
+
+### CORS Errors
+
+**Problem**: Frontend can't connect to backend
+
+**Solution**:
+- Ensure CORS is configured in your backend server
+- Check that your frontend URL is allowed in CORS settings
+- Verify both servers are running on the correct ports
+- Check your browser console for specific CORS errors
+
+### Empty Results
+
+**Problem**: No data displayed in the viewer
+
+**Solution**:
+- Verify the table name in the `path` prop matches your database
+- Check that the table has data
+- Inspect browser console for errors
+- Check the Network tab for failed API requests
+- Verify the API endpoint is returning data correctly
+
+### Authentication Failures
+
+**Problem**: 401 Unauthorized errors
+
+**Solution**:
+- Verify authentication credentials match between frontend and backend
+- Check that the header name is correct (e.g., `X-API-Key`, `Authorization`)
+- Ensure authentication middleware is properly configured
+- Check that your auth system is working correctly
+
+### Framework-Specific Issues
+
+If you're using a framework not shown in the examples, check the [Backend Architecture](/contributor-docs/architecture/backend-architecture/) and [Frontend Architecture](/contributor-docs/architecture/architecture/) pages for framework-specific guidance.
+
+## Next Steps
+
+Now that you've integrated Tabula Lens into your application:
+
+- Learn about [Frontend Implementation](/user-guides/frontend/frontend-implementation/) for advanced patterns and customization
+- Explore [Backend Implementation](/user-guides/backend/backend-implementation/) for framework-specific configurations
+- Understand the [Architecture](/contributor-docs/architecture/architecture/) to learn about the HTTP API contract and interchangeability
+- Read about the [Design System](/contributor-docs/internal-systems/design-system/) for styling and theming options
+- Check the [Backend Architecture](/contributor-docs/architecture/backend-architecture/) for the full list of supported frameworks

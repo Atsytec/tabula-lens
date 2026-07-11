@@ -1,0 +1,161 @@
+---
+title: Supabase Auth Integration
+description: Integrate Supabase Auth with Tabula Lens to secure your database endpoints.
+---
+
+# Supabase Auth Integration
+
+[Supabase Auth](https://supabase.com/docs/guides/auth) is a full-featured authentication system built into Supabase. This guide shows how to protect your Tabula Lens endpoints using Supabase session validation and pass access tokens to the `DatabaseViewer` component.
+
+## Prerequisites
+
+Install the appropriate Supabase package for your framework:
+
+```bash
+# Next.js (App Router — uses @supabase/ssr for server-side session handling)
+npm install @supabase/supabase-js @supabase/ssr
+
+# Express
+npm install @supabase/supabase-js
+```
+
+You'll also need a Supabase project with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or their non-public equivalents) set in your environment.
+
+## Backend Setup
+
+### Next.js App Router
+
+Supabase sessions in Next.js App Router are cookie-based. The `@supabase/ssr` package provides a server client that reads and writes cookies via Next.js's `cookies()` API.
+
+First, create a server client utility:
+
+```typescript
+// lib/supabase/server.ts
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+
+export async function createClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name, value, options) {
+          try { cookieStore.set({ name, value, ...options }); } catch {}
+        },
+        remove(name, options) {
+          try { cookieStore.set({ name, value: '', ...options }); } catch {}
+        },
+      },
+    }
+  );
+}
+```
+
+Then protect the Tabula Lens route handler:
+
+```typescript
+// app/api/tabula-lens/route.ts
+import { createClient } from '@/lib/supabase/server';
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+const handler = createNextRouteHandler(tabulaLens);
+
+export async function GET(request: Request) {
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error || !user) return new Response('Unauthorized', { status: 401 });
+
+  return handler(request);
+}
+```
+
+### Express
+
+For Express, create a Supabase client using your project URL and anon key, then validate the Bearer token from the `Authorization` header:
+
+```typescript
+import express from 'express';
+import { createClient } from '@supabase/supabase-js';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_ANON_KEY!
+);
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+
+async function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+
+  if (error || !user) return res.status(401).json({ error: 'Invalid token' });
+
+  req.user = user;
+  next();
+}
+
+app.use('/api/tabula-lens', requireAuth, expressAdapter(tabulaLens));
+```
+
+## Frontend Integration
+
+Use the Supabase browser client to retrieve the current session and forward the access token via `getAuthHeaders`:
+
+```tsx
+'use client';
+import { createClient } from '@supabase/supabase-js';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+export function TabulaLensViewer() {
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      getAuthHeaders={async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return {};
+        return { Authorization: `Bearer ${session.access_token}` };
+      }}
+    />
+  );
+}
+```
+
+## Important Notes
+
+- **Use `getUser()` for authorization on the server, not `getSession()`.** `getSession()` reads the session from the cookie or local storage without re-validating the JWT with Supabase's servers. `getUser()` makes a network request to verify the token, making it safe for authorization decisions.
+- **`@supabase/ssr` is required for Next.js App Router.** The standard `@supabase/supabase-js` client does not integrate with Next.js's `cookies()` API. Use `@supabase/ssr`'s `createServerClient` on the server and `createBrowserClient` on the client.
+- **`DATABASE_URL` and Supabase Auth are separate concerns.** The `DATABASE_URL` you pass to `TabulaLens` is your direct PostgreSQL connection string (typically the Supabase connection pooler URI with the service role). It is unrelated to the `SUPABASE_ANON_KEY` used by the auth client.
+- **Never expose the Supabase service role key to the client.** The service role key bypasses Row Level Security. It should only be used in server-side code when you explicitly need to bypass RLS.
+
+## Troubleshooting
+
+**`getUser()` returns `null` even when signed in (Next.js)**
+
+Ensure you are using `createServerClient` from `@supabase/ssr` and that the `cookies` adapter correctly reads from the Next.js `cookieStore`. Using `createClient` from `@supabase/supabase-js` on the server will not have access to request cookies.
+
+**401 returned from the Express route despite a valid session**
+
+Confirm the frontend is passing the `access_token` (not the `refresh_token`) as the Bearer token. Call `supabase.auth.getUser(token)` with the raw access token string — passing a refresh token will always fail validation.
+
+**Cookie errors in the server client's `set` and `remove` handlers**
+
+The `try/catch` wrappers in the cookie handlers are intentional. Next.js throws if you attempt to set cookies from a Server Component (only Route Handlers and Server Actions are allowed to do so). The caught errors are safe to ignore.

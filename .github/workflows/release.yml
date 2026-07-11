@@ -15,11 +15,14 @@ permissions:
   contents: write
   pull-requests: write
   id-token: write
+  pages: write
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
 
     steps:
       - name: Checkout code
@@ -54,3 +57,42 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           # Enable provenance for package verification (requires trusted publishing setup)
           NPM_CONFIG_PROVENANCE: true
+
+  # Deploy documentation to GitHub Pages after successful package release
+  deploy-docs:
+    name: Deploy Documentation
+    needs: release
+    if: ${{ needs.release.outputs.published == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build documentation
+        run: pnpm --filter @tabula-lens/docs run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/docs/dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

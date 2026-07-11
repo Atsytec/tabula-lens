@@ -1,0 +1,693 @@
+---
+title: Backend Architecture
+description: Detailed guide to Tabula Lens backend architecture, framework adapters, and implementation patterns.
+---
+
+# Backend Architecture
+
+The Tabula Lens backend provides a flexible, framework-agnostic foundation for database querying through a stable HTTP API contract. This architecture enables you to use Tabula Lens with any Node.js framework while maintaining security and performance.
+
+## Core Design Principles
+
+### Framework Agnostic
+
+Tabula Lens works with 15+ Node.js frameworks through a unified adapter pattern. This means you can use your preferred framework without being locked into a specific technology stack.
+
+### Security First
+
+Database credentials never leave the backend. All database connections are managed server-side, and authentication is handled through your existing backend security systems.
+
+### HTTP API Contract
+
+The backend implements a stable HTTP API contract that any frontend can consume. This contract is versioned and documented, ensuring compatibility across different implementations.
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    HTTP API Layer                            │
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+│  │   Express    │  │   Fastify    │  │    Next.js    │     │
+│  │   Adapter    │  │   Adapter    │  │   Adapter    │     │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
+│         │                 │                 │               │
+│         └─────────────────┴─────────────────┘               │
+│                           │                                 │
+│                    ┌──────┴──────┐                          │
+│                    │ TabulaLens  │                          │
+│                    │   Core      │                          │
+│                    └──────┬──────┘                          │
+└───────────────────────────┼──────────────────────────────────┘
+                            │
+┌───────────────────────────┼──────────────────────────────────┐
+│                    ┌──────┴──────┐                          │
+│                    │   Query     │                          │
+│                    │   Builder   │                          │
+│                    └──────┬──────┘                          │
+│                           │                                 │
+│                    ┌──────┴──────┐                          │
+│                    │ Connection  │                          │
+│                    │   Pool      │                          │
+│                    └──────┬──────┘                          │
+└───────────────────────────┼──────────────────────────────────┘
+                            │
+┌───────────────────────────┼──────────────────────────────────┐
+│                    ┌──────┴──────┐                          │
+│                    │  Database   │                          │
+│                    │   Driver    │                          │
+│                    └──────┬──────┘                          │
+│                           │                                 │
+└───────────────────────────┼──────────────────────────────────┘
+                            │
+                    ┌───────▼───────┐
+                    │   PostgreSQL   │
+                    └────────────────┘
+```
+
+## Framework Adapters
+
+Tabula Lens provides adapters for a wide range of Node.js frameworks, organized by category:
+
+### Traditional Frameworks
+
+These are established Express-style frameworks:
+
+#### Express 5.x
+
+```typescript
+import express from 'express';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
+
+app.listen(3002);
+```
+
+**Peer Dependencies:** `express@^5.0.0`
+
+#### Express 4.x
+
+```typescript
+import express from 'express';
+import { TabulaLens, express4Adapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+app.use('/api/tabula-lens', express4Adapter(tabulaLens));
+
+app.listen(3002);
+```
+
+**Peer Dependencies:** `express@^4.0.0`
+
+#### Fastify
+
+```typescript
+import Fastify from 'fastify';
+import { TabulaLens, fastifyAdapter } from '@tabula-lens/node';
+
+const fastify = Fastify();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+fastify.all('/api/tabula-lens/*', fastifyAdapter(tabulaLens));
+
+fastify.listen({ port: 3002 });
+```
+
+**Peer Dependencies:** `fastify@^4.0.0`
+
+#### Koa
+
+```typescript
+import Koa from 'koa';
+import { TabulaLens, koaAdapter } from '@tabula-lens/node';
+
+const app = new Koa();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+app.use(koaAdapter(tabulaLens));
+
+app.listen(3002);
+```
+
+**Peer Dependencies:** `koa@^2.14.0`
+
+#### Hapi
+
+```typescript
+import Hapi from '@hapi/hapi';
+import { TabulaLens, hapiAdapter } from '@tabula-lens/node';
+
+const server = Hapi.server({ port: 3002 });
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+server.route({
+  method: 'GET',
+  path: '/api/tabula-lens/{path*}',
+  handler: hapiAdapter(tabulaLens),
+});
+
+await server.start();
+```
+
+**Peer Dependencies:** `@hapi/hapi@^21.0.0`
+
+#### Restify
+
+```typescript
+import restify from 'restify';
+import { TabulaLens, restifyAdapter } from '@tabula-lens/node';
+
+const server = restify.createServer();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+server.get('/api/tabula-lens/*', restifyAdapter(tabulaLens));
+
+server.listen(3002);
+```
+
+**Peer Dependencies:** `restify@^11.0.0`
+
+### Modern Full-Stack Frameworks
+
+These frameworks provide integrated full-stack solutions:
+
+#### Next.js
+
+```typescript
+// app/api/tabula-lens/[...path]/route.ts  (App Router)
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createNextRouteHandler(tabulaLens);
+
+export { handler as GET };
+```
+
+**Peer Dependencies:** `next@^13.0.0`
+
+#### TanStack Start
+
+```typescript
+import { TabulaLens, createTanStackStartHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createTanStackStartHandler(tabulaLens);
+
+export const APIRoute = createAPIFileRoute('/api/tabula-lens/$')({
+  GET: ({ request }) => handler(request),
+});
+```
+
+**Peer Dependencies:** `@tanstack/start@^1.0.0`
+
+#### Remix
+
+```typescript
+// app/routes/api.tabula-lens.$.ts
+import { TabulaLens, createRemixHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createRemixHandler(tabulaLens);
+
+export const loader = ({ request }: { request: Request }) => handler(request);
+```
+
+**Peer Dependencies:** `@remix-run/react@^2.0.0`
+
+#### SvelteKit
+
+```typescript
+// src/routes/api/tabula-lens/[...path]/+server.ts
+import { TabulaLens, createSvelteKitHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createSvelteKitHandler(tabulaLens);
+
+export const GET = (event: { request: Request; url: URL }) => handler(event);
+```
+
+**Peer Dependencies:** `@sveltejs/kit@^2.0.0`
+
+### Edge Runtimes
+
+These frameworks are optimized for edge computing:
+
+#### Hono
+
+```typescript
+import { Hono } from 'hono';
+import { TabulaLens, createHonoMiddleware } from '@tabula-lens/node';
+
+const app = new Hono();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+app.all('/api/tabula-lens/*', createHonoMiddleware(tabulaLens));
+
+export default app;
+```
+
+**Peer Dependencies:** `hono@^4.12.29`
+
+#### Elysia
+
+```typescript
+import Elysia from 'elysia';
+import { TabulaLens, createElysiaHandler } from '@tabula-lens/node';
+
+const app = new Elysia();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+app.all('/api/tabula-lens/*', createElysiaHandler(tabulaLens));
+
+app.listen(3002);
+```
+
+**Peer Dependencies:** `elysia@^1.0.0`
+
+#### Fresh
+
+```typescript
+// routes/api/tabula-lens/[...path].ts
+import { TabulaLens, createFreshHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createFreshHandler(tabulaLens);
+
+export const handler = { GET: (req: Request) => handler(req) };
+```
+
+**Peer Dependencies:** `fresh@^1.0.0`
+
+### Custom Implementation
+
+For custom implementations or unsupported frameworks:
+
+```typescript
+import http from 'http';
+import { TabulaLens, nativeAdapter } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Use the native adapter for custom HTTP server implementations
+const handler = nativeAdapter(tabulaLens);
+http.createServer(handler).listen(3000);
+```
+
+## TabulaLens Core
+
+The core `TabulaLens` class provides the main functionality:
+
+### Constructor
+
+```typescript
+constructor(databaseUrl: string, options?: TabulaLensOptions)
+```
+
+**Parameters:**
+- `databaseUrl`: PostgreSQL connection string
+- `options`: Optional configuration object
+
+**Options:**
+```typescript
+interface TabulaLensOptions {
+  logger?: Logger;
+  logLevel?: 'debug' | 'info' | 'warn' | 'error' | 'silent';
+  logFormat?: 'json' | 'text' | 'pretty';
+  maxConnections?: number;
+  connectionTimeout?: number;
+}
+```
+
+### Query Method
+
+```typescript
+async query(params: QueryParams): Promise<QueryResult>
+```
+
+**Parameters:**
+```typescript
+interface QueryOptions {
+  table?: string;          // Table name (default: 'users')
+  page?: number;           // Page number (default: 1)
+  limit?: number;          // Items per page (default: 10)
+  filter?: string;         // Filter string
+  filterColumns?: string[]; // Columns to filter on
+  sort?: string;           // Sort string, e.g. 'name:asc,created_at:desc'
+  columns?: string[];      // Columns to return
+}
+```
+
+**Returns:**
+```typescript
+interface QueryResult {
+  data: Record<string, unknown>[];
+  columns: string[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+```
+
+## Database Layer
+
+### Connection Management
+
+TabulaLens manages database connections efficiently:
+
+- **Connection Pooling**: Reuses connections for better performance
+- **Automatic Reconnection**: Handles connection failures gracefully
+- **Connection Timeout**: Configurable connection timeout
+- **Max Connections**: Configurable maximum connection limit
+
+### Query Building
+
+The query builder constructs safe SQL queries:
+
+```typescript
+// Example: SELECT * FROM users WHERE name LIKE '%Alice%' ORDER BY name ASC LIMIT 10 OFFSET 0
+const result = await tabulaLens.query({
+  table: 'users',
+  filter: 'Alice',
+  sort: 'name:asc',
+  limit: 10,
+  page: 1
+});
+```
+
+**Security Features:**
+- **Parameterized Queries**: Prevents SQL injection
+- **Input Validation**: Validates all input parameters
+- **Column Whitelisting**: Only allows valid column names
+- **Type Checking**: Ensures correct data types
+
+### Transaction Support
+
+TabulaLens supports database transactions:
+
+```typescript
+async function withTransaction(callback: (client: any) => Promise<void>) {
+  const client = await tabulaLens.getClient();
+  try {
+    await client.query('BEGIN');
+    await callback(client);
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+```
+
+## Logging System
+
+TabulaLens includes comprehensive logging for debugging and monitoring:
+
+### Logger Configuration
+
+```typescript
+const tabulaLens = new TabulaLens(databaseUrl, {
+  logger: {
+    debug: (message) => console.log(message),
+    info: (message) => console.info(message),
+    warn: (message) => console.warn(message),
+    error: (message) => console.error(message)
+  },
+  logLevel: 'info',
+  logFormat: 'json'
+});
+```
+
+### Log Levels
+
+- **debug**: Detailed debugging information
+- **info**: General informational messages
+- **warn**: Warning messages for potential issues
+- **error**: Error messages for failures
+- **silent**: No logging
+
+### Log Formats
+
+- **json**: Structured JSON logs for log aggregation
+- **text**: Human-readable text logs
+- **pretty**: Formatted logs with colors and timestamps
+
+### Request Logging
+
+All HTTP requests are logged with:
+
+- Request ID for tracing
+- Query parameters
+- Execution time
+- Result count
+- Error information (if applicable)
+
+### Query Logging
+
+Database queries are logged with:
+
+- SQL query (sanitized)
+- Execution time
+- Row count
+- Query parameters
+
+## Error Handling
+
+### TabulaLensError
+
+Custom error class for structured error handling:
+
+```typescript
+class TabulaLensError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public details?: any
+  ) {
+    super(message);
+    this.name = 'TabulaLensError';
+  }
+}
+```
+
+### Error Codes
+
+| Code | Description |
+|------|-------------|
+| `CONNECTION_ERROR` | Database connection failed |
+| `QUERY_ERROR` | Query execution failed |
+| `VALIDATION_ERROR` | Input validation failed |
+| `TABLE_NOT_FOUND` | Specified table doesn't exist |
+| `COLUMN_NOT_FOUND` | Specified column doesn't exist |
+| `AUTHENTICATION_ERROR` | Authentication failed |
+
+### Error Response Format
+
+```json
+{
+  "error": {
+    "message": "Table not found",
+    "code": "TABLE_NOT_FOUND",
+    "details": {
+      "table": "nonexistent_table"
+    },
+    "timestamp": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+## Security Features
+
+### Credential Management
+
+- **Environment Variables**: Credentials stored in environment variables
+- **No Frontend Exposure**: Connection strings never sent to browser
+- **Secure Storage**: Integration with secret management systems
+- **Connection Encryption**: SSL/TLS for database connections
+
+### Authentication
+
+TabulaLens supports multiple authentication methods:
+
+#### Token-Based Authentication
+
+```typescript
+app.get('/api/tabula-lens', authenticateToken, async (req, res) => {
+  const data = await tabulaLens.query(req.query);
+  res.json(data);
+});
+
+function authenticateToken(req, res, next) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (validateToken(token)) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+}
+```
+
+#### API Key Authentication
+
+```typescript
+app.get('/api/tabula-lens', authenticateApiKey, async (req, res) => {
+  const data = await tabulaLens.query(req.query);
+  res.json(data);
+});
+
+function authenticateApiKey(req, res, next) {
+  const apiKey = req.headers['x-api-key'];
+  if (validateApiKey(apiKey)) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+}
+```
+
+### Input Validation
+
+All inputs are validated before processing:
+
+- **Type Checking**: Ensures correct data types
+- **Range Validation**: Validates numeric ranges
+- **Whitelisting**: Only allows known safe values
+- **SQL Injection Prevention**: Parameterized queries only
+
+## Performance Optimization
+
+### Connection Pooling
+
+Configure connection pool for optimal performance:
+
+```typescript
+const tabulaLens = new TabulaLens(databaseUrl, {
+  maxConnections: 20,
+  connectionTimeout: 30000
+});
+```
+
+### Query Optimization
+
+- **Index Usage**: Leverages database indexes
+- **Query Caching**: Optional query result caching
+- **Pagination**: Limits data transfer size
+- **Lazy Loading**: Loads data only when needed
+
+### Monitoring
+
+Built-in performance monitoring:
+
+- **Query Execution Time**: Track slow queries
+- **Connection Pool Status**: Monitor connection usage
+- **Error Rates**: Track error frequency
+- **Request Metrics**: Monitor API performance
+
+## Testing
+
+### Unit Testing
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { TabulaLens } from '@tabula-lens/node';
+
+describe('TabulaLens', () => {
+  it('should query database', async () => {
+    const tabulaLens = new TabulaLens(testDatabaseUrl);
+    const result = await tabulaLens.query({ table: 'users' });
+    expect(result.data).toBeDefined();
+    expect(result.columns).toBeDefined();
+  });
+});
+```
+
+### Integration Testing
+
+```typescript
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { TabulaLens } from '@tabula-lens/node';
+
+describe('TabulaLens Integration', () => {
+  let tabulaLens: TabulaLens;
+
+  beforeAll(async () => {
+    tabulaLens = new TabulaLens(testDatabaseUrl);
+  });
+
+  afterAll(async () => {
+    await tabulaLens.close();
+  });
+
+  it('should handle pagination', async () => {
+    const result = await tabulaLens.query({
+      table: 'users',
+      page: 1,
+      limit: 10
+    });
+    expect(result.pagination.page).toBe(1);
+    expect(result.data.length).toBeLessThanOrEqual(10);
+  });
+});
+```
+
+## Deployment Considerations
+
+### Environment Variables
+
+Required environment variables:
+
+```bash
+DATABASE_URL=postgresql://user:password@host:port/database
+LOG_LEVEL=info
+MAX_CONNECTIONS=20
+```
+
+### Health Checks
+
+Implement health check endpoints:
+
+```typescript
+app.get('/health', async (req, res) => {
+  try {
+    await tabulaLens.query({ table: 'users', limit: 1 });
+    res.json({ status: 'healthy' });
+  } catch (error) {
+    res.status(503).json({ status: 'unhealthy' });
+  }
+});
+```
+
+### Graceful Shutdown
+
+Handle graceful shutdown:
+
+```typescript
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  await tabulaLens.close();
+  process.exit(0);
+});
+```
+
+## Best Practices
+
+1. **Use Environment Variables**: Never hardcode credentials
+2. **Implement Authentication**: Always secure your API endpoints
+3. **Monitor Performance**: Track query performance and connection usage
+4. **Handle Errors Gracefully**: Provide meaningful error messages
+5. **Use Connection Pooling**: Configure appropriate pool sizes
+6. **Implement Rate Limiting**: Prevent abuse of your API
+7. **Log Important Events**: Use logging for debugging and monitoring
+8. **Test Thoroughly**: Unit test and integration test your implementation
+9. **Version Your API**: Use API versioning for backward compatibility
+10. **Document Your Implementation**: Document custom authentication and validation logic

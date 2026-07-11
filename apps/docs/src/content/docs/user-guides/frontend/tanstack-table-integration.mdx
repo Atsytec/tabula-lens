@@ -1,0 +1,886 @@
+---
+title: TanStack Table Integration
+description: Learn how to integrate TanStack Table with Tabula Lens for advanced table functionality.
+---
+
+# TanStack Table Integration
+
+TanStack Table (formerly React Table) provides powerful table functionality with sorting, filtering, pagination, and more. This guide shows how to integrate TanStack Table with Tabula Lens for advanced table features and performance optimization.
+
+## Installation
+
+First, install TanStack Table:
+
+```bash
+npm install @tanstack/react-table
+# or
+pnpm add @tanstack/react-table
+# or
+yarn add @tanstack/react-table
+```
+
+## Basic Setup
+
+### Table Definition
+
+Define your table structure with TanStack Table:
+
+```tsx
+import { useReactTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table';
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  created_at: string;
+}
+
+function EnhancedDataTable({ data }: { data: { columns: string[]; rows: User[] } }) {
+  const columns = [
+    {
+      accessorKey: 'id',
+      header: 'ID',
+      cell: (info: any) => info.getValue(),
+    },
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: (info: any) => info.getValue(),
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+      cell: (info: any) => info.getValue(),
+    },
+    {
+      accessorKey: 'created_at',
+      header: 'Created At',
+      cell: (info: any) => new Date(info.getValue()).toLocaleDateString(),
+    },
+  ];
+
+  const table = useReactTable({
+    data: data.rows,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  return (
+    <table>
+      <thead>
+        {table.getHeaderGroups().map((headerGroup) => (
+          <tr key={headerGroup.id}>
+            {headerGroup.headers.map((header) => (
+              <th key={header.id}>
+                {header.isPlaceholder
+                  ? null
+                  : (
+                    <div
+                      {...{
+                        onClick: header.column.getToggleSortingHandler(),
+                        style: { cursor: 'pointer' },
+                      }}
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {header.column.getIsSorted() === 'asc' ? ' ↑' : null}
+                      {header.column.getIsSorted() === 'desc' ? ' ↓' : null}
+                    </div>
+                  )}
+              </th>
+            ))}
+          </tr>
+        ))}
+      </thead>
+      <tbody>
+        {table.getRowModel().rows.map((row) => (
+          <tr key={row.id}>
+            {row.getVisibleCells().map((cell) => (
+              <td key={cell.id}>
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+```
+
+## Table Configuration Patterns
+
+### Basic Column Definition
+
+Define columns with accessor keys and custom renderers:
+
+```tsx
+const columns = [
+  {
+    accessorKey: 'id',
+    header: 'ID',
+    size: 80,
+  },
+  {
+    accessorKey: 'name',
+    header: 'Name',
+    size: 200,
+  },
+  {
+    accessorKey: 'email',
+    header: 'Email',
+    size: 250,
+  },
+];
+```
+
+### Custom Cell Renderers
+
+Use custom cell renderers for complex data formatting:
+
+```tsx
+const columns = [
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: (info: any) => {
+      const status = info.getValue();
+      const colors = {
+        active: 'green',
+        inactive: 'red',
+        pending: 'yellow',
+      };
+      return (
+        <span style={{ color: colors[status as keyof typeof colors] }}>
+          {status}
+        </span>
+      );
+    },
+  },
+  {
+    accessorKey: 'created_at',
+    header: 'Created',
+    cell: (info: any) => new Date(info.getValue()).toLocaleString(),
+  },
+  {
+    accessorKey: 'actions',
+    header: 'Actions',
+    cell: (info: any) => (
+      <button onClick={() => handleEdit(info.row.original)}>
+        Edit
+      </button>
+    ),
+  },
+];
+```
+
+### Accessor Functions
+
+Use accessor functions for computed values:
+
+```tsx
+const columns = [
+  {
+    accessorFn: (row: User) => `${row.first_name} ${row.last_name}`,
+    id: 'full_name',
+    header: 'Full Name',
+  },
+  {
+    accessorFn: (row: User) => row.email.toLowerCase(),
+    id: 'email_lower',
+    header: 'Email (Lower)',
+  },
+];
+```
+
+## Sorting and Filtering
+
+### Multi-Column Sorting
+
+Enable multi-column sorting:
+
+```tsx
+const table = useReactTable({
+  data,
+  columns,
+  getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(),
+  enableMultiSort: true,
+  enableMultiRemove: true,
+  maxMultiSortColCount: 3,
+});
+```
+
+### Custom Sorting
+
+Implement custom sorting logic:
+
+```tsx
+const columns = [
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    sortingFn: (rowA: any, rowB: any) => {
+      const order = { active: 0, pending: 1, inactive: 2 };
+      return order[rowA.original.status] - order[rowB.original.status];
+    },
+  },
+];
+```
+
+### Column Filtering
+
+Add column filtering capabilities:
+
+```tsx
+import { getFilteredRowModel } from '@tanstack/react-table';
+
+const table = useReactTable({
+  data,
+  columns,
+  getCoreRowModel: getCoreRowModel(),
+  getFilteredRowModel: getFilteredRowModel(),
+  enableFilters: true,
+});
+
+// Usage
+table.getColumn('name').setFilterValue('John');
+```
+
+### Global Filtering
+
+Implement global table filtering:
+
+```tsx
+import { getGlobalFilteredRowModel } from '@tanstack/react-table';
+
+const [globalFilter, setGlobalFilter] = useState('');
+
+const table = useReactTable({
+  data,
+  columns,
+  getCoreRowModel: getCoreRowModel(),
+  getGlobalFilteredRowModel: getGlobalFilteredRowModel(),
+  state: {
+    globalFilter,
+  },
+  onGlobalFilterChange: setGlobalFilter,
+});
+
+// Usage
+<input
+  type="text"
+  value={globalFilter ?? ''}
+  onChange={(e) => setGlobalFilter(e.target.value)}
+  placeholder="Search all columns..."
+/>
+```
+
+## Pagination
+
+### Client-Side Pagination
+
+Implement client-side pagination:
+
+```tsx
+import { getPaginationRowModel } from '@tanstack/react-table';
+
+const table = useReactTable({
+  data,
+  columns,
+  getCoreRowModel: getCoreRowModel(),
+  getPaginationRowModel: getPaginationRowModel(),
+  initialState: {
+    pagination: {
+      pageSize: 20,
+    },
+  },
+});
+
+// Usage
+<div>
+  <button
+    onClick={() => table.previousPage()}
+    disabled={!table.getCanPreviousPage()}
+  >
+    Previous
+  </button>
+  <span>
+    Page {table.getState().pagination.pageIndex + 1} of{' '}
+    {table.getPageCount()}
+  </span>
+  <button
+    onClick={() => table.nextPage()}
+    disabled={!table.getCanNextPage()}
+  >
+    Next
+  </button>
+</div>
+```
+
+### Server-Side Pagination
+
+Implement server-side pagination with Tabula Lens:
+
+```tsx
+import { useReactTable, getCoreRowModel } from '@tanstack/react-table';
+
+function ServerSidePaginatedTable() {
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
+  const [data, setData] = useState({ rows: [], total: 0 });
+
+  useEffect(() => {
+    fetchData(pagination.pageIndex + 1, pagination.pageSize).then(setData);
+  }, [pagination]);
+
+  const table = useReactTable({
+    data: data.rows,
+    columns,
+    pageCount: Math.ceil(data.total / pagination.pageSize),
+    getCoreRowModel: getCoreRowModel(),
+    state: {
+      pagination,
+    },
+    onPaginationChange: setPagination,
+    manualPagination: true,
+  });
+
+  return <TableRenderer table={table} />;
+}
+```
+
+## Column Definition Examples
+
+### Dynamic Columns
+
+Generate columns dynamically from data:
+
+```tsx
+function DynamicColumnsTable({ data }: { data: { columns: string[]; rows: any[] } }) {
+  const columns = useMemo(() => {
+    return data.columns.map((col) => ({
+      accessorKey: col,
+      header: col.charAt(0).toUpperCase() + col.slice(1),
+    }));
+  }, [data.columns]);
+
+  const table = useReactTable({
+    data: data.rows,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  return <TableRenderer table={table} />;
+}
+```
+
+### Conditional Columns
+
+Show/hide columns based on conditions:
+
+```tsx
+const columns = [
+  {
+    accessorKey: 'id',
+    header: 'ID',
+  },
+  {
+    accessorKey: 'email',
+    header: 'Email',
+    // Only show if user has permission
+    visible: hasPermission('view_email'),
+  },
+  {
+    accessorKey: 'salary',
+    header: 'Salary',
+    // Only show if user is admin
+    visible: isAdmin,
+  },
+].filter((col) => col.visible !== false);
+```
+
+### Resizable Columns
+
+Enable column resizing:
+
+```tsx
+import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
+
+const table = useReactTable({
+  data,
+  columns,
+  getCoreRowModel: getCoreRowModel(),
+  enableColumnResizing: true,
+  columnResizeMode: 'onChange',
+});
+
+// Usage in table header
+<th
+  {...{
+    style: {
+      width: header.getSize(),
+      position: 'relative',
+    },
+  }}
+>
+  {header.isPlaceholder
+    ? null
+    : flexRender(header.column.columnDef.header, header.getContext())}
+  <div
+    {...{
+      onMouseDown: header.getResizeHandler(),
+      onTouchStart: header.getResizeHandler(),
+      style: {
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        height: '100%',
+        width: '5px',
+        cursor: 'col-resize',
+      },
+    }}
+  />
+</th>
+```
+
+## Performance Optimization
+
+### Virtualization
+
+Use virtualization for large datasets:
+
+```tsx
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+function VirtualizedTable({ data }: { data: { rows: any[] } }) {
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  const table = useReactTable({
+    data: data.rows,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  const { rows } = table.getRowModel();
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 50,
+    overscan: 5,
+  });
+
+  return (
+    <div ref={tableContainerRef} style={{ height: '500px', overflow: 'auto' }}>
+      <div style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+          const row = rows[virtualRow.index];
+          return (
+            <div
+              key={row.id}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              {row.getVisibleCells().map((cell) => (
+                <span key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </span>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+```
+
+### Memoization
+
+Memoize expensive computations:
+
+```tsx
+const columns = useMemo(() => [
+  {
+    accessorKey: 'id',
+    header: 'ID',
+    cell: (info: any) => info.getValue(),
+  },
+  {
+    accessorKey: 'name',
+    header: 'Name',
+    cell: (info: any) => info.getValue(),
+  },
+], []);
+
+const table = useReactTable({
+  data,
+  columns,
+  getCoreRowModel: getCoreRowModel(),
+});
+```
+
+### Lazy Loading
+
+Implement lazy loading for large datasets:
+
+```tsx
+function LazyLoadedTable() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  const loadMore = async () => {
+    if (loading || !hasMore) return;
+    setLoading(true);
+    const newData = await fetchData(data.length, 50);
+    setData([...data, ...newData]);
+    setHasMore(newData.length === 50);
+    setLoading(false);
+  };
+
+  return (
+    <div>
+      <Table data={data} />
+      {hasMore && (
+        <button onClick={loadMore} disabled={loading}>
+          {loading ? 'Loading...' : 'Load More'}
+        </button>
+      )}
+    </div>
+  );
+}
+```
+
+## Integration with DatabaseViewer
+
+### Custom DataTable Component
+
+Replace the default DataTable with TanStack Table:
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+import { useReactTable, getCoreRowModel } from '@tanstack/react-table';
+
+function TanStackDataTable({ data, sort, onSortChange }: any) {
+  const columns = data.columns.map((col: string) => ({
+    accessorKey: col,
+    header: col.charAt(0).toUpperCase() + col.slice(1),
+  }));
+
+  const table = useReactTable({
+    data: data.rows,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    state: {
+      sorting: sort ? [sort] : [],
+    },
+    onSortingChange: (updater) => {
+      const newSort = updater instanceof Function ? updater([]) : updater;
+      onSortChange(newSort[0]);
+    },
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  return (
+    <table>
+      <thead>
+        {table.getHeaderGroups().map((headerGroup) => (
+          <tr key={headerGroup.id}>
+            {headerGroup.headers.map((header) => (
+              <th key={header.id}>
+                {header.isPlaceholder
+                  ? null
+                  : (
+                    <div
+                      onClick={header.column.getToggleSortingHandler()}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {header.column.getIsSorted() === 'asc' ? ' ↑' : null}
+                      {header.column.getIsSorted() === 'desc' ? ' ↓' : null}
+                    </div>
+                  )}
+              </th>
+            ))}
+          </tr>
+        ))}
+      </thead>
+      <tbody>
+        {table.getRowModel().rows.map((row) => (
+          <tr key={row.id}>
+            {row.getVisibleCells().map((cell) => (
+              <td key={cell.id}>
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function App() {
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      dataComponent={TanStackDataTable}
+    />
+  );
+}
+```
+
+### Hybrid Approach
+
+Combine DatabaseViewer's features with TanStack Table:
+
+```tsx
+import { DatabaseViewer, useDatabaseData } from '@tabula-lens/react';
+import { useReactTable, getCoreRowModel } from '@tanstack/react-table';
+
+function HybridDatabaseViewer() {
+  const { data, loading, error } = useDatabaseData({
+    path: '/api/tabula-lens',
+    table: 'users',
+  });
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  const table = useReactTable({
+    data: data?.rows || [],
+    columns: data?.columns.map((col) => ({
+      accessorKey: col,
+      header: col,
+    })) || [],
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  return (
+    <div>
+      <DatabaseViewer path="/api/tabula-lens" tableSelector="dropdown" />
+      <TanStackTable table={table} />
+    </div>
+  );
+}
+```
+
+## Advanced Features
+
+### Row Selection
+
+Add row selection capabilities:
+
+```tsx
+import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
+
+function SelectableTable({ data }: { data: { rows: any[] } }) {
+  const [rowSelection, setRowSelection] = useState({});
+
+  const table = useReactTable({
+    data: data.rows,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    state: {
+      rowSelection,
+    },
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
+  });
+
+  const selectedRows = table.getFilteredSelectedRowModel().rows;
+
+  return (
+    <div>
+      <TableRenderer table={table} />
+      <div>Selected {selectedRows.length} rows</div>
+    </div>
+  );
+}
+```
+
+### Column Visibility
+
+Toggle column visibility:
+
+```tsx
+import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
+
+function ColumnVisibilityTable({ data }: { data: { rows: any[] } }) {
+  const [columnVisibility, setColumnVisibility] = useState({});
+
+  const table = useReactTable({
+    data: data.rows,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    state: {
+      columnVisibility,
+    },
+    onColumnVisibilityChange: setColumnVisibility,
+  });
+
+  return (
+    <div>
+      <div>
+        {table.getAllColumns().map((column) => (
+          <label key={column.id}>
+            <input
+              type="checkbox"
+              checked={column.getIsVisible()}
+              onChange={column.getToggleVisibilityHandler()}
+            />
+            {column.id}
+          </label>
+        ))}
+      </div>
+      <TableRenderer table={table} />
+    </div>
+  );
+}
+```
+
+### Row Expansion
+
+Add row expansion for detailed views:
+
+```tsx
+import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
+
+function ExpandableTable({ data }: { data: { rows: any[] } }) {
+  const [expanded, setExpanded] = useState({});
+
+  const table = useReactTable({
+    data: data.rows,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    state: {
+      expanded,
+    },
+    onExpandedChange: setExpanded,
+    getSubRows: (row) => row.subRows,
+  });
+
+  return (
+    <div>
+      <TableRenderer table={table} />
+    </div>
+  );
+}
+```
+
+## Testing
+
+### Testing TanStack Table Components
+
+Test table components with React Testing Library:
+
+```tsx
+import { render, screen } from '@testing-library/react';
+import { EnhancedDataTable } from './EnhancedDataTable';
+
+describe('EnhancedDataTable', () => {
+  it('renders table with data', () => {
+    const mockData = {
+      columns: ['id', 'name', 'email'],
+      rows: [
+        { id: 1, name: 'John', email: 'john@example.com' },
+        { id: 2, name: 'Jane', email: 'jane@example.com' },
+      ],
+    };
+
+    render(<EnhancedDataTable data={mockData} />);
+
+    expect(screen.getByText('John')).toBeInTheDocument();
+    expect(screen.getByText('Jane')).toBeInTheDocument();
+  });
+
+  it('handles sorting', () => {
+    const mockData = {
+      columns: ['id', 'name', 'email'],
+      rows: [
+        { id: 1, name: 'John', email: 'john@example.com' },
+        { id: 2, name: 'Jane', email: 'jane@example.com' },
+      ],
+    };
+
+    render(<EnhancedDataTable data={mockData} />);
+
+    const nameHeader = screen.getByText('Name');
+    fireEvent.click(nameHeader);
+
+    // Verify sorting behavior
+  });
+});
+```
+
+## Best Practices
+
+1. **Column Definition**: Use memoized column definitions to prevent re-renders
+2. **Performance**: Use virtualization for large datasets
+3. **Type Safety**: Leverage TypeScript for type-safe column definitions
+4. **Accessibility**: Ensure table headers and interactions are accessible
+5. **Responsive Design**: Make tables responsive for mobile devices
+6. **Error Handling**: Handle empty states and loading states gracefully
+7. **Testing**: Test table components and interactions thoroughly
+8. **Server-Side**: Use server-side pagination for large datasets
+
+## Troubleshooting
+
+### Performance Issues
+
+If table performance is slow:
+
+```tsx
+// Enable row virtualization
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+// Memoize columns
+const columns = useMemo(() => [...], []);
+
+// Reduce re-renders
+const table = useReactTable({
+  // ... options
+  enableRowVirtualization: true,
+});
+```
+
+### Sorting Not Working
+
+If sorting isn't working:
+
+```tsx
+// Ensure sorting model is enabled
+const table = useReactTable({
+  // ... options
+  getSortedRowModel: getSortedRowModel(),
+  enableSorting: true,
+});
+```
+
+### Column Resizing Issues
+
+If column resizing isn't working:
+
+```tsx
+// Ensure column resizing is enabled
+const table = useReactTable({
+  // ... options
+  enableColumnResizing: true,
+  columnResizeMode: 'onChange',
+});
+```
+
+TanStack Table provides a powerful foundation for advanced table functionality. When combined with Tabula Lens, it enables sophisticated data presentation and interaction patterns while maintaining excellent performance and user experience.

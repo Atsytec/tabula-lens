@@ -1,0 +1,179 @@
+---
+title: Auth.js (NextAuth v5) Integration
+description: Integrate Auth.js (NextAuth v5) with Tabula Lens to secure your database endpoints.
+---
+
+# Auth.js (NextAuth v5) Integration
+
+[Auth.js](https://authjs.dev) (NextAuth v5) is a flexible authentication library for Next.js and Node.js. This guide shows how to protect your Tabula Lens endpoints using Auth.js sessions and pass credentials to the `DatabaseViewer` component.
+
+## Prerequisites
+
+Install the appropriate Auth.js package for your framework:
+
+```bash
+# Next.js
+npm install next-auth@beta
+
+# Express
+npm install @auth/express
+```
+
+Generate an `AUTH_SECRET` for production:
+
+```bash
+npx auth secret
+```
+
+Add the generated value as `AUTH_SECRET` in your environment variables.
+
+## Backend Setup
+
+### Auth.js Configuration
+
+Create an `auth.ts` file at your project root to configure Auth.js:
+
+```typescript
+// auth.ts
+import NextAuth from 'next-auth';
+import GitHub from 'next-auth/providers/github';
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  providers: [GitHub],
+});
+```
+
+Add the Auth.js route handler to handle sign-in and sign-out:
+
+```typescript
+// app/api/auth/[...nextauth]/route.ts
+import { handlers } from '@/auth';
+export const { GET, POST } = handlers;
+```
+
+### Next.js App Router
+
+Protect the Tabula Lens route by calling `auth()` and checking for an active session:
+
+```typescript
+// app/api/tabula-lens/route.ts
+import { auth } from '@/auth';
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+const handler = createNextRouteHandler(tabulaLens);
+
+export async function GET(request: Request) {
+  const session = await auth();
+  if (!session?.user) return new Response('Unauthorized', { status: 401 });
+  return handler(request);
+}
+```
+
+### Express
+
+Use `ExpressAuth` to mount the Auth.js endpoints and `getSession` to validate requests:
+
+```typescript
+import express from 'express';
+import { ExpressAuth, getSession } from '@auth/express';
+import GitHub from 'next-auth/providers/github';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+const authConfig = { providers: [GitHub] };
+
+// Required for Auth.js to read cookies behind a proxy
+app.set('trust proxy', true);
+
+// Mount Auth.js sign-in/sign-out routes
+app.use('/auth/*', ExpressAuth(authConfig));
+
+// Session validation middleware
+async function requireAuth(req, res, next) {
+  const session = await getSession(req, authConfig);
+  if (!session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  res.locals.session = session;
+  next();
+}
+
+app.use('/api/tabula-lens', requireAuth, expressAdapter(tabulaLens));
+```
+
+## Frontend Integration
+
+Auth.js sessions are cookie-based. For same-origin Next.js API routes, the browser sends the session cookie automatically — no `Authorization` header is needed:
+
+```tsx
+'use client';
+import { useSession } from 'next-auth/react';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+export function TabulaLensViewer() {
+  const { data: session, status } = useSession();
+
+  if (status === 'loading') return <div>Loading...</div>;
+  if (!session) return <div>Sign in to view data</div>;
+
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      getAuthHeaders={async () => ({})}
+    />
+  );
+}
+```
+
+### Cross-Origin Requests
+
+If your frontend and backend are on different origins, cookies won't be forwarded automatically. Expose the OAuth access token through the session and pass it as a Bearer token:
+
+```typescript
+// auth.ts — store the OAuth access token in the session
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  providers: [GitHub],
+  callbacks: {
+    async jwt({ token, account }) {
+      if (account) token.accessToken = account.access_token;
+      return token;
+    },
+    async session({ session, token }) {
+      session.accessToken = token.accessToken as string;
+      return session;
+    },
+  },
+});
+```
+
+```tsx
+// Use the stored token in getAuthHeaders
+<DatabaseViewer
+  path="/api/tabula-lens"
+  getAuthHeaders={async () => ({
+    Authorization: `Bearer ${session.accessToken}`,
+  })}
+/>
+```
+
+## Important Notes
+
+- **Session cookies are HttpOnly** — client-side JavaScript cannot read the raw JWT. Use the `session` callback to expose only what you need.
+- **Same-origin routes need no headers.** Pass `getAuthHeaders={async () => ({})}` and the browser handles cookies automatically.
+- **`AUTH_SECRET` is required in production.** Run `npx auth secret` to generate one; the app will throw at startup if it's missing.
+- **v5 breaking change:** Configuration now lives in a root `auth.ts` file. The v4 pattern of exporting `authOptions` from the API route is no longer used — update your imports to `@/auth` accordingly.
+- **`auth()` must import from your local `@/auth`**, not directly from `next-auth`. The local export carries your providers and callbacks configuration.
+
+## Troubleshooting
+
+**401 returned even when signed in**
+
+Confirm the `auth()` call in your route handler imports from `@/auth` (your local config), not from `next-auth` directly. Importing from `next-auth` bypasses your configuration and the session won't be found.
+
+**`session.accessToken` is undefined**
+
+Add the `jwt` and `session` callbacks to your `auth.ts` as shown in the cross-origin section above. Without them, `account.access_token` is never persisted to the session.
+
+**Express: `getSession` returns `null`**
+
+Ensure `app.set('trust proxy', true)` is set before any middleware. Without it, Auth.js may not be able to read cookies when the app is behind a load balancer or reverse proxy.

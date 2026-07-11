@@ -1,0 +1,23 @@
+# robots.txt for Tabula Lens Documentation
+
+User-agent: *
+Allow: /
+
+# Disallow common development and staging paths
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+
+# Allow search engines to crawl the documentation
+Allow: /quick-start/
+Allow: /user-guides/
+Allow: /api/
+Allow: /contributor-docs/
+Allow: /contributing/
+Allow: /accessibility/
+
+# Sitemap location
+Sitemap: https://docs.tabula-lens.dev/sitemap-index.xml
+
+# Crawl-delay (optional, respect server resources)
+Crawl-delay: 1

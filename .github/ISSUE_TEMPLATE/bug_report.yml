@@ -104,10 +104,33 @@ body:
     validations:
       required: true
 
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What type of issue is this?
+      options:
+        - Code bug
+        - Documentation issue
+        - Both code and documentation
+      default: 0
+    validations:
+      required: true
+
   - type: textarea
     id: additional
     attributes:
       label: Additional Context
       description: Any other context, screenshots, or error messages
+    validations:
+      required: false
+
+  - type: textarea
+    id: documentation-details
+    attributes:
+      label: Documentation Details (if applicable)
+      description: If this is a documentation issue, please describe the documentation problem
+      placeholder: What documentation is incorrect or missing?
+      render: markdown
     validations:
       required: false

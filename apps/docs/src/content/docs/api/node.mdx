@@ -1,0 +1,643 @@
+---
+title: Node API
+description: Complete API reference for the @tabula-lens/node package.
+---
+
+# Node API Reference
+
+Complete API reference for the `@tabula-lens/node` package.
+
+## Installation
+
+```bash
+npm install @tabula-lens/node
+```
+
+> 💡 **Quick Reference**: For a quick start guide and basic usage examples, check out the [@tabula-lens/node README](https://github.com/Atsytec/tabula-lens/blob/main/packages/node/README.md).
+
+## TabulaLens Class
+
+The main class for backend database querying and HTTP API implementation.
+
+### Constructor
+
+```typescript
+new TabulaLens(databaseUrl: string, options?: TabulaLensOptions)
+```
+
+Creates a new TabulaLens instance with the specified database connection and options.
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `databaseUrl` | `string` | Yes | PostgreSQL connection string |
+| `options` | `TabulaLensOptions` | No | Configuration options |
+
+#### TabulaLensOptions
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `logger` | `Logger` | - | Custom logger instance (if not provided, default logger is created) |
+| `logLevel` | `LogLevel` | - | Log level: `'error' \| 'warn' \| 'info' \| 'debug' \| 'silent'` |
+| `enableQueryLogging` | `boolean` | `true` | Enable query-level logging |
+| `enableRequestLogging` | `boolean` | `true` | Enable request-level logging |
+| `sensitiveDataMasking` | `boolean` | `true` | Mask sensitive data (like database URLs) in logs |
+| `logFormat` | `'json' \| 'text' \| 'pretty'` | - | Log output format |
+
+#### Example
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens('postgresql://user:password@localhost:5432/mydb', {
+  logLevel: 'info',
+  enableQueryLogging: true,
+  enableRequestLogging: true,
+  sensitiveDataMasking: true,
+  logFormat: 'pretty'
+});
+```
+
+### Methods
+
+#### query
+
+```typescript
+async query(options: QueryOptions): Promise<QueryResult>
+```
+
+Executes a database query based on the provided parameters.
+
+#### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `table` | `string` | No | `'users'` | Table name to query |
+| `page` | `number` | No | `1` | Page number (1-indexed) |
+| `limit` | `number` | No | `10` | Number of rows per page |
+| `sort` | `string` | No | - | Sort specification (format: `column:direction,column:direction`) |
+| `filter` | `string` | No | - | Filter string for searching across text columns |
+| `columns` | `string[]` | No | - | Specific columns to return |
+| `filterColumns` | `string[]` | No | - | Specific columns to filter (comma-separated) |
+
+#### Returns
+
+`Promise<QueryResult>` - The query result containing data and metadata.
+
+#### QueryResult
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `data` | `Record<string, unknown>[]` | Array of data records |
+| `columns` | `string[]` | Array of column names |
+| `pagination` | `object` | Pagination metadata |
+| `pagination.page` | `number` | Current page number |
+| `pagination.limit` | `number` | Number of records per page |
+| `pagination.total` | `number` | Total number of records |
+| `pagination.totalPages` | `number` | Total number of pages |
+
+#### Example
+
+```typescript
+const result = await tabulaLens.query({
+  table: 'users',
+  page: 1,
+  limit: 25,
+  filter: 'john',
+  filterColumns: ['name', 'email'],
+  sort: 'created_at:desc',
+  columns: ['id', 'name', 'email', 'created_at']
+});
+
+console.log(result.data);
+console.log(result.pagination);
+```
+
+#### handle
+
+```typescript
+async handle(context: RequestContext): Promise<ResponseContext>
+```
+
+Handles an HTTP request and returns a response context. This is the main method used by framework adapters.
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `context` | `RequestContext` | Yes | HTTP request context |
+
+#### RequestContext
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `method` | `string` | HTTP method (GET, POST, etc.) |
+| `path` | `string` | Request path |
+| `query` | `Record<string, string>` | Query parameters |
+| `body` | `unknown` | Request body (optional) |
+
+#### Returns
+
+`Promise<ResponseContext>` - HTTP response context.
+
+#### ResponseContext
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `number` | HTTP status code |
+| `headers` | `Record<string, string>` | Response headers |
+| `body` | `unknown` | Response body |
+
+#### Example
+
+```typescript
+// Query data — path must be '/query' (the subpath after the mount point)
+const response = await tabulaLens.handle({
+  method: 'GET',
+  path: '/query',
+  query: { table: 'users', page: '1', limit: '25' }
+});
+console.log(response.status); // 200
+console.log(response.body); // Query result data
+
+// List tables
+const tablesResponse = await tabulaLens.handle({
+  method: 'GET',
+  path: '/tables',
+  query: {}
+});
+console.log(tablesResponse.body); // ['users', 'products', ...]
+```
+
+#### getLogger
+
+```typescript
+getLogger(): Logger
+```
+
+Returns the logger instance used by this TabulaLens instance.
+
+#### Returns
+
+`Logger` - The logger instance.
+
+#### Example
+
+```typescript
+const logger = tabulaLens.getLogger();
+logger.info('Custom log message', { customData: 'value' });
+```
+
+#### getTables
+
+```typescript
+async getTables(): Promise<string[]>
+```
+
+Returns a list of all tables in the database.
+
+#### Returns
+
+`Promise<string[]>` - Array of table names.
+
+#### Example
+
+```typescript
+const tables = await tabulaLens.getTables();
+console.log('Available tables:', tables);
+```
+
+#### getFilterableColumns
+
+```typescript
+async getFilterableColumns(table: string): Promise<string[]>
+```
+
+Returns a list of text-based columns that can be used for filtering in the specified table.
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `table` | `string` | Yes | Table name |
+
+#### Returns
+
+`Promise<string[]>` - Array of filterable column names.
+
+#### Example
+
+```typescript
+const filterableColumns = await tabulaLens.getFilterableColumns('users');
+console.log('Filterable columns:', filterableColumns);
+// Output: ['name', 'email', 'status', ...]
+```
+
+## TabulaLensError Class
+
+Custom error class for Tabula Lens-specific errors.
+
+### Constructor
+
+```typescript
+constructor(statusCode: number, code: string, message: string, details?: unknown)
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `statusCode` | `number` | Yes | HTTP status code |
+| `code` | `string` | Yes | Machine-readable error code |
+| `message` | `string` | Yes | Human-readable error message |
+| `details` | `unknown` | No | Additional error details |
+
+#### Example
+
+```typescript
+import { TabulaLensError } from '@tabula-lens/node';
+
+throw new TabulaLensError(
+  404,
+  'TABLE_NOT_FOUND',
+  'Table does not exist',
+  { table: 'users' }
+);
+```
+
+## Logger API
+
+### Logger Interface
+
+```typescript
+interface Logger {
+  error(message: string, context?: LogContext): void;
+  warn(message: string, context?: LogContext): void;
+  info(message: string, context?: LogContext): void;
+  debug(message: string, context?: LogContext): void;
+}
+```
+
+### LogContext
+
+```typescript
+interface LogContext {
+  component?: string;
+  operation?: string;
+  requestId?: string;
+  userId?: string;
+  table?: string;
+  query?: Record<string, unknown>;
+  error?: Error | string;
+  stack?: string;
+  timestamp?: string;
+  [key: string]: unknown;
+}
+```
+
+### LogLevel
+
+```typescript
+type LogLevel = 'error' | 'warn' | 'info' | 'debug' | 'silent';
+```
+
+### LoggerOptions
+
+```typescript
+interface LoggerOptions {
+  level?: LogLevel;
+  includeStack?: boolean;
+  includeTimestamp?: boolean;
+  colorize?: boolean;
+  format?: 'json' | 'text' | 'pretty';
+}
+```
+
+### createLogger
+
+```typescript
+function createLogger(options?: LoggerOptions): Logger
+```
+
+Creates a new logger instance with the specified options.
+
+#### Example
+
+```typescript
+import { createLogger } from '@tabula-lens/node';
+
+const logger = createLogger({
+  level: 'debug',
+  format: 'pretty',
+  colorize: true,
+  includeTimestamp: true,
+  includeStack: false
+});
+
+logger.info('Application started', { port: 3000 });
+```
+
+### generateId
+
+```typescript
+function generateId(): string
+```
+
+Generates a unique ID for request tracking.
+
+#### Returns
+
+`string` - A unique identifier.
+
+#### Example
+
+```typescript
+import { generateId } from '@tabula-lens/node';
+
+const requestId = generateId();
+console.log(requestId); // e.g., "a1b2c3d4"
+```
+
+### maskSensitiveData
+
+```typescript
+function maskSensitiveData(data: string): string
+```
+
+Masks sensitive data (like database connection strings) for logging.
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `data` | `string` | Yes | Data to mask |
+
+#### Returns
+
+`string` - Masked data.
+
+#### Example
+
+```typescript
+import { maskSensitiveData } from '@tabula-lens/node';
+
+const connectionString = 'postgresql://user:password@localhost:5432/mydb';
+const masked = maskSensitiveData(connectionString);
+console.log(masked); // "postgresql://user:****@localhost:5432/mydb"
+```
+
+## Framework Adapters
+
+Tabula Lens provides adapters for 15+ Node.js frameworks. Each adapter implements the HTTP API contract using framework-specific patterns.
+
+### Express Adapter (5.x+)
+
+```typescript
+import express from 'express';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Mount at /api/tabula-lens — sub-routes (/query, /tables, /tables/:table) are handled internally
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
+
+app.listen(3000);
+```
+
+### Express 4.x Adapter
+
+```typescript
+import express from 'express';
+import { TabulaLens, express4Adapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+app.use('/api/tabula-lens', express4Adapter(tabulaLens));
+
+app.listen(3000);
+```
+
+### Fastify Adapter
+
+```typescript
+import Fastify from 'fastify';
+import { TabulaLens, fastifyAdapter } from '@tabula-lens/node';
+
+const fastify = Fastify();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+fastify.all('/api/tabula-lens/*', fastifyAdapter(tabulaLens));
+
+fastify.listen({ port: 3000 });
+```
+
+### Koa Adapter
+
+```typescript
+import Koa from 'koa';
+import { TabulaLens, koaAdapter } from '@tabula-lens/node';
+
+const app = new Koa();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Koa adapter passes ctx.path directly to handle(), so you need to mount
+// it via a router or filter by path prefix in middleware
+app.use(koaAdapter(tabulaLens));
+
+app.listen(3000);
+```
+
+### Hapi Adapter
+
+```typescript
+import Hapi from '@hapi/hapi';
+import { TabulaLens, hapiAdapter } from '@tabula-lens/node';
+
+const server = Hapi.server({ port: 3000 });
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+server.route({
+  method: 'GET',
+  path: '/api/tabula-lens/{path*}',
+  handler: hapiAdapter(tabulaLens),
+});
+
+await server.start();
+```
+
+### Restify Adapter
+
+```typescript
+import restify from 'restify';
+import { TabulaLens, restifyAdapter } from '@tabula-lens/node';
+
+const server = restify.createServer();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+server.get('/api/tabula-lens/*', restifyAdapter(tabulaLens));
+
+server.listen(3000);
+```
+
+### Next.js Adapter
+
+```typescript
+// app/api/tabula-lens/[...path]/route.ts  (App Router)
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createNextRouteHandler(tabulaLens);
+
+export { handler as GET };
+```
+
+### TanStack Start Adapter
+
+```typescript
+import { TabulaLens, createTanStackStartHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createTanStackStartHandler(tabulaLens);
+
+export const APIRoute = createAPIFileRoute('/api/tabula-lens/$')({
+  GET: ({ request }) => handler(request),
+});
+```
+
+### Remix Adapter
+
+```typescript
+// app/routes/api.tabula-lens.$.ts
+import { TabulaLens, createRemixHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createRemixHandler(tabulaLens);
+
+export const loader = ({ request }: { request: Request }) => handler(request);
+```
+
+### SvelteKit Adapter
+
+```typescript
+// src/routes/api/tabula-lens/[...path]/+server.ts
+import { TabulaLens, createSvelteKitHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createSvelteKitHandler(tabulaLens);
+
+export const GET = (event: { request: Request; url: URL }) => handler(event);
+```
+
+### Hono Adapter
+
+```typescript
+import { Hono } from 'hono';
+import { TabulaLens, createHonoMiddleware } from '@tabula-lens/node';
+
+const app = new Hono();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+app.all('/api/tabula-lens/*', createHonoMiddleware(tabulaLens));
+
+export default app;
+```
+
+### Elysia Adapter
+
+```typescript
+import { Elysia } from 'elysia';
+import { TabulaLens, createElysiaHandler } from '@tabula-lens/node';
+
+const app = new Elysia();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+app.all('/api/tabula-lens/*', createElysiaHandler(tabulaLens));
+
+app.listen(3000);
+```
+
+### Fresh Adapter
+
+```typescript
+// routes/api/tabula-lens/[...path].ts
+import { TabulaLens, createFreshHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createFreshHandler(tabulaLens);
+
+export const handlers = { GET: (req: Request) => handler(req) };
+```
+
+### Native Adapter
+
+```typescript
+import http from 'http';
+import { TabulaLens, nativeAdapter } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = nativeAdapter(tabulaLens);
+
+http.createServer(handler).listen(3000);
+```
+
+## Supported Frameworks
+
+- **Traditional**: Express (4.x & 5.x), Fastify, Koa, Hapi, Restify
+- **Modern**: Next.js, TanStack Start, Remix, SvelteKit
+- **Edge**: Hono, Elysia, Fresh
+- **Native**: Native adapter for custom implementations
+
+## Type Exports
+
+```typescript
+export type {
+  QueryOptions,
+  QueryResult,
+  RequestContext,
+  ResponseContext,
+  SortOption,
+  FilterOption,
+  TabulaLensOptions,
+  Logger,
+  LogContext,
+  LogLevel,
+  LoggerOptions
+};
+```
+
+## Complete Example
+
+```typescript
+import { TabulaLens, expressAdapter, createLogger } from '@tabula-lens/node';
+import express from 'express';
+
+// Create custom logger
+const logger = createLogger({
+  level: 'info',
+  format: 'pretty',
+  colorize: true
+});
+
+// Initialize TabulaLens
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger,
+  enableQueryLogging: true,
+  enableRequestLogging: true,
+  sensitiveDataMasking: true,
+  logFormat: 'pretty'
+});
+
+// Create Express app
+const app = express();
+
+// Add Tabula Lens endpoint (handles /query, /tables, /tables/:table sub-routes)
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
+
+// Start server
+app.listen(3000, () => {
+  logger.info('Server started', { port: 3000 });
+});
+```

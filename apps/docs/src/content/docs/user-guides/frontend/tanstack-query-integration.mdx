@@ -1,0 +1,666 @@
+---
+title: TanStack Query Integration
+description: Learn how to integrate TanStack Query with Tabula Lens for advanced data fetching and caching.
+---
+
+# TanStack Query Integration
+
+TanStack Query (formerly React Query) provides powerful data fetching and caching capabilities. This guide shows how to integrate TanStack Query with Tabula Lens for advanced data management, caching strategies, and performance optimization.
+
+## Installation
+
+First, install TanStack Query:
+
+```bash
+npm install @tanstack/react-query
+# or
+pnpm add @tanstack/react-query
+# or
+yarn add @tanstack/react-query
+```
+
+## Basic Setup
+
+### Query Client Provider
+
+Wrap your application with the QueryClientProvider:
+
+```tsx
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <DatabaseViewer path="/api/tabula-lens" />
+    </QueryClientProvider>
+  );
+}
+```
+
+## Data Fetching Patterns
+
+### Basic Query Hook
+
+Create a custom hook for fetching database data:
+
+```tsx
+import { useQuery } from '@tanstack/react-query';
+
+interface QueryResult {
+  columns: string[];
+  rows: Record<string, unknown>[];
+  total: number;
+}
+
+function useDatabaseQuery(table: string, page: number, pageSize: number) {
+  return useQuery({
+    queryKey: ['database', table, page, pageSize],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/tabula-lens?table=${table}&page=${page}&page_size=${pageSize}`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch data');
+      }
+      return response.json() as Promise<QueryResult>;
+    },
+  });
+}
+```
+
+### Advanced Query with Parameters
+
+```tsx
+import { useQuery } from '@tanstack/react-query';
+
+interface DatabaseParams {
+  table: string;
+  page: number;
+  pageSize: number;
+  sort?: { column: string; direction: 'asc' | 'desc' };
+  filter?: string;
+}
+
+function useAdvancedDatabaseQuery(params: DatabaseParams) {
+  const queryParams = new URLSearchParams({
+    table: params.table,
+    page: params.page.toString(),
+    page_size: params.pageSize.toString(),
+    ...(params.sort && {
+      sort_column: params.sort.column,
+      sort_direction: params.sort.direction,
+    }),
+    ...(params.filter && { filter: params.filter }),
+  });
+
+  return useQuery({
+    queryKey: ['database', params],
+    queryFn: async () => {
+      const response = await fetch(`/api/tabula-lens?${queryParams}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch data');
+      }
+      return response.json() as Promise<QueryResult>;
+    },
+  });
+}
+```
+
+## Caching Strategies
+
+### Stale Time Configuration
+
+Configure how long data remains fresh:
+
+```tsx
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+    },
+  },
+});
+```
+
+### Per-Query Caching
+
+Configure caching for specific queries:
+
+```tsx
+function useDatabaseQuery(table: string) {
+  return useQuery({
+    queryKey: ['database', table],
+    queryFn: fetchDatabaseData,
+    staleTime: 2 * 60 * 1000, // 2 minutes for this specific query
+    cacheTime: 5 * 60 * 1000, // 5 minutes cache time
+  });
+}
+```
+
+### Cache Invalidation
+
+Invalidate cache when data changes:
+
+```tsx
+import { useQueryClient } from '@tanstack/react-query';
+
+function DataUpdater() {
+  const queryClient = useQueryClient();
+
+  const updateData = async (newData: unknown) => {
+    await fetch('/api/update-data', {
+      method: 'POST',
+      body: JSON.stringify(newData),
+    });
+
+    // Invalidate specific query
+    queryClient.invalidateQueries({ queryKey: ['database', 'users'] });
+
+    // Invalidate all database queries
+    queryClient.invalidateQueries({ queryKey: ['database'] });
+  };
+
+  return <button onClick={() => updateData({})}>Update Data</button>;
+}
+```
+
+### Prefetching Data
+
+Prefetch data for better user experience:
+
+```tsx
+import { useQueryClient } from '@tanstack/react-query';
+
+function TableSelector() {
+  const queryClient = useQueryClient();
+
+  const handleTableHover = (table: string) => {
+    // Prefetch data when user hovers over table
+    queryClient.prefetchQuery({
+      queryKey: ['database', table, 1, 20],
+      queryFn: () => fetchDatabaseData(table, 1, 20),
+    });
+  };
+
+  return (
+    <div>
+      {['users', 'products', 'orders'].map((table) => (
+        <div
+          key={table}
+          onMouseEnter={() => handleTableHover(table)}
+        >
+          {table}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## Query Invalidation Examples
+
+### Manual Invalidation
+
+```tsx
+import { useQueryClient } from '@tanstack/react-query';
+
+function DataEditor() {
+  const queryClient = useQueryClient();
+
+  const handleSave = async () => {
+    await saveData();
+
+    // Invalidate specific table query
+    queryClient.invalidateQueries({
+      queryKey: ['database', 'users'],
+    });
+
+    // Invalidate with filters
+    queryClient.invalidateQueries({
+      queryKey: ['database', 'users', { filter: 'active' }],
+    });
+  };
+
+  return <button onClick={handleSave}>Save</button>;
+}
+```
+
+### Automatic Invalidation
+
+```tsx
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+function useUpdateData() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateData,
+    onSuccess: () => {
+      // Automatically invalidate on success
+      queryClient.invalidateQueries({ queryKey: ['database'] });
+    },
+  });
+}
+```
+
+### Conditional Invalidation
+
+```tsx
+import { useQueryClient } from '@tanstack/react-query';
+
+function SmartInvalidator() {
+  const queryClient = useQueryClient();
+
+  const handleUpdate = async (table: string) => {
+    await updateTableData(table);
+
+    // Only invalidate if the query is currently active
+    queryClient.invalidateQueries({
+      queryKey: ['database', table],
+      refetchType: 'active',
+    });
+  };
+
+  return <button onClick={() => handleUpdate('users')}>Update Users</button>;
+}
+```
+
+## Error Handling
+
+### Global Error Handling
+
+Configure global error handling:
+
+```tsx
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        // Don't retry on 404 errors
+        if (error instanceof Error && error.message.includes('404')) {
+          return false;
+        }
+        // Retry up to 3 times
+        return failureCount < 3;
+      },
+      onError: (error) => {
+        console.error('Query error:', error);
+      },
+    },
+  },
+});
+```
+
+### Per-Query Error Handling
+
+```tsx
+function useDatabaseQuery(table: string) {
+  return useQuery({
+    queryKey: ['database', table],
+    queryFn: fetchDatabaseData,
+    retry: 2,
+    onError: (error) => {
+      // Handle specific query errors
+      if (error instanceof Error) {
+        console.error(`Failed to fetch ${table}:`, error.message);
+      }
+    },
+  });
+}
+```
+
+### Error Boundaries
+
+Use error boundaries for graceful error handling:
+
+```tsx
+import { ErrorBoundary } from 'react-error-boundary';
+
+function ErrorFallback({ error }: { error: Error }) {
+  return (
+    <div className="error-fallback">
+      <h2>Something went wrong</h2>
+      <p>{error.message}</p>
+      <button onClick={() => window.location.reload()}>Reload</button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <DatabaseViewer path="/api/tabula-lens" />
+      </ErrorBoundary>
+    </QueryClientProvider>
+  );
+}
+```
+
+## Performance Optimization
+
+### Query Deduplication
+
+TanStack Query automatically deduplicates identical queries:
+
+```tsx
+// These will be deduplicated into a single request
+function Component1() {
+  useQuery({ queryKey: ['database', 'users'], queryFn: fetchUsers });
+}
+
+function Component2() {
+  useQuery({ queryKey: ['database', 'users'], queryFn: fetchUsers });
+}
+```
+
+### Background Refetching
+
+Configure background refetching for fresh data:
+
+```tsx
+function useDatabaseQuery(table: string) {
+  return useQuery({
+    queryKey: ['database', table],
+    queryFn: fetchDatabaseData,
+    refetchInterval: 60 * 1000, // Refetch every minute
+    refetchIntervalInBackground: true, // Continue refetching when tab is inactive
+  });
+}
+```
+
+### Selective Updates
+
+Use `select` to transform data without affecting cache:
+
+```tsx
+function useDatabaseQuery(table: string) {
+  return useQuery({
+    queryKey: ['database', table],
+    queryFn: fetchDatabaseData,
+    select: (data) => ({
+      ...data,
+      rows: data.rows.map(row => ({
+        ...row,
+        formatted: formatRow(row),
+      })),
+    }),
+  });
+}
+```
+
+### Pagination Optimization
+
+Optimize pagination with proper query keys:
+
+```tsx
+function usePaginatedQuery(table: string, page: number, pageSize: number) {
+  return useQuery({
+    queryKey: ['database', table, 'page', page, 'pageSize', pageSize],
+    queryFn: () => fetchDatabaseData(table, page, pageSize),
+    keepPreviousData: true, // Keep previous data while fetching new page
+  });
+}
+```
+
+## Advanced Patterns
+
+### Infinite Queries
+
+Implement infinite scrolling with infinite queries:
+
+```tsx
+import { useInfiniteQuery } from '@tanstack/react-query';
+
+function useInfiniteDatabaseQuery(table: string) {
+  return useInfiniteQuery({
+    queryKey: ['database', table, 'infinite'],
+    queryFn: ({ pageParam = 1 }) =>
+      fetchDatabaseData(table, pageParam, 20),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.rows.length < 20) return undefined;
+      return allPages.length + 1;
+    },
+  });
+}
+
+function InfiniteDatabaseViewer() {
+  const { data, fetchNextPage, hasNextPage, isFetching } =
+    useInfiniteDatabaseQuery('users');
+
+  return (
+    <div>
+      {data?.pages.map((page, i) => (
+        <DataTable key={i} data={page} />
+      ))}
+      {hasNextPage && (
+        <button
+          onClick={() => fetchNextPage()}
+          disabled={isFetching}
+        >
+          {isFetching ? 'Loading...' : 'Load More'}
+        </button>
+      )}
+    </div>
+  );
+}
+```
+
+### Parallel Queries
+
+Fetch multiple tables in parallel:
+
+```tsx
+import { useQuery } from '@tanstack/react-query';
+
+function useMultipleTables(tables: string[]) {
+  const queries = tables.map((table) =>
+    useQuery({
+      queryKey: ['database', table],
+      queryFn: () => fetchDatabaseData(table),
+    })
+  );
+
+  return {
+    data: queries.map((q) => q.data),
+    isLoading: queries.some((q) => q.isLoading),
+    error: queries.find((q) => q.error)?.error,
+  };
+}
+```
+
+### Dependent Queries
+
+Execute queries based on previous query results:
+
+```tsx
+import { useQuery } from '@tanstack/react-query';
+
+function useDependentQuery(table: string) {
+  // First query: get table metadata
+  const metadataQuery = useQuery({
+    queryKey: ['database', table, 'metadata'],
+    queryFn: () => fetchTableMetadata(table),
+  });
+
+  // Second query: only runs if first query succeeds
+  const dataQuery = useQuery({
+    queryKey: ['database', table, 'data'],
+    queryFn: () => fetchDatabaseData(table),
+    enabled: !!metadataQuery.data, // Only run if metadata exists
+  });
+
+  return { metadata: metadataQuery.data, data: dataQuery.data };
+}
+```
+
+## Integration with DatabaseViewer
+
+### Custom Hook Integration
+
+Create a custom hook that integrates TanStack Query with DatabaseViewer:
+
+```tsx
+import { useQuery } from '@tanstack/react-query';
+import { useDatabaseData } from '@tabula-lens/react';
+
+function useDatabaseViewerQuery(path: string, table: string) {
+  const query = useQuery({
+    queryKey: ['database', table],
+    queryFn: async () => {
+      const response = await fetch(`${path}?table=${table}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch data');
+      }
+      return response.json();
+    },
+  });
+
+  // Use with DatabaseViewer's internal state management
+  const { data, loading, error } = useDatabaseData({
+    path,
+    table,
+  });
+
+  return {
+    data: query.data || data,
+    loading: query.isLoading || loading,
+    error: query.error || error,
+    refetch: query.refetch,
+  };
+}
+```
+
+### Hybrid Approach
+
+Combine TanStack Query with DatabaseViewer's built-in fetching:
+
+```tsx
+import { DatabaseViewer } from '@tabula-lens/react';
+import { useQueryClient } from '@tanstack/react-query';
+
+function EnhancedDatabaseViewer() {
+  const queryClient = useQueryClient();
+
+  const handleDataUpdate = async () => {
+    // Update data
+    await updateData();
+
+    // Invalidate TanStack Query cache
+    queryClient.invalidateQueries({ queryKey: ['database'] });
+
+    // DatabaseViewer will automatically refetch
+  };
+
+  return (
+    <div>
+      <DatabaseViewer path="/api/tabula-lens" />
+      <button onClick={handleDataUpdate}>Update Data</button>
+    </div>
+  );
+}
+```
+
+## Testing
+
+### Testing with React Query
+
+Test components that use TanStack Query:
+
+```tsx
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useDatabaseQuery } from './useDatabaseQuery';
+
+describe('useDatabaseQuery', () => {
+  it('fetches data successfully', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useDatabaseQuery('users'), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toBeDefined();
+  });
+});
+```
+
+## Best Practices
+
+1. **Query Keys**: Use consistent, hierarchical query keys
+2. **Stale Time**: Configure appropriate stale times for your use case
+3. **Error Handling**: Implement proper error handling and retry logic
+4. **Cache Invalidation**: Invalidate cache strategically, not excessively
+5. **Performance**: Use `keepPreviousData` for pagination to improve UX
+6. **Testing**: Test query hooks and components separately
+7. **Type Safety**: Use TypeScript for type-safe query results
+8. **Selective Updates**: Use `select` to transform data without affecting cache
+
+## Troubleshooting
+
+### Cache Not Updating
+
+If cache isn't updating as expected:
+
+```tsx
+// Force refetch
+queryClient.refetchQueries({ queryKey: ['database'] });
+
+// Clear cache completely
+queryClient.clear();
+```
+
+### Memory Leaks
+
+Prevent memory leaks with proper cleanup:
+
+```tsx
+useEffect(() => {
+  return () => {
+    queryClient.removeQueries({ queryKey: ['database'] });
+  };
+}, []);
+```
+
+### Network Issues
+
+Handle network issues gracefully:
+
+```tsx
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        if (error instanceof Error && error.message.includes('network')) {
+          return failureCount < 5; // Retry more times for network errors
+        }
+        return failureCount < 3;
+      },
+    },
+  },
+});
+```
+
+TanStack Query provides a powerful foundation for data fetching and caching. When combined with Tabula Lens, it enables sophisticated data management patterns while maintaining excellent performance and user experience.

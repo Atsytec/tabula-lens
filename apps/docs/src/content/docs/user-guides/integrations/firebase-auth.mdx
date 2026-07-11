@@ -1,0 +1,206 @@
+---
+title: Firebase Auth Integration
+description: Integrate Firebase Authentication with Tabula Lens to secure your database endpoints.
+---
+
+# Firebase Auth Integration
+
+[Firebase Authentication](https://firebase.google.com/docs/auth) provides backend services and SDKs for authenticating users with passwords, phone numbers, and popular federated providers. This guide shows how to verify Firebase ID tokens on your backend and pass them to the `DatabaseViewer` component via `getAuthHeaders`.
+
+## Prerequisites
+
+Install the Firebase Admin SDK on your backend and the Firebase client SDK on your frontend:
+
+```bash
+# Backend
+npm install firebase-admin
+
+# Frontend
+npm install firebase
+```
+
+You'll also need a Firebase project with Authentication enabled. Download the service account JSON from **Project Settings → Service Accounts → Generate new private key** and store the values as environment variables.
+
+Add these to your server environment:
+
+```bash
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxx@your-project.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+## Backend Setup
+
+### Firebase Admin Initialization
+
+Create a shared Admin SDK module. The `getApps().length` guard prevents duplicate initialization when module code is re-evaluated (common in Next.js development):
+
+```typescript
+// lib/firebase-admin.ts
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+
+if (!getApps().length) {
+  initializeApp({
+    credential: cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+  });
+}
+
+export { getAuth } from 'firebase-admin/auth';
+```
+
+### Next.js App Router
+
+Extract the Bearer token from the `Authorization` header and verify it with `getAuth().verifyIdToken()`:
+
+```typescript
+// app/api/tabula-lens/route.ts
+import { getAuth } from '@/lib/firebase-admin';
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+const handler = createNextRouteHandler(tabulaLens);
+
+export async function GET(request: Request) {
+  const authHeader = request.headers.get('authorization');
+
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  try {
+    await getAuth().verifyIdToken(authHeader.replace('Bearer ', ''));
+    return handler(request);
+  } catch {
+    return new Response('Invalid token', { status: 401 });
+  }
+}
+```
+
+### Express
+
+Apply a `firebaseAuth` middleware before the Tabula Lens adapter:
+
+```typescript
+import express from 'express';
+import { getAuth } from './lib/firebase-admin';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
+
+async function firebaseAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const decodedToken = await getAuth().verifyIdToken(authHeader.split('Bearer ')[1]);
+    req.user = decodedToken;
+    next();
+  } catch {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+}
+
+app.use('/api/tabula-lens', firebaseAuth, expressAdapter(tabulaLens));
+```
+
+## Frontend Integration
+
+### Firebase Client Setup
+
+Initialize the Firebase app and export the `auth` instance:
+
+```typescript
+// lib/firebase.ts
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+};
+
+export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+```
+
+### DatabaseViewer with react-firebase-hooks
+
+If you're using [`react-firebase-hooks`](https://github.com/CSFrequency/react-firebase-hooks), the `useAuthState` hook gives you the current user and loading state:
+
+```tsx
+'use client';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '@/lib/firebase';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+export function TabulaLensViewer() {
+  const [user, loading] = useAuthState(auth);
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <div>Sign in to view data</div>;
+
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      getAuthHeaders={async () => {
+        const idToken = await user.getIdToken();
+        return { Authorization: `Bearer ${idToken}` };
+      }}
+    />
+  );
+}
+```
+
+### DatabaseViewer without react-firebase-hooks
+
+Use `auth.currentUser` directly inside `getAuthHeaders` if you prefer not to add the extra dependency:
+
+```tsx
+'use client';
+import { auth } from '@/lib/firebase';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+export function TabulaLensViewer() {
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      getAuthHeaders={async () => {
+        const user = auth.currentUser;
+        if (!user) return {};
+        const idToken = await user.getIdToken();
+        return { Authorization: `Bearer ${idToken}` };
+      }}
+    />
+  );
+}
+```
+
+## Important Notes
+
+- **`getIdToken()` auto-refreshes expired tokens.** Firebase ID tokens are valid for 1 hour. Calling `user.getIdToken()` automatically fetches a fresh token if the current one expires within 5 minutes — you do not need to implement refresh logic yourself. Pass `true` (`user.getIdToken(true)`) to force an immediate refresh.
+- **Never commit your service account JSON file to version control.** Store the `projectId`, `clientEmail`, and `privateKey` as separate environment variables as shown above, or mount the JSON file via a secrets manager. The private key grants full Admin SDK access to your Firebase project.
+- **The Admin SDK must be initialized only once.** The `if (!getApps().length)` guard in `lib/firebase-admin.ts` prevents re-initialization in environments where modules can be re-evaluated (such as Next.js hot module replacement). Always use this pattern.
+- **`FIREBASE_PRIVATE_KEY` newline handling.** When stored as an environment variable, the `\n` characters in the PEM key are often escaped as literal `\\n`. The `.replace(/\\n/g, '\n')` call in the Admin setup restores them to real newlines that the SDK expects.
+
+## Troubleshooting
+
+**`verifyIdToken()` throws "Firebase ID token has expired"**
+
+The client is sending a stale token. Ensure `getIdToken()` is called inside `getAuthHeaders` on every request (not cached outside the callback). `getIdToken()` handles the refresh automatically when called fresh.
+
+**`verifyIdToken()` throws "Credential implementation provided to initializeApp() via the 'credential' property has insufficient permission"**
+
+The service account credentials are incorrect or missing. Double-check `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY` in your server environment, and confirm the private key's newline characters are restored correctly.
+
+**Firebase Admin SDK throws "The default Firebase app already exists" in development**
+
+Remove the `if (!getApps().length)` guard or ensure the Admin SDK module is only imported once. In Next.js, this typically means verifying that `lib/firebase-admin.ts` is not being initialized from multiple entry points.
