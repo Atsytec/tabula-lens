@@ -378,6 +378,15 @@ npm install @tabula-lens/react</pre>
       <a href="/api/react/" class="btn-secondary">API Reference</a>
     </div>
   </section>
+
+  <!-- ─── Feedback ─── -->
+  <section class="feedback" aria-labelledby="feedback-heading">
+    <h2 id="feedback-heading" class="sr-only">Documentation feedback</h2>
+    <p class="feedback-text">Found an issue with the documentation?</p>
+    <a href="https://github.com/Atsytec/tabula-lens/issues" class="feedback-link"
+      >Report an issue on GitHub</a
+    >
+  </section>
 </section>
 
 <style>
@@ -1020,6 +1029,32 @@ npm install @tabula-lens/react</pre>
     background: var(--sl-color-accent-low);
     text-decoration: none;
     color: var(--sl-color-accent-high);
+  }
+
+  /* ════════════════════════════════
+     FEEDBACK
+  ════════════════════════════════ */
+  .feedback {
+    padding: 2rem 0 1rem;
+    text-align: center;
+    border-top: 1px solid var(--sl-color-gray-5);
+  }
+
+  .feedback-text {
+    color: var(--sl-color-gray-3);
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .feedback-link {
+    color: var(--sl-color-accent);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .feedback-link:hover {
+    text-decoration: underline;
   }
 
   /* ── Screen reader only ── */

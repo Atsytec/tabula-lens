@@ -9,11 +9,12 @@ Disallow: /admin/
 Disallow: /private/
 
 # Allow search engines to crawl the documentation
-Allow: /docs/
-Allow: /guides/
-Allow: /api-reference/
-Allow: /concepts/
 Allow: /quick-start/
+Allow: /user-guides/
+Allow: /api/
+Allow: /contributor-docs/
+Allow: /contributing/
+Allow: /accessibility/
 
 # Sitemap location
 Sitemap: https://docs.tabula-lens.dev/sitemap-index.xml
