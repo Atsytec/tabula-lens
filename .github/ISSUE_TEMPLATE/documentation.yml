@@ -1,0 +1,117 @@
+name: Documentation
+description: Report a documentation issue or suggest an improvement
+title: '[DOCS] '
+labels: documentation
+assignees: ''
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Tabula Lens documentation! Please provide as much detail as possible.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Before submitting, please verify:
+      options:
+        - label: I have searched for existing documentation issues
+          required: true
+        - label: I have checked the current documentation for the topic
+          required: true
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation issue is this?
+      options:
+        - Incorrect information
+        - Missing information
+        - Unclear explanation
+        - Broken link
+        - Outdated content
+        - Code example issue
+        - Spelling/grammar error
+        - Accessibility issue
+        - New content suggestion
+        - Other
+      default: 0
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of the documentation issue
+      placeholder: What documentation needs to be improved?
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Location
+      description: Where is the issue located? (Please provide the URL or page name)
+      placeholder: https://docs.tabula-lens.dev/user-guides/frontend/frontend-implementation
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-content
+    attributes:
+      label: Current Content
+      description: What does the current documentation say?
+      placeholder: Copy the current content here...
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggested-content
+    attributes:
+      label: Suggested Content
+      description: What should the documentation say instead?
+      placeholder: Provide your suggested improvement...
+    validations:
+      required: false
+
+  - type: textarea
+    id: code-example
+    attributes:
+      label: Code Example Issue (if applicable)
+      description: If this is about a code example, please describe the issue
+      placeholder: The code example doesn't work because...
+    validations:
+      required: false
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: How would you like to see this fixed?
+      placeholder: Add more explanation, fix the code example, add a diagram...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other context, screenshots, or related information
+      placeholder: Add any other relevant information...
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Would you like to contribute a fix?
+      options:
+        - label: Yes, I'd like to submit a PR for this
+          required: false
+        - label: Yes, but I need guidance on how to fix it
+          required: false
+        - label: No, I'm just reporting the issue
+          required: false

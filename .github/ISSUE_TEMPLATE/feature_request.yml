@@ -9,6 +9,19 @@ body:
       value: |
         Thanks for suggesting a feature! Please describe your idea in detail.
 
+  - type: dropdown
+    id: feature-type
+    attributes:
+      label: Feature Type
+      description: What type of feature is this?
+      options:
+        - Code feature (React/Node package)
+        - Documentation improvement
+        - Both code and documentation
+      default: 0
+    validations:
+      required: true
+
   - type: checkboxes
     id: prerequisites
     attributes:
@@ -59,5 +72,15 @@ body:
     attributes:
       label: Additional Context
       description: Any other context, screenshots, or examples
+    validations:
+      required: false
+
+  - type: textarea
+    id: documentation-details
+    attributes:
+      label: Documentation Details (if applicable)
+      description: If this is a documentation feature, what content needs to be added or improved?
+      placeholder: What documentation should be created or updated?
+      render: markdown
     validations:
       required: false

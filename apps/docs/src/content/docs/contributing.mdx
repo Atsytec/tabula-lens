@@ -1,0 +1,428 @@
+---
+title: Contributing to Documentation
+description: Learn how to contribute to Tabula Lens documentation
+sidebar:
+  order: 1
+  label: Contributing
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+# Contributing to Documentation
+
+Thank you for your interest in improving Tabula Lens documentation! This guide will help you understand how to contribute effectively to our documentation.
+
+## Documentation as Code
+
+At Tabula Lens, we treat documentation as first-class code. **No feature is considered complete without documentation.** This principle ensures that:
+
+- Users always have up-to-date information
+- Documentation stays in sync with code changes
+- Contributors understand the importance of clear documentation
+- We maintain high quality standards for all content
+
+## Documentation Philosophy
+
+We follow the **Diataxis framework** for documentation structure, which divides content into four categories:
+
+- **Tutorials**: Learning-oriented lessons for beginners
+- **How-to Guides**: Problem-oriented practical guides
+- **Explanation**: Understanding-oriented conceptual content
+- **Reference**: Information-oriented technical reference
+
+Each type of content serves a different purpose and audience. Understanding when to use each type is key to creating effective documentation.
+
+## Quick Start for Documentation Contributors
+
+### Prerequisites
+
+- Node.js 22.x or higher
+- pnpm 9.x or higher
+- Git
+- Basic familiarity with Markdown and MDX
+
+### Development Setup
+
+1. **Fork the repository** on GitHub
+2. **Clone your fork:**
+
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/tabula-lens.git
+   cd tabula-lens
+   ```
+
+3. **Install dependencies:**
+
+   ```bash
+   pnpm install
+   ```
+
+4. **Navigate to the docs app:**
+
+   ```bash
+   cd apps/docs
+   ```
+
+5. **Start the development server:**
+
+   ```bash
+   pnpm dev
+   ```
+
+   The documentation site will be available at `http://localhost:4321`
+
+## Documentation Structure
+
+Our documentation is organized in `apps/docs/src/content/docs/` with the following structure:
+
+```
+docs/
+├── quick-start/           # Getting started tutorials
+├── user-guides/          # How-to guides for users
+│   ├── frontend/        # Frontend implementation guides
+│   ├── backend/         # Backend implementation guides
+│   ├── integrations/    # Integration guides
+│   └── production/      # Production deployment guides
+├── api/                 # API reference documentation
+│   ├── react.mdx       # React package API
+│   ├── node.mdx        # Node package API
+│   └── http.mdx        # HTTP API reference
+└── contributor-docs/   # Contributor documentation
+    ├── architecture/   # System architecture
+    ├── component-architecture/ # Component architecture
+    ├── internal-systems/ # Internal systems
+    ├── performance-scaling/ # Performance and scaling
+    └── security/       # Security documentation
+```
+
+## Writing Guidelines
+
+### Diataxis Framework Usage
+
+#### Tutorials
+
+**Purpose**: Step-by-step lessons for beginners
+**Characteristics**:
+- Linear, step-by-step approach
+- Minimal decisions required
+- Concrete examples
+- No explanation of underlying concepts
+- Assumes no prior knowledge
+
+**When to use**: Getting started guides, initial setup tutorials
+
+**Example**: Quick Start tutorial that walks through setting up a full-stack application
+
+#### How-to Guides
+
+**Purpose**: Problem-oriented practical guides
+**Characteristics**:
+- Solve specific problems
+- Assume some knowledge
+- Can be read in any order
+- Practical and focused
+- Include variations and options
+
+**When to use**: Implementation guides, configuration examples, troubleshooting
+
+**Example**: "How to implement JWT authentication" or "How to customize component styling"
+
+#### Explanation
+
+**Purpose**: Understanding-oriented conceptual content
+**Characteristics**:
+- Explain "why" and "how it works"
+- Context and background
+- No step-by-step instructions
+- Explore different approaches
+- Discuss trade-offs
+
+**When to use**: Architecture explanations, security models, performance characteristics
+
+**Example**: "Security architecture" or "Caching strategies"
+
+#### Reference
+
+**Purpose**: Information-oriented technical reference
+**Characteristics**:
+- Formal and structured
+- No explanation or context
+- Comprehensive and accurate
+- Code-focused
+- Look-up oriented
+
+**When to use**: API documentation, configuration options, error codes
+
+**Example**: API reference pages, configuration parameter documentation
+
+### Writing Style Guide
+
+#### Voice and Tone
+
+- **Be direct and concise**: Get to the point quickly
+- **Use active voice**: "Configure the server" not "The server should be configured"
+- **Address the reader**: Use "you" to make it personal
+- **Be consistent**: Use the same terminology throughout
+- **Avoid jargon**: Explain technical terms when first used
+
+#### Structure
+
+- **Start with a clear introduction**: Explain what the page covers
+- **Use headings**: Break up content with descriptive headings
+- **Write short paragraphs**: Keep paragraphs to 2-3 sentences
+- **Use lists**: Use bullet points for items, numbered lists for steps
+- **Include examples**: Show, don't just tell
+
+#### Formatting
+
+- **Use code blocks for all code**: Always wrap code in triple backticks with language specification
+- **Highlight important terms**: Use **bold** for key terms
+- **Use italics for emphasis**: Use *italics* for subtle emphasis
+- **Link to related content**: Help users find more information
+- **Use callouts**: Use Starlight's callout components for notes, warnings, and tips
+
+#### Accessibility
+
+- **Write descriptive link text**: Avoid "click here" - use descriptive text
+- **Provide alt text**: Describe images and diagrams
+- **Use clear headings**: Create a logical heading hierarchy
+- **Consider screen readers**: Write content that works with assistive technology
+
+### Code Example Standards
+
+#### Code Block Format
+
+Always specify the language for code blocks:
+
+```markdown
+```typescript
+const example = "Hello, World!";
+```
+```
+
+#### Code Quality
+
+- **Test all examples**: Ensure code examples actually work
+- **Keep it simple**: Focus on the concept, not edge cases
+- **Add comments**: Explain non-obvious code
+- **Use realistic values**: Avoid "foo" and "bar" - use meaningful names
+- **Show imports**: Include necessary imports in examples
+- **Handle errors**: Show error handling where appropriate
+
+#### Example Structure
+
+1. **Context**: Briefly explain what the example demonstrates
+2. **Code**: The actual code example
+3. **Explanation**: What the code does and why
+4. **Output**: Expected output or result (if applicable)
+
+#### TypeScript Examples
+
+- Use proper TypeScript types
+- Show interface/type definitions when relevant
+- Include JSDoc comments for complex functions
+- Demonstrate type safety where appropriate
+
+#### React Examples
+
+- Show complete component examples
+- Include prop types or interfaces
+- Demonstrate hooks usage
+- Show component composition patterns
+
+#### Backend Examples
+
+- Show complete route handlers
+- Include middleware usage
+- Demonstrate error handling
+- Show authentication patterns
+
+## Testing Documentation Changes
+
+### Local Testing
+
+Before submitting documentation changes:
+
+1. **Build the documentation:**
+
+   ```bash
+   cd apps/docs
+   pnpm build
+   ```
+
+2. **Check for build errors**: Fix any build errors before committing
+
+3. **Test links**: Verify all internal links work correctly
+
+4. **Preview changes**: Use `pnpm dev` to preview your changes locally
+
+5. **Test on mobile**: Check responsive design on different screen sizes
+
+### Content Validation
+
+- **Check spelling and grammar**: Use a spell checker or grammar tool
+- **Verify code examples**: Copy and run code examples to ensure they work
+- **Test instructions**: Follow your own instructions to verify they're complete
+- **Check links**: Ensure all links point to valid pages
+- **Verify images**: Check that all images load correctly
+
+### Accessibility Testing
+
+- **Test with screen reader**: Use a screen reader to test content
+- **Check keyboard navigation**: Ensure all interactive elements are keyboard accessible
+- **Verify color contrast**: Use a contrast checker to ensure text is readable
+- **Test with browser tools**: Use browser accessibility tools to check for issues
+
+## PR Review Process for Documentation
+
+### Before Submitting
+
+Ensure your documentation PR:
+
+- [ ] Follows Diataxis framework principles
+- [ ] Uses consistent writing style
+- [ ] Has tested, working code examples
+- [ ] Includes proper formatting and structure
+- [ ] Links to related content appropriately
+- [ ] Passes local build validation
+- [ ] Has been spell-checked and grammar-checked
+- [ ] Includes accessibility considerations
+
+### Creating a Documentation PR
+
+1. **Create a feature branch:**
+
+   ```bash
+   git checkout -b docs/your-documentation-change
+   ```
+
+2. **Make your changes** following the guidelines above
+
+3. **Test your changes locally**
+
+4. **Commit with a clear message:**
+
+   ```bash
+   git commit -m "docs: add authentication guide"
+   ```
+
+5. **Push to your fork:**
+
+   ```bash
+   git push origin docs/your-documentation-change
+   ```
+
+6. **Create a Pull Request** with:
+   - Clear title describing the documentation change
+   - Description explaining what was added/changed and why
+   - Link to related issues if applicable
+   - Screenshots for visual changes (if applicable)
+
+### Review Criteria
+
+Documentation PRs are reviewed for:
+
+- **Accuracy**: Is the technical content correct?
+- **Clarity**: Is the writing clear and easy to understand?
+- **Completeness**: Does it cover the topic adequately?
+- **Consistency**: Does it match our style and structure?
+- **Accessibility**: Is it accessible to all users?
+- **Links**: Do all links work correctly?
+- **Code examples**: Do code examples work and demonstrate the concept?
+
+### What Happens Next
+
+- Maintainers will review your PR as soon as possible
+- We may request changes or ask clarifying questions
+- Once approved, your PR will be merged
+- Documentation changes are deployed with the next release
+
+## Documentation Update Checklist
+
+Use this checklist when updating documentation:
+
+### Content Quality
+
+- [ ] Content follows Diataxis framework principles
+- [ ] Writing is clear, concise, and consistent
+- [ ] Technical accuracy is verified
+- [ ] Code examples are tested and work correctly
+- [ ] Explanations are thorough but not verbose
+- [ ] Appropriate level of detail for target audience
+
+### Structure and Formatting
+
+- [ ] Page has clear introduction
+- [ ] Headings create logical structure
+- [ ] Code blocks use proper language specification
+- [ ] Links point to valid destinations
+- [ ] Images have descriptive alt text
+- [ ] Callouts are used appropriately (notes, warnings, tips)
+
+### Accessibility
+
+- [ ] Link text is descriptive
+- [ ] Heading hierarchy is logical
+- [ ] Color contrast meets WCAG AA standards
+- [ ] Content works with screen readers
+- [ ] Keyboard navigation is functional
+
+### Testing
+
+- [ ] Documentation builds without errors
+- [ ] All internal links work correctly
+- [ ] Code examples have been tested
+- [ ] Instructions have been followed and verified
+- [ ] Responsive design works on mobile devices
+
+### Integration
+
+- [ ] New pages are added to navigation
+- [ ] Cross-references are updated
+- [ ] Related content is linked
+- [ ] Index/glossary is updated if needed
+- [ ] Table of contents is accurate
+
+## Version Updates
+
+When releasing new versions of Tabula Lens packages:
+
+1. **Update version references**: Change version numbers in documentation
+2. **Add migration guides**: Document breaking changes and migration paths
+3. **Update examples**: Ensure code examples work with new version
+4. **Deprecate old content**: Mark outdated content as deprecated
+5. **Add release notes**: Document new features and improvements
+6. **Update quick start**: Ensure quick start uses latest version
+7. **Test all examples**: Verify all code examples work with new version
+
+## Documentation Tasks
+
+Documentation improvements can include:
+
+- **New content**: Add new guides, tutorials, or reference pages
+- **Content updates**: Update existing content to reflect changes
+- **Bug fixes**: Fix errors or inaccuracies in documentation
+- **Improvements**: Improve clarity, structure, or readability
+- **Examples**: Add or improve code examples
+- **Accessibility**: Improve accessibility of documentation
+- **Translation**: Translate documentation to other languages
+- **Images**: Add or improve diagrams and screenshots
+
+## Getting Help
+
+If you need help with documentation contributions:
+
+- **Open an issue**: Ask questions in GitHub issues
+- **Join discussions**: Participate in existing PR discussions
+- **Check existing docs**: Look at similar pages for examples
+- **Contact maintainers**: Reach out to the documentation team
+
+## Recognition
+
+We value all documentation contributions! Your name will be acknowledged in:
+
+- The contributor list
+- Release notes for significant contributions
+- Documentation credits for major contributions
+
+Thank you for helping make Tabula Lens documentation better for everyone!

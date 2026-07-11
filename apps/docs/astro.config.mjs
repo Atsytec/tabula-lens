@@ -177,6 +177,12 @@ export default defineConfig({
 						},
 					],
 				},
+				{
+					label: 'Contributing',
+					items: [
+						{ label: 'Contributing to Documentation', slug: 'contributing' },
+					],
+				},
 			],
 		}),
 	],

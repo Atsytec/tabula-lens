@@ -136,6 +136,32 @@ Feel free to:
 - Start a discussion in an existing PR
 - Contact us at info@tabula-lens.dev
 
+## Documentation
+
+Documentation is a first-class citizen in this project. We follow the **docs-as-code** principle: no feature is considered complete without documentation.
+
+For detailed guidance on contributing to documentation, see our [Documentation Contributing Guide](https://docs.tabula-lens.dev/contributing).
+
+### Documentation Principles
+
+- **Diataxis Framework**: We organize content into tutorials, how-to guides, explanations, and reference
+- **Quality Standards**: All documentation must be accurate, clear, and accessible
+- **Testing**: Code examples must be tested and verified
+- **Accessibility**: Documentation must meet WCAG 2.1 AA standards
+- **Maintenance**: Documentation is reviewed and updated with each release
+
+### Documentation Tasks
+
+Documentation improvements include:
+
+- New guides and tutorials
+- Content updates and corrections
+- Code example improvements
+- Accessibility enhancements
+- Translation contributions
+
+See the [Documentation Contributing Guide](https://docs.tabula-lens.dev/contributing) for detailed instructions on writing, testing, and submitting documentation changes.
+
 ## Code of Conduct
 
 Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md).
