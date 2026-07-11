@@ -73,7 +73,7 @@ Executes a database query based on the provided parameters.
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `table` | `string` | Yes | - | Table name to query |
+| `table` | `string` | No | `'users'` | Table name to query |
 | `page` | `number` | No | `1` | Page number (1-indexed) |
 | `limit` | `number` | No | `10` | Number of rows per page |
 | `sort` | `string` | No | - | Sort specification (format: `column:direction,column:direction`) |
@@ -152,14 +152,22 @@ Handles an HTTP request and returns a response context. This is the main method 
 #### Example
 
 ```typescript
+// Query data — path must be '/query' (the subpath after the mount point)
 const response = await tabulaLens.handle({
   method: 'GET',
-  path: '/api/tabula-lens',
+  path: '/query',
   query: { table: 'users', page: '1', limit: '25' }
 });
-
 console.log(response.status); // 200
 console.log(response.body); // Query result data
+
+// List tables
+const tablesResponse = await tabulaLens.handle({
+  method: 'GET',
+  path: '/tables',
+  query: {}
+});
+console.log(tablesResponse.body); // ['users', 'products', ...]
 ```
 
 #### getLogger
@@ -392,7 +400,8 @@ import { TabulaLens, expressAdapter } from '@tabula-lens/node';
 const app = express();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-app.get('/api/tabula-lens', expressAdapter(tabulaLens));
+// Mount at /api/tabula-lens — sub-routes (/query, /tables, /tables/:table) are handled internally
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
 
 app.listen(3000);
 ```
@@ -406,7 +415,7 @@ import { TabulaLens, express4Adapter } from '@tabula-lens/node';
 const app = express();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-app.get('/api/tabula-lens', express4Adapter(tabulaLens));
+app.use('/api/tabula-lens', express4Adapter(tabulaLens));
 
 app.listen(3000);
 ```
@@ -420,7 +429,7 @@ import { TabulaLens, fastifyAdapter } from '@tabula-lens/node';
 const fastify = Fastify();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-fastify.get('/api/tabula-lens', fastifyAdapter(tabulaLens));
+fastify.all('/api/tabula-lens/*', fastifyAdapter(tabulaLens));
 
 fastify.listen({ port: 3000 });
 ```
@@ -434,6 +443,8 @@ import { TabulaLens, koaAdapter } from '@tabula-lens/node';
 const app = new Koa();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
+// Koa adapter passes ctx.path directly to handle(), so you need to mount
+// it via a router or filter by path prefix in middleware
 app.use(koaAdapter(tabulaLens));
 
 app.listen(3000);
@@ -450,8 +461,8 @@ const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
 server.route({
   method: 'GET',
-  path: '/api/tabula-lens',
-  handler: hapiAdapter(tabulaLens)
+  path: '/api/tabula-lens/{path*}',
+  handler: hapiAdapter(tabulaLens),
 });
 
 await server.start();
@@ -466,7 +477,7 @@ import { TabulaLens, restifyAdapter } from '@tabula-lens/node';
 const server = restify.createServer();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-server.get('/api/tabula-lens', restifyAdapter(tabulaLens));
+server.get('/api/tabula-lens/*', restifyAdapter(tabulaLens));
 
 server.listen(3000);
 ```
@@ -474,11 +485,13 @@ server.listen(3000);
 ### Next.js Adapter
 
 ```typescript
+// app/api/tabula-lens/[...path]/route.ts  (App Router)
 import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createNextRouteHandler(tabulaLens);
 
-export const GET = createNextRouteHandler(tabulaLens);
+export { handler as GET };
 ```
 
 ### TanStack Start Adapter
@@ -487,28 +500,35 @@ export const GET = createNextRouteHandler(tabulaLens);
 import { TabulaLens, createTanStackStartHandler } from '@tabula-lens/node';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createTanStackStartHandler(tabulaLens);
 
-export const handler = createTanStackStartHandler(tabulaLens);
+export const APIRoute = createAPIFileRoute('/api/tabula-lens/$')({
+  GET: ({ request }) => handler(request),
+});
 ```
 
 ### Remix Adapter
 
 ```typescript
+// app/routes/api.tabula-lens.$.ts
 import { TabulaLens, createRemixHandler } from '@tabula-lens/node';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createRemixHandler(tabulaLens);
 
-export const loader = createRemixHandler(tabulaLens);
+export const loader = ({ request }: { request: Request }) => handler(request);
 ```
 
 ### SvelteKit Adapter
 
 ```typescript
+// src/routes/api/tabula-lens/[...path]/+server.ts
 import { TabulaLens, createSvelteKitHandler } from '@tabula-lens/node';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createSvelteKitHandler(tabulaLens);
 
-export const GET = createSvelteKitHandler(tabulaLens);
+export const GET = (event: { request: Request; url: URL }) => handler(event);
 ```
 
 ### Hono Adapter
@@ -520,7 +540,7 @@ import { TabulaLens, createHonoMiddleware } from '@tabula-lens/node';
 const app = new Hono();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-app.get('/api/tabula-lens', createHonoMiddleware(tabulaLens));
+app.all('/api/tabula-lens/*', createHonoMiddleware(tabulaLens));
 
 export default app;
 ```
@@ -534,7 +554,7 @@ import { TabulaLens, createElysiaHandler } from '@tabula-lens/node';
 const app = new Elysia();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-app.get('/api/tabula-lens', createElysiaHandler(tabulaLens));
+app.all('/api/tabula-lens/*', createElysiaHandler(tabulaLens));
 
 app.listen(3000);
 ```
@@ -542,22 +562,25 @@ app.listen(3000);
 ### Fresh Adapter
 
 ```typescript
+// routes/api/tabula-lens/[...path].ts
 import { TabulaLens, createFreshHandler } from '@tabula-lens/node';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createFreshHandler(tabulaLens);
 
-export const handler = createFreshHandler(tabulaLens);
+export const handlers = { GET: (req: Request) => handler(req) };
 ```
 
 ### Native Adapter
 
 ```typescript
+import http from 'http';
 import { TabulaLens, nativeAdapter } from '@tabula-lens/node';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
-
-// Use with any HTTP server
 const handler = nativeAdapter(tabulaLens);
+
+http.createServer(handler).listen(3000);
 ```
 
 ## Supported Frameworks
@@ -610,8 +633,8 @@ const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
 // Create Express app
 const app = express();
 
-// Add Tabula Lens endpoint
-app.get('/api/tabula-lens', expressAdapter(tabulaLens));
+// Add Tabula Lens endpoint (handles /query, /tables, /tables/:table sub-routes)
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
 
 // Start server
 app.listen(3000, () => {

@@ -7,19 +7,23 @@ description: Complete HTTP API reference for Tabula Lens.
 
 The HTTP API is the universal interface contract that connects Tabula Lens frontends and backends. This API follows RESTful conventions and provides a standardized way to query database tables with pagination, filtering, and sorting capabilities.
 
-## Base Endpoint
+## Available Endpoints
 
-All API calls are made to a single endpoint configured in your backend:
+When the adapter is mounted at `/api/tabula-lens` (the recommended base path), three sub-routes are exposed:
 
-```
-GET /api/tabula-lens
-```
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/tabula-lens/query` | Query table data with pagination, filtering, and sorting |
+| `GET /api/tabula-lens/tables` | List all available tables |
+| `GET /api/tabula-lens/tables/:table` | Get metadata for a specific table |
 
-## Request Format
+The `@tabula-lens/react` component automatically uses all three endpoints based on the `path` prop you supply (e.g., `path="/api/tabula-lens"`).
+
+## Query Endpoint
 
 ### HTTP Method
 
-`GET /api/tabula-lens`
+`GET /api/tabula-lens/query`
 
 ### Query Parameters
 
@@ -27,11 +31,21 @@ GET /api/tabula-lens
 |-----------|------|----------|---------|-------------|
 | `table` | `string` | Yes | - | Table name to query |
 | `page` | `number` | No | `1` | Page number (1-indexed) |
-| `pageSize` | `number` | No | `50` | Number of rows per page |
+| `limit` | `number` | No | `10` | Number of rows per page |
 | `filter` | `string` | No | - | Filter string for searching across text columns |
 | `filterColumns` | `string[]` | No | - | Specific columns to filter (comma-separated) |
 | `sort` | `string` | No | - | Sort specification (format: `column:direction,column:direction`) |
 | `columns` | `string[]` | No | - | Specific columns to return (comma-separated) |
+
+### Request Headers
+
+| Header | Type | Required | Description |
+|--------|------|----------|-------------|
+| `Authorization` | `string` | No* | Authentication token (Bearer token or custom scheme) |
+| `Content-Type` | `string` | No | Request content type (typically `application/json`) |
+| `Accept` | `string` | No | Response content type (typically `application/json`) |
+
+*Authentication headers are required if your backend implementation requires authentication.
 
 ### Request Headers
 
@@ -48,49 +62,49 @@ GET /api/tabula-lens
 #### Basic Query
 
 ```http
-GET /api/tabula-lens?table=users
+GET /api/tabula-lens/query?table=users
 ```
 
 #### Paginated Query
 
 ```http
-GET /api/tabula-lens?table=users&page=2&pageSize=25
+GET /api/tabula-lens/query?table=users&page=2&limit=25
 ```
 
 #### Filtered Query
 
 ```http
-GET /api/tabula-lens?table=users&filter=john
+GET /api/tabula-lens/query?table=users&filter=john
 ```
 
 #### Filtered Query with Specific Columns
 
 ```http
-GET /api/tabula-lens?table=users&filter=john&filterColumns=name,email
+GET /api/tabula-lens/query?table=users&filter=john&filterColumns=name,email
 ```
 
 #### Sorted Query
 
 ```http
-GET /api/tabula-lens?table=users&sort=created_at:desc
+GET /api/tabula-lens/query?table=users&sort=created_at:desc
 ```
 
 #### Multi-column Sort
 
 ```http
-GET /api/tabula-lens?table=users&sort=status:asc,created_at:desc
+GET /api/tabula-lens/query?table=users&sort=status:asc,created_at:desc
 ```
 
 #### Column Selection
 
 ```http
-GET /api/tabula-lens?table=users&columns=id,name,email
+GET /api/tabula-lens/query?table=users&columns=id,name,email
 ```
 
 #### Complete Query with All Parameters
 
 ```http
-GET /api/tabula-lens?table=users&page=1&pageSize=25&filter=john&filterColumns=name,email&sort=created_at:desc&columns=id,name,email,created_at
+GET /api/tabula-lens/query?table=users&page=1&limit=25&filter=john&filterColumns=name,email&sort=created_at:desc&columns=id,name,email,created_at
 Authorization: Bearer your-token-here
 ```
 
@@ -157,14 +171,11 @@ Authorization: Bearer your-token-here
 
 ```json
 {
-  "error": {
-    "message": "Table 'users' does not exist",
-    "code": "TABLE_NOT_FOUND",
-    "statusCode": 404,
-    "details": {
-      "table": "users",
-      "availableTables": ["customers", "products", "orders"]
-    }
+  "error": "TABLE_NOT_FOUND",
+  "message": "Table 'users' does not exist",
+  "details": {
+    "table": "users",
+    "availableTables": ["customers", "products", "orders"]
   }
 }
 ```
@@ -173,11 +184,9 @@ Authorization: Bearer your-token-here
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `error` | `object` | Error details object |
-| `error.message` | `string` | Human-readable error message |
-| `error.code` | `string` | Machine-readable error code |
-| `error.statusCode` | `number` | HTTP status code |
-| `error.details` | `object` | Additional error context (optional) |
+| `error` | `string` | Machine-readable error code |
+| `message` | `string` | Human-readable error message |
+| `details` | `object` | Additional error context (optional) |
 
 ## Authentication
 
@@ -186,7 +195,7 @@ Authorization: Bearer your-token-here
 The most common authentication method uses Bearer tokens:
 
 ```http
-GET /api/tabula-lens?table=users
+GET /api/tabula-lens/query?table=users
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
@@ -195,7 +204,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 You can implement custom authentication schemes using the `getAuthHeaders` prop in the React component:
 
 ```javascript
-const getAuthHeaders = () => ({
+const getAuthHeaders = async () => ({
   'X-API-Key': 'your-api-key-here',
   'X-User-ID': 'user-123'
 });
@@ -204,7 +213,7 @@ const getAuthHeaders = () => ({
 ### API Key Authentication
 
 ```http
-GET /api/tabula-lens?table=users
+GET /api/tabula-lens/query?table=users
 X-API-Key: your-api-key-here
 ```
 
@@ -213,7 +222,7 @@ X-API-Key: your-api-key-here
 If your backend doesn't require authentication, you can omit authentication headers entirely:
 
 ```http
-GET /api/tabula-lens?table=users
+GET /api/tabula-lens/query?table=users
 ```
 
 ## Error Catalog
@@ -232,14 +241,11 @@ GET /api/tabula-lens?table=users
 **Example Response:**
 ```json
 {
-  "error": {
-    "message": "Table 'users' does not exist",
-    "code": "TABLE_NOT_FOUND",
-    "statusCode": 404,
-    "details": {
-      "table": "users",
-      "availableTables": ["customers", "products", "orders"]
-    }
+  "error": "TABLE_NOT_FOUND",
+  "message": "Table 'users' does not exist",
+  "details": {
+    "table": "users",
+    "availableTables": ["customers", "products", "orders"]
   }
 }
 ```
@@ -263,15 +269,12 @@ GET /api/tabula-lens?table=users
 **Example Response:**
 ```json
 {
-  "error": {
-    "message": "Invalid query parameter: page must be a positive number",
-    "code": "INVALID_QUERY",
-    "statusCode": 400,
-    "details": {
-      "parameter": "page",
-      "value": "abc",
-      "constraint": "must be a positive number"
-    }
+  "error": "INVALID_QUERY",
+  "message": "Invalid query parameter: page must be a positive number",
+  "details": {
+    "parameter": "page",
+    "value": "abc",
+    "constraint": "must be a positive number"
   }
 }
 ```
@@ -294,14 +297,11 @@ GET /api/tabula-lens?table=users
 **Example Response:**
 ```json
 {
-  "error": {
-    "message": "Authentication failed: Invalid or expired token",
-    "code": "AUTHENTICATION_FAILED",
-    "statusCode": 401,
-    "details": {
-      "authMethod": "Bearer",
-      "reason": "token_expired"
-    }
+  "error": "AUTHENTICATION_FAILED",
+  "message": "Authentication failed: Invalid or expired token",
+  "details": {
+    "authMethod": "Bearer",
+    "reason": "token_expired"
   }
 }
 ```
@@ -325,16 +325,8 @@ GET /api/tabula-lens?table=users
 **Example Response:**
 ```json
 {
-  "error": {
-    "message": "Database error: connection timeout",
-    "code": "DATABASE_ERROR",
-    "statusCode": 500,
-    "details": {
-      "error": "connection timeout",
-      "database": "postgresql",
-      "query": "SELECT * FROM users"
-    }
-  }
+  "error": "DATABASE_ERROR",
+  "message": "Database error: connection timeout"
 }
 ```
 
@@ -342,11 +334,11 @@ GET /api/tabula-lens?table=users
 
 ---
 
-### INTERNAL_ERROR
+### INTERNAL_SERVER_ERROR
 
 **Status Code:** `500`
 
-**Description:** Internal server error.
+**Description:** An unexpected internal server error.
 
 **Causes:**
 - Unexpected server error
@@ -356,15 +348,8 @@ GET /api/tabula-lens?table=users
 **Example Response:**
 ```json
 {
-  "error": {
-    "message": "Internal server error",
-    "code": "INTERNAL_ERROR",
-    "statusCode": 500,
-    "details": {
-      "requestId": "req_abc123",
-      "timestamp": "2024-01-01T00:00:00Z"
-    }
-  }
+  "error": "INTERNAL_SERVER_ERROR",
+  "message": "An unexpected error occurred"
 }
 ```
 
@@ -404,18 +389,18 @@ The `page` parameter specifies which page of results to return.
 page=2
 ```
 
-#### PageSize
+#### Limit
 
-The `pageSize` parameter specifies how many records to return per page.
+The `limit` parameter specifies how many records to return per page.
 
 **Requirements:**
 - Must be a positive integer
-- Default: `50`
+- Default: `10`
 - Recommended range: 1-1000
 
 **Example:**
 ```
-pageSize=25
+limit=25
 ```
 
 ### Filtering Parameters
@@ -534,7 +519,7 @@ Implement caching in your backend:
 
 Cache keys should be based on the complete query parameters:
 ```
-cache_key = "tabula_lens:{table}:{page}:{pageSize}:{filter}:{filterColumns}:{sort}:{columns}"
+cache_key = "tabula_lens:{table}:{page}:{limit}:{filter}:{filterColumns}:{sort}:{columns}"
 ```
 
 ## Interchangeability
@@ -547,31 +532,65 @@ The HTTP API is designed to be implementation-agnostic:
 
 This allows you to mix and match implementations while maintaining a stable interface contract.
 
+## Tables Endpoints
+
+### List Tables
+
+Returns all available table names in the database.
+
+**HTTP Method:** `GET /api/tabula-lens/tables`
+
+**Response:**
+```json
+["users", "products", "orders", "customers"]
+```
+
+### Get Table Metadata
+
+Returns column metadata for a specific table.
+
+**HTTP Method:** `GET /api/tabula-lens/tables/:table`
+
+**Example:** `GET /api/tabula-lens/tables/users`
+
+**Response:**
+```json
+{
+  "name": "users",
+  "columns": [
+    { "name": "id", "type": "integer" },
+    { "name": "name", "type": "character varying" },
+    { "name": "email", "type": "character varying" },
+    { "name": "created_at", "type": "timestamp without time zone" }
+  ]
+}
+```
+
 ## Code Examples
 
 ### cURL
 
 ```bash
 # Basic query
-curl "http://localhost:3000/api/tabula-lens?table=users"
+curl "http://localhost:3000/api/tabula-lens/query?table=users"
 
 # With authentication
 curl -H "Authorization: Bearer your-token" \
-  "http://localhost:3000/api/tabula-lens?table=users&page=1&pageSize=25"
+  "http://localhost:3000/api/tabula-lens/query?table=users&page=1&limit=25"
 
 # With filtering and sorting
-curl "http://localhost:3000/api/tabula-lens?table=users&filter=john&sort=created_at:desc"
+curl "http://localhost:3000/api/tabula-lens/query?table=users&filter=john&sort=created_at:desc"
 ```
 
 ### JavaScript (Fetch)
 
 ```javascript
 // Basic query
-const response = await fetch('http://localhost:3000/api/tabula-lens?table=users');
+const response = await fetch('http://localhost:3000/api/tabula-lens/query?table=users');
 const data = await response.json();
 
 // With authentication
-const response = await fetch('http://localhost:3000/api/tabula-lens?table=users', {
+const response = await fetch('http://localhost:3000/api/tabula-lens/query?table=users', {
   headers: {
     'Authorization': 'Bearer your-token'
   }
@@ -582,12 +601,12 @@ const data = await response.json();
 const params = new URLSearchParams({
   table: 'users',
   page: '1',
-  pageSize: '25',
+  limit: '25',
   filter: 'john',
   sort: 'created_at:desc'
 });
 
-const response = await fetch(`http://localhost:3000/api/tabula-lens?${params}`);
+const response = await fetch(`http://localhost:3000/api/tabula-lens/query?${params}`);
 const data = await response.json();
 ```
 
@@ -597,22 +616,22 @@ const data = await response.json();
 import axios from 'axios';
 
 // Basic query
-const response = await axios.get('http://localhost:3000/api/tabula-lens', {
+const response = await axios.get('http://localhost:3000/api/tabula-lens/query', {
   params: { table: 'users' }
 });
 
 // With authentication
-const response = await axios.get('http://localhost:3000/api/tabula-lens', {
-  params: { table: 'users', page: 1, pageSize: 25 },
+const response = await axios.get('http://localhost:3000/api/tabula-lens/query', {
+  params: { table: 'users', page: 1, limit: 25 },
   headers: { 'Authorization': 'Bearer your-token' }
 });
 
 // With all parameters
-const response = await axios.get('http://localhost:3000/api/tabula-lens', {
+const response = await axios.get('http://localhost:3000/api/tabula-lens/query', {
   params: {
     table: 'users',
     page: 1,
-    pageSize: 25,
+    limit: 25,
     filter: 'john',
     filterColumns: 'name,email',
     sort: 'created_at:desc',
@@ -627,13 +646,13 @@ const response = await axios.get('http://localhost:3000/api/tabula-lens', {
 import requests
 
 # Basic query
-response = requests.get('http://localhost:3000/api/tabula-lens', 
+response = requests.get('http://localhost:3000/api/tabula-lens/query', 
                        params={'table': 'users'})
 data = response.json()
 
 # With authentication
-response = requests.get('http://localhost:3000/api/tabula-lens',
-                       params={'table': 'users', 'page': 1, 'pageSize': 25},
+response = requests.get('http://localhost:3000/api/tabula-lens/query',
+                       params={'table': 'users', 'page': 1, 'limit': 25},
                        headers={'Authorization': 'Bearer your-token'})
 data = response.json()
 
@@ -641,13 +660,13 @@ data = response.json()
 params = {
     'table': 'users',
     'page': 1,
-    'pageSize': 25,
+    'limit': 25,
     'filter': 'john',
     'filterColumns': 'name,email',
     'sort': 'created_at:desc',
     'columns': 'id,name,email,created_at'
 }
-response = requests.get('http://localhost:3000/api/tabula-lens', params=params)
+response = requests.get('http://localhost:3000/api/tabula-lens/query', params=params)
 data = response.json()
 ```
 

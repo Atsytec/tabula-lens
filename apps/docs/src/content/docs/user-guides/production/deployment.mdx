@@ -72,28 +72,31 @@ GRANT ALL PRIVILEGES ON DATABASE tabula_lens TO tabula_lens_user;
 
 **SSL/TLS Configuration**
 
+SSL is configured via the PostgreSQL connection string, not through TabulaLens constructor options:
+
+```bash
+# Require SSL via connection string
+DATABASE_URL="postgresql://user:password@host:5432/mydb?sslmode=require"
+
+# Require SSL with certificate verification
+DATABASE_URL="postgresql://user:password@host:5432/mydb?sslmode=verify-full"
+```
+
 ```javascript
-// Backend: Enable SSL in production
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
-  ssl: {
-    rejectUnauthorized: true // Validate SSL certificates
-  }
-});
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 ```
 
 **Connection Pooling**
 
-```javascript
-// Use connection pooling for production
-const { Pool } = require('pg');
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 20, // Maximum pool size
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+Connection pool settings are also configured through the connection string parameters:
 
-const tabulaLens = new TabulaLens(pool);
+```bash
+# Configure pool size via connection string
+DATABASE_URL="postgresql://user:password@host:5432/mydb?pool_min=2&pool_max=20"
+```
+
+```javascript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 ```
 
 **Database Backups**

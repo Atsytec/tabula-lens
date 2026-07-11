@@ -49,7 +49,7 @@ The main component for displaying database data in your React application. It pr
 |------|------|---------|-------------|
 | `showFilter` | `boolean` | `true` | Whether to show the filter input |
 | `filterPlaceholder` | `string` | `'Filter records...'` | Placeholder text for the filter input |
-| `filterPosition` | `'top' \| 'bottom'` | `'top'` | Position of the filter input |
+| `filterPosition` | `'top' \| 'bottom' \| 'both'` | `'top'` | Position of the filter input |
 | `filterDebounceMs` | `number` | `300` | Debounce delay for filter input in milliseconds |
 | `filterComponent` | `React.FC` | - | Custom filter input component |
 | `defaultFilterColumns` | `Record<string, string[]>` | - | Default filter columns per table |
@@ -61,7 +61,7 @@ The main component for displaying database data in your React application. It pr
 |------|------|---------|-------------|
 | `showPagination` | `boolean` | `true` | Whether to show pagination controls |
 | `pageSize` | `number` | `10` | Number of records per page |
-| `pageSizeOptions` | `number[]` | `[10, 25, 50, 100]` | Available page size options |
+| `pageSizeOptions` | `number[]` | `[10, 20, 30, 50, 100]` | Available page size options |
 | `showPageSizeSelector` | `boolean` | `true` | Whether to show the page size selector |
 | `paginationPosition` | `'top' \| 'bottom' \| 'both'` | `'bottom'` | Position of pagination controls |
 | `paginationComponent` | `React.FC` | - | Custom pagination component |
@@ -89,6 +89,7 @@ The main component for displaying database data in your React application. It pr
 |------|------|---------|-------------|
 | `className` | `string` | - | Additional CSS class name for the container |
 | `classNames` | `ClassNames` | - | Custom class names for specific elements |
+| `style` | `React.CSSProperties` | - | Inline style for the container |
 | `styles` | `Styles` | - | Custom styles for specific elements |
 
 #### Optional Props - Data Fetching
@@ -97,6 +98,18 @@ The main component for displaying database data in your React application. It pr
 |------|------|---------|-------------|
 | `refetchInterval` | `number` | - | Interval in milliseconds to refetch data |
 | `onError` | `(error: Error) => void` | - | Error callback function |
+| `queryOptions` | `object` | - | Additional TanStack Query options (`staleTime`, `cacheTime`, `retry`, `retryDelay`, `refetchOnWindowFocus`, `refetchOnReconnect`, `refetchOnMount`) |
+
+#### Optional Props - Logging
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `logger` | `Logger` | - | Custom logger instance |
+| `enableLogging` | `boolean` | `false` | Whether to enable built-in logging |
+| `logLevel` | `LogLevel` | - | Log level when creating a default logger |
+| `logFetchErrors` | `boolean` | `true` | Whether to log fetch errors |
+| `logQueryErrors` | `boolean` | `true` | Whether to log query errors |
+| `logPerformanceMetrics` | `boolean` | `true` | Whether to log performance metrics |
 
 #### Optional Props - Custom Components
 
@@ -177,8 +190,11 @@ Component displayed while data is loading.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
+| `customComponent` | `React.FC` | - | Custom loading component |
 | `className` | `string` | - | Additional CSS class name |
-| `styles` | `Styles` | - | Custom styles |
+| `classNames` | `ClassNames` | - | Custom class names for specific elements |
+| `style` | `React.CSSProperties` | - | Custom inline style for the container |
+| `styles` | `Styles` | - | Custom styles for specific elements |
 
 #### Example
 
@@ -197,9 +213,13 @@ Component displayed when an error occurs.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `error` | `Error` | - | Error object |
-| `retry` | `() => void` | - | Retry function |
+| `onRetry` | `() => void` | - | Retry callback function |
+| `customComponent` | `React.FC<{ error: Error; retry: () => void }>` | - | Custom error component |
 | `className` | `string` | - | Additional CSS class name |
-| `styles` | `Styles` | - | Custom styles |
+| `classNames` | `ClassNames` | - | Custom class names for specific elements |
+| `style` | `React.CSSProperties` | - | Custom inline style for the container |
+| `styles` | `Styles` | - | Custom styles for specific elements |
+| `isRecoverable` | `boolean` | `true` | Whether to show the retry button |
 
 #### Example
 
@@ -208,7 +228,7 @@ import { ErrorState } from '@tabula-lens/react';
 
 <ErrorState 
   error={error} 
-  retry={() => refetch()}
+  onRetry={() => refetch()}
   className="custom-error"
 />
 ```
@@ -221,8 +241,13 @@ Component displayed when no data is available.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
+| `customComponent` | `React.FC` | - | Custom empty state component |
 | `className` | `string` | - | Additional CSS class name |
-| `styles` | `Styles` | - | Custom styles |
+| `classNames` | `ClassNames` | - | Custom class names for specific elements |
+| `style` | `React.CSSProperties` | - | Custom inline style for the container |
+| `styles` | `Styles` | - | Custom styles for specific elements |
+| `hasActiveFilter` | `boolean` | `false` | Whether a filter is currently active (changes the empty message) |
+| `onClearFilter` | `() => void` | - | Callback to clear the active filter |
 
 #### Example
 
@@ -298,18 +323,16 @@ Component for paginating through table data.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `pageIndex` | `number` | - | Current page index |
+| `pageIndex` | `number` | - | Current page index (0-based) |
 | `pageCount` | `number` | - | Total number of pages |
 | `pageSize` | `number` | - | Current page size |
 | `canPreviousPage` | `boolean` | - | Whether previous page is available |
 | `canNextPage` | `boolean` | - | Whether next page is available |
-| `previousPage` | `() => void` | - | Go to previous page |
-| `nextPage` | `() => void` | - | Go to next page |
-| `firstPage` | `() => void` | - | Go to first page |
-| `lastPage` | `() => void` | - | Go to last page |
-| `setPageSize` | `(size: number) => void` | - | Set page size |
-| `pageSizeOptions` | `number[]` | `[10, 25, 50, 100]` | Available page sizes |
-| `showPageSizeSelector` | `boolean` | `true` | Show page size selector |
+| `onPageChange` | `(pageIndex: number) => void` | - | Callback when page changes |
+| `onPageSizeChange` | `(pageSize: number) => void` | - | Callback when page size changes |
+| `pageSizeOptions` | `number[]` | - | Available page size options |
+| `showPageSizeSelector` | `boolean` | - | Whether to show the page size selector |
+| `customComponent` | `React.FC<{ pageIndex, pageCount, pageSize, canPreviousPage, canNextPage, previousPage, nextPage, firstPage, lastPage, setPageSize }>` | - | Custom pagination component |
 | `className` | `string` | - | Additional CSS class name |
 | `classNames` | `ClassNames` | - | Custom class names |
 | `styles` | `Styles` | - | Custom styles |
@@ -325,68 +348,67 @@ import { Pagination } from '@tabula-lens/react';
   pageSize={pageSize}
   canPreviousPage={currentPage > 0}
   canNextPage={currentPage < totalPages - 1}
-  previousPage={() => setCurrentPage(p => p - 1)}
-  nextPage={() => setCurrentPage(p => p + 1)}
-  firstPage={() => setCurrentPage(0)}
-  lastPage={() => setCurrentPage(totalPages - 1)}
-  setPageSize={setPageSize}
+  onPageChange={(index) => setCurrentPage(index)}
+  onPageSizeChange={(size) => setPageSize(size)}
   pageSizeOptions={[10, 25, 50, 100]}
+  showPageSizeSelector={true}
 />
 ```
 
 ### DataTable
 
-Component for rendering the data table.
+Component for rendering the data table. Uses TanStack Table internally via `@tanstack/react-table` types.
 
 #### Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `data` | `Record<string, unknown>[]` | - | Table data |
-| `columns` | `string[]` | - | Column names |
-| `sortableColumns` | `string[]` | - | Sortable column names |
-| `sort` | `{ column: string; direction: 'asc' \| 'desc' } \| null` | - | Current sort |
-| `onSort` | `(column: string) => void` | - | Sort callback |
-| `formatHeader` | `((name: string) => string) \| null` | - | Header formatter |
-| `formatCell` | `(value: unknown, column: string) => React.ReactNode` | - | Cell formatter |
-| `sortIcon` | `React.FC<{ direction: 'asc' \| 'desc' \| null }>` | - | Custom sort icon |
+| `data` | `Record<string, unknown>[]` | - | Table data records |
+| `columns` | `ColumnDef<Record<string, unknown>>[]` | - | TanStack Table column definitions |
+| `sorting` | `SortingState` | - | Current sorting state (from `@tanstack/react-table`) |
+| `onSortingChange` | `(sorting: SortingState) => void` | - | Sorting change callback |
+| `pagination` | `PaginationState` | - | Current pagination state (from `@tanstack/react-table`) |
+| `onPaginationChange` | `(pagination: PaginationState) => void` | - | Pagination change callback |
+| `pageCount` | `number` | - | Total number of pages |
+| `enableSorting` | `boolean` | - | Whether sorting is enabled |
+| `multiSort` | `boolean` | `false` | Whether multi-column sorting is enabled |
+| `sortIcon` | `React.FC<{ direction: 'asc' \| 'desc' \| null }>` | - | Custom sort icon component |
+| `formatHeader` | `((name: string) => string) \| null` | - | Column header formatter |
+| `formatCell` | `(value: unknown, column: string) => React.ReactNode` | - | Cell value formatter |
+| `emptyComponent` | `React.FC` | - | Custom empty state component |
+| `hasActiveFilter` | `boolean` | - | Whether a filter is active (affects empty message) |
+| `onClearFilter` | `() => void` | - | Callback to clear the active filter |
 | `className` | `string` | - | Additional CSS class name |
-| `classNames` | `ClassNames` | - | Custom class names |
-| `styles` | `Styles` | - | Custom styles |
+| `classNames` | `ClassNames` | - | Custom class names for specific elements |
+| `style` | `React.CSSProperties` | - | Custom inline style for the container |
+| `styles` | `Styles` | - | Custom styles for specific elements |
 
-#### Example
+#### Note
 
-```jsx
-import { DataTable } from '@tabula-lens/react';
-
-<DataTable
-  data={tableData}
-  columns={['id', 'name', 'email']}
-  sortableColumns={['name', 'email']}
-  sort={{ column: 'name', direction: 'asc' }}
-  onSort={(column) => handleSort(column)}
-  formatHeader={(name) => name.toUpperCase()}
-  formatCell={(value, column) => {
-    if (column === 'email') {
-      return <a href={`mailto:${value}`}>{value}</a>;
-    }
-    return value;
-  }}
-/>
-```
+`DataTable` is intended to be used together with state from `useTableState`. Column definitions are normally built dynamically by `DatabaseViewer` from the query result. See the complete example in `DatabaseViewer` for the typical usage pattern.
 
 ## Custom Hooks
 
 ### useLogger
 
-Hook for logging functionality with component-level context.
+Hook for logger initialization and component lifecycle logging.
+
+#### Parameters
+
+Accepts a single options object:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `logger` | `Logger` | - | Custom logger instance to use |
+| `enableLogging` | `boolean` | `false` | Whether logging is enabled |
+| `logLevel` | `LogLevel` | - | Log level to use when creating a default logger |
 
 #### Returns
 
 | Return | Type | Description |
 |--------|------|-------------|
-| `logger` | `Logger` | Logger instance |
-| `componentId` | `string` | Unique component ID |
+| `logger` | `Logger \| null` | Logger instance (null if `enableLogging` is false) |
+| `componentId` | `string` | Unique component ID for log correlation |
 
 #### Example
 
@@ -394,38 +416,42 @@ Hook for logging functionality with component-level context.
 import { useLogger } from '@tabula-lens/react';
 
 function MyComponent() {
-  const { logger, componentId } = useLogger('MyComponent');
+  const { logger, componentId } = useLogger({ enableLogging: true, logLevel: 'debug' });
   
   useEffect(() => {
-    logger.info('Component mounted', { componentId });
+    logger?.info('Component mounted', { componentId });
   }, []);
 }
 ```
 
 ### useTableState
 
-Hook for table state management (pagination, sorting, filtering).
+Hook for table state management (pagination, sorting, filtering). Uses TanStack Table types for sorting and pagination state.
 
 #### Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `initialPageSize` | `number` | `10` | Initial page size |
-| `initialSort` | `{ column: string; direction: 'asc' \| 'desc' }` | - | Initial sort configuration |
+Accepts a single options object:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `initialTable` | `string` | - | Initial table to select |
+| `pageSize` | `number` | `10` | Initial page size |
+| `defaultSort` | `{ column: string; direction: 'asc' \| 'desc' }` | - | Initial sort configuration |
+| `filterDebounceMs` | `number` | `300` | Debounce delay for filter input in milliseconds |
 
 #### Returns
 
 | Return | Type | Description |
 |--------|------|-------------|
-| `state` | `object` | Table state object |
-| `state.pageIndex` | `number` | Current page index |
-| `state.pageSize` | `number` | Current page size |
-| `state.sort` | `{ column: string; direction: 'asc' \| 'desc' } \| null` | Current sort |
-| `state.filter` | `string` | Current filter value |
-| `setPageIndex` | `(index: number) => void` | Set page index |
-| `setPageSize` | `(size: number) => void` | Set page size |
-| `setSort` | `(sort: { column: string; direction: 'asc' \| 'desc' } \| null) => void` | Set sort |
-| `setFilter` | `(filter: string) => void` | Set filter |
+| `selectedTable` | `string \| undefined` | Currently selected table |
+| `setSelectedTable` | `(table: string) => void` | Set the selected table |
+| `sorting` | `SortingState` | Current TanStack Table sorting state |
+| `setSorting` | `(sorting: SortingState) => void` | Update sorting state |
+| `pagination` | `PaginationState` | Current TanStack Table pagination state (`{ pageIndex, pageSize }`) |
+| `setPagination` | `(pagination: PaginationState) => void` | Update pagination state |
+| `filter` | `string` | Current raw filter value |
+| `setFilter` | `(filter: string) => void` | Update filter value |
+| `debouncedFilter` | `string` | Debounced filter value (used for actual queries) |
 
 #### Example
 
@@ -434,15 +460,20 @@ import { useTableState } from '@tabula-lens/react';
 
 function MyComponent() {
   const {
-    pageIndex,
-    pageSize,
-    sort,
+    selectedTable,
+    setSelectedTable,
+    sorting,
+    setSorting,
+    pagination,
+    setPagination,
     filter,
-    setPageIndex,
-    setPageSize,
-    setSort,
-    setFilter
-  } = useTableState(25, { column: 'created_at', direction: 'desc' });
+    setFilter,
+    debouncedFilter,
+  } = useTableState({
+    initialTable: 'users',
+    pageSize: 25,
+    defaultSort: { column: 'created_at', direction: 'desc' },
+  });
   
   // Use state for data fetching
 }
@@ -450,38 +481,57 @@ function MyComponent() {
 
 ### useDatabaseData
 
-Hook for data fetching logic with authentication and error handling.
+Hook for data fetching logic with authentication and error handling. Fetches both table data and the tables list.
 
 #### Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `path` | `string` | - | API endpoint path |
-| `options` | `object` | - | Fetch options |
-| `options.getAuthHeaders` | `() => Promise<Record<string, string>>` | - | Auth headers function |
-| `options.headers` | `Record<string, string>` | - | Static headers |
-| `options.refetchInterval` | `number` | - | Refetch interval in milliseconds |
+Accepts a single options object:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `path` | `string` | - | API endpoint base path (e.g. `'/api/tabula-lens'`) |
+| `selectedTable` | `string \| undefined` | - | Currently selected table |
+| `queryParams` | `string` | - | URL query string (typically from `buildQueryParams`) |
+| `getAuthHeaders` | `() => Promise<Record<string, string>>` | - | Async function returning auth headers |
+| `headers` | `Record<string, string>` | - | Static headers to include in requests |
+| `logger` | `Logger \| null` | - | Logger instance |
+| `componentId` | `string` | - | Component ID for logging |
+| `logFetchErrors` | `boolean` | `true` | Whether to log fetch errors |
+| `logPerformanceMetrics` | `boolean` | `true` | Whether to log performance metrics |
+| `queryOptions` | `object` | `{}` | Additional TanStack Query options |
+| `refetchInterval` | `number` | - | Interval in milliseconds to refetch data |
+| `tableSelectorMode` | `'dropdown' \| 'sidebar' \| 'none'` | `'dropdown'` | Table selector mode (affects whether table list is fetched) |
 
 #### Returns
 
 | Return | Type | Description |
 |--------|------|-------------|
-| `data` | `QueryResult \| null` | Query result data |
-| `isLoading` | `boolean` | Loading state |
+| `data` | `QueryResult \| undefined` | Query result data |
+| `tables` | `string[] \| undefined` | List of available table names |
+| `isLoading` | `boolean` | Loading state for the data query |
 | `error` | `Error \| null` | Error object |
-| `refetch` | `() => void` | Refetch function |
+| `refetch` | `() => void` | Refetch the data query |
 
 #### Example
 
 ```jsx
-import { useDatabaseData } from '@tabula-lens/react';
+import { useDatabaseData, buildQueryParams, useTableState } from '@tabula-lens/react';
 
 function MyComponent() {
-  const { data, isLoading, error, refetch } = useDatabaseData('/api/tabula-lens', {
-    getAuthHeaders: async () => ({
-      'Authorization': `Bearer ${getToken()}`
-    }),
-    refetchInterval: 30000
+  const tableState = useTableState({ initialTable: 'users' });
+  const queryParams = buildQueryParams({
+    selectedTable: tableState.selectedTable,
+    pagination: tableState.pagination,
+    sorting: tableState.sorting,
+    filter: tableState.debouncedFilter,
+  });
+
+  const { data, tables, isLoading, error, refetch } = useDatabaseData({
+    path: '/api/tabula-lens',
+    selectedTable: tableState.selectedTable,
+    queryParams,
+    getAuthHeaders: async () => ({ 'Authorization': `Bearer ${getToken()}` }),
+    refetchInterval: 30000,
   });
   
   if (isLoading) return <div>Loading...</div>;
@@ -493,38 +543,38 @@ function MyComponent() {
 
 ### buildQueryParams
 
-Utility function for building query parameters from state.
+Utility function for building a URL query string from table state. Used internally by `DatabaseViewer` to construct requests to the `/query` endpoint.
 
 #### Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `table` | `string` | - | Table name |
-| `pageIndex` | `number` | - | Page index |
-| `pageSize` | `number` | - | Page size |
+Accepts a single options object:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `selectedTable` | `string \| undefined` | - | Currently selected table name |
+| `pagination` | `PaginationState` | - | TanStack Table pagination state (`{ pageIndex, pageSize }`) |
+| `sorting` | `SortingState` | - | TanStack Table sorting state |
 | `filter` | `string` | - | Filter value |
-| `sort` | `{ column: string; direction: 'asc' \| 'desc' } \| null` | - | Sort configuration |
-| `filterColumns` | `string[]` | - | Filter columns |
+| `filterColumns` | `string[]` | - | Columns to filter |
 
 #### Returns
 
-`Record<string, string>` - Query parameters object.
+`string` - URL-encoded query string (e.g. `"table=users&page=1&limit=25&filter=john"`).
 
 #### Example
 
 ```jsx
 import { buildQueryParams } from '@tabula-lens/react';
 
-const params = buildQueryParams({
-  table: 'users',
-  pageIndex: 0,
-  pageSize: 25,
+const queryString = buildQueryParams({
+  selectedTable: 'users',
+  pagination: { pageIndex: 0, pageSize: 25 },
+  sorting: [{ id: 'created_at', desc: true }],
   filter: 'john',
-  sort: { column: 'created_at', direction: 'desc' },
-  filterColumns: ['name', 'email']
+  filterColumns: ['name', 'email'],
 });
 
-// Result: { table: 'users', page: '1', pageSize: '25', filter: 'john', sort: 'created_at:desc', filterColumns: 'name,email' }
+// Result: "table=users&page=1&limit=25&sort=created_at%3Adesc&filter=john&filterColumns=name%2Cemail"
 ```
 
 ## Utility Functions

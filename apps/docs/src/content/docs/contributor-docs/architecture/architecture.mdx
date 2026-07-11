@@ -191,12 +191,13 @@ All database queries go through a single endpoint, simplified through query para
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `path` | string | Yes | Table name to query |
+| `table` | string | No | Table name to query (defaults to first table) |
 | `page` | number | No | Page number (default: 1) |
-| `pageSize` | number | No | Items per page (default: 10) |
+| `limit` | number | No | Items per page (default: 10) |
 | `filter` | string | No | Filter string for search |
-| `sort` | string | No | Sort column |
-| `order` | string | No | Sort order (asc/desc) |
+| `filterColumns` | string | No | Comma-separated column names to filter on |
+| `sort` | string | No | Sort string, e.g. `name:asc` or `name:asc,email:desc` |
+| `columns` | string | No | Comma-separated column names to return |
 
 ### Request Headers
 
@@ -215,28 +216,21 @@ All database queries go through a single endpoint, simplified through query para
     { "id": 1, "name": "Alice", "email": "alice@example.com" },
     { "id": 2, "name": "Bob", "email": "bob@example.com" }
   ],
+  "columns": ["id", "name", "email"],
   "pagination": {
     "page": 1,
-    "pageSize": 10,
+    "limit": 10,
     "total": 100,
     "totalPages": 10
-  },
-  "columns": [
-    { "name": "id", "type": "integer" },
-    { "name": "name", "type": "varchar" },
-    { "name": "email", "type": "varchar" }
-  ]
+  }
 }
 ```
 
 **Error Response:**
 ```json
 {
-  "error": {
-    "message": "Table not found",
-    "code": "TABLE_NOT_FOUND",
-    "timestamp": "2024-01-15T10:30:00Z"
-  }
+  "error": "NOT_FOUND",
+  "message": "Table not found"
 }
 ```
 
@@ -263,7 +257,7 @@ You can use any frontend framework that can make HTTP requests:
 <DatabaseViewer path="/api/tabula-lens" initialTable="users" />
 
 // Vanilla JavaScript
-fetch('/api/tabula-lens?path=users')
+fetch('/api/tabula-lens/query?table=users')
   .then(res => res.json())
   .then(data => renderTable(data));
 ```
@@ -273,11 +267,10 @@ fetch('/api/tabula-lens?path=users')
 You can implement the backend in any language/framework:
 
 ```javascript
-// Node.js/Express
-app.get('/api/tabula-lens', async (req, res) => {
-  const data = await tabulaLens.query(req.query);
-  res.json(data);
-});
+// Node.js/Express (using the expressAdapter)
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
 
 // Python/FastAPI (hypothetical)
 @app.get("/api/tabula-lens")

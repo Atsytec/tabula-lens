@@ -48,7 +48,7 @@ app.get('/api/tabula-lens', async (req, res) => {
 // Frontend: Send authentication
 <DatabaseViewer 
   path="/api/tabula-lens"
-  getAuthHeaders={() => ({
+  getAuthHeaders={async () => ({
     'Authorization': `Bearer ${userToken}`
   })}
 />
@@ -83,11 +83,12 @@ Authorization is enforced on the backend before database queries are executed.
    ```
 
 3. **Connection Security**
+   ```bash
+   # Use SSL in production via the connection string
+   DATABASE_URL="postgresql://user:password@host:5432/mydb?sslmode=require"
+   ```
    ```javascript
-   // Use SSL in production
-   const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
-     ssl: { rejectUnauthorized: true }
-   })
+   const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
    ```
 
 ### Frontend Security
@@ -137,65 +138,61 @@ const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
 ### ❌ Don't: Bypass Authentication
 
 ```javascript
-// NEVER do this
-app.get('/api/tabula-lens', async (req, res) => {
-  // No authentication check!
-  const data = await tabulaLens.query(req.query)
-  res.json(data)
-})
+// NEVER do this — no authentication check!
+import { expressAdapter } from '@tabula-lens/node';
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
 ```
 
 ### ✅ Do: Always Authenticate
 
 ```javascript
-// Always verify authentication
-app.get('/api/tabula-lens', async (req, res) => {
+// Add authentication middleware before the adapter
+import { expressAdapter } from '@tabula-lens/node';
+
+app.use('/api/tabula-lens', async (req, res, next) => {
   const user = await authenticate(req)
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
-  
-  const data = await tabulaLens.query(req.query)
-  res.json(data)
+  next()
 })
+
+app.use('/api/tabula-lens', expressAdapter(tabulaLens))
 ```
 
 ## Error Handling
 
-Security-conscious error handling prevents information leakage:
+Security-conscious error handling prevents information leakage. TabulaLens adapters handle errors consistently — use your framework's error handler to suppress internal details:
 
 ```javascript
-// Generic error messages
-try {
-  const data = await tabulaLens.query(req.query)
-  res.json(data)
-} catch (error) {
-  // Don't expose internal details
-  console.error('Database error:', error) // Log details server-side
-  res.status(500).json({ 
-    error: 'An error occurred while processing your request' 
+// Express error handler — intercepts any errors from the adapter
+app.use((err, req, res, next) => {
+  console.error('Internal error:', err) // Log details server-side only
+  res.status(500).json({
+    error: 'An error occurred while processing your request'
   })
-}
+})
 ```
 
 ## Logging and Monitoring
 
-Implement security logging:
+Implement security logging using TabulaLens built-in logging options:
 
 ```javascript
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
-  logging: true
+  enableRequestLogging: true,
+  enableQueryLogging: true,
+  logLevel: 'info',
+  sensitiveDataMasking: true,
 })
 
-// Log security events
-app.get('/api/tabula-lens', async (req, res) => {
+// Log security events in your own middleware
+app.use('/api/tabula-lens', async (req, res, next) => {
   const user = await authenticate(req)
   if (!user) {
     logger.warn('Unauthorized access attempt', { ip: req.ip })
     return res.status(401).json({ error: 'Unauthorized' })
   }
-  
   logger.info('Database query', { user: user.id, table: req.query.table })
-  const data = await tabulaLens.query(req.query)
-  res.json(data)
+  next()
 })
 ```
 

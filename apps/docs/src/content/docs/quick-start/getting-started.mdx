@@ -147,7 +147,7 @@ Pass authentication headers to the `DatabaseViewer` component:
 <DatabaseViewer 
   path="/api/tabula-lens"
   initialTable="users"
-  getAuthHeaders={() => ({
+  getAuthHeaders={async () => ({
     'X-API-Key': 'your-secret-api-key'
     // or 'Authorization': `Bearer ${token}`
   })}

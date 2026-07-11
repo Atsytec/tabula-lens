@@ -73,38 +73,48 @@ Tabula Lens provides adapters for a wide range of Node.js frameworks, organized 
 
 These are established Express-style frameworks:
 
-#### Express (4.x & 5.x)
+#### Express 5.x
 
 ```typescript
 import express from 'express';
-import TabulaLens from '@tabula-lens/node';
+import { TabulaLens, expressAdapter } from '@tabula-lens/node';
 
 const app = express();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-app.get('/api/tabula-lens', async (req, res) => {
-  const data = await tabulaLens.query(req.query);
-  res.json(data);
-});
+app.use('/api/tabula-lens', expressAdapter(tabulaLens));
 
 app.listen(3002);
 ```
 
-**Peer Dependencies:** `express@^4.0.0` or `express@^5.0.0`
+**Peer Dependencies:** `express@^5.0.0`
+
+#### Express 4.x
+
+```typescript
+import express from 'express';
+import { TabulaLens, express4Adapter } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+app.use('/api/tabula-lens', express4Adapter(tabulaLens));
+
+app.listen(3002);
+```
+
+**Peer Dependencies:** `express@^4.0.0`
 
 #### Fastify
 
 ```typescript
 import Fastify from 'fastify';
-import TabulaLens from '@tabula-lens/node';
+import { TabulaLens, fastifyAdapter } from '@tabula-lens/node';
 
 const fastify = Fastify();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-fastify.get('/api/tabula-lens', async (request, reply) => {
-  const data = await tabulaLens.query(request.query);
-  reply.send(data);
-});
+fastify.all('/api/tabula-lens/*', fastifyAdapter(tabulaLens));
 
 fastify.listen({ port: 3002 });
 ```
@@ -115,17 +125,12 @@ fastify.listen({ port: 3002 });
 
 ```typescript
 import Koa from 'koa';
-import TabulaLens from '@tabula-lens/node';
+import { TabulaLens, koaAdapter } from '@tabula-lens/node';
 
 const app = new Koa();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-app.use(async (ctx) => {
-  if (ctx.path === '/api/tabula-lens') {
-    const data = await tabulaLens.query(ctx.query);
-    ctx.body = data;
-  }
-});
+app.use(koaAdapter(tabulaLens));
 
 app.listen(3002);
 ```
@@ -136,18 +141,15 @@ app.listen(3002);
 
 ```typescript
 import Hapi from '@hapi/hapi';
-import TabulaLens from '@tabula-lens/node';
+import { TabulaLens, hapiAdapter } from '@tabula-lens/node';
 
 const server = Hapi.server({ port: 3002 });
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
 server.route({
   method: 'GET',
-  path: '/api/tabula-lens',
-  handler: async (request, h) => {
-    const data = await tabulaLens.query(request.query);
-    return h.response(data);
-  }
+  path: '/api/tabula-lens/{path*}',
+  handler: hapiAdapter(tabulaLens),
 });
 
 await server.start();
@@ -159,16 +161,12 @@ await server.start();
 
 ```typescript
 import restify from 'restify';
-import TabulaLens from '@tabula-lens/node';
+import { TabulaLens, restifyAdapter } from '@tabula-lens/node';
 
 const server = restify.createServer();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-server.get('/api/tabula-lens', async (req, res, next) => {
-  const data = await tabulaLens.query(req.query);
-  res.send(data);
-  next();
-});
+server.get('/api/tabula-lens/*', restifyAdapter(tabulaLens));
 
 server.listen(3002);
 ```
@@ -182,19 +180,13 @@ These frameworks provide integrated full-stack solutions:
 #### Next.js
 
 ```typescript
-// pages/api/tabula-lens.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
-import TabulaLens from '@tabula-lens/node';
+// app/api/tabula-lens/[...path]/route.ts  (App Router)
+import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createNextRouteHandler(tabulaLens);
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const data = await tabulaLens.query(req.query);
-  res.json(data);
-}
+export { handler as GET };
 ```
 
 **Peer Dependencies:** `next@^13.0.0`
@@ -202,19 +194,13 @@ export default async function handler(
 #### TanStack Start
 
 ```typescript
-import { createRoute } from '@tanstack/react-router';
-import TabulaLens from '@tabula-lens/node';
+import { TabulaLens, createTanStackStartHandler } from '@tabula-lens/node';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createTanStackStartHandler(tabulaLens);
 
-export const apiRoute = createRoute({
-  path: '/api/tabula-lens',
-  method: 'GET',
-  handler: async ({ request }) => {
-    const url = new URL(request.url);
-    const data = await tabulaLens.query(Object.fromEntries(url.searchParams));
-    return Response.json(data);
-  },
+export const APIRoute = createAPIFileRoute('/api/tabula-lens/$')({
+  GET: ({ request }) => handler(request),
 });
 ```
 
@@ -223,17 +209,13 @@ export const apiRoute = createRoute({
 #### Remix
 
 ```typescript
-// app/routes/api.tabula-lens.ts
-import { LoaderFunction } from '@remix-run/node';
-import TabulaLens from '@tabula-lens/node';
+// app/routes/api.tabula-lens.$.ts
+import { TabulaLens, createRemixHandler } from '@tabula-lens/node';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createRemixHandler(tabulaLens);
 
-export const loader: LoaderFunction = async ({ request }) => {
-  const url = new URL(request.url);
-  const data = await tabulaLens.query(Object.fromEntries(url.searchParams));
-  return data;
-};
+export const loader = ({ request }: { request: Request }) => handler(request);
 ```
 
 **Peer Dependencies:** `@remix-run/react@^2.0.0`
@@ -241,15 +223,13 @@ export const loader: LoaderFunction = async ({ request }) => {
 #### SvelteKit
 
 ```typescript
-// src/routes/api/tabula-lens/+server.ts
-import TabulaLens from '@tabula-lens/node';
+// src/routes/api/tabula-lens/[...path]/+server.ts
+import { TabulaLens, createSvelteKitHandler } from '@tabula-lens/node';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createSvelteKitHandler(tabulaLens);
 
-export async function GET({ url }) {
-  const data = await tabulaLens.query(Object.fromEntries(url.searchParams));
-  return new Response(JSON.stringify(data));
-}
+export const GET = (event: { request: Request; url: URL }) => handler(event);
 ```
 
 **Peer Dependencies:** `@sveltejs/kit@^2.0.0`
@@ -262,15 +242,12 @@ These frameworks are optimized for edge computing:
 
 ```typescript
 import { Hono } from 'hono';
-import TabulaLens from '@tabula-lens/node';
+import { TabulaLens, createHonoMiddleware } from '@tabula-lens/node';
 
 const app = new Hono();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-app.get('/api/tabula-lens', async (c) => {
-  const data = await tabulaLens.query(c.req.query());
-  return c.json(data);
-});
+app.all('/api/tabula-lens/*', createHonoMiddleware(tabulaLens));
 
 export default app;
 ```
@@ -281,15 +258,12 @@ export default app;
 
 ```typescript
 import Elysia from 'elysia';
-import TabulaLens from '@tabula-lens/node';
+import { TabulaLens, createElysiaHandler } from '@tabula-lens/node';
 
 const app = new Elysia();
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-app.get('/api/tabula-lens', async ({ query }) => {
-  const data = await tabulaLens.query(query);
-  return data;
-});
+app.all('/api/tabula-lens/*', createElysiaHandler(tabulaLens));
 
 app.listen(3002);
 ```
@@ -299,18 +273,13 @@ app.listen(3002);
 #### Fresh
 
 ```typescript
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import TabulaLens from '@tabula-lens/node';
+// routes/api/tabula-lens/[...path].ts
+import { TabulaLens, createFreshHandler } from '@tabula-lens/node';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const handler = createFreshHandler(tabulaLens);
 
-async function handler(req: Request) {
-  const url = new URL(req.url);
-  const data = await tabulaLens.query(Object.fromEntries(url.searchParams));
-  return new Response(JSON.stringify(data));
-}
-
-serve(handler);
+export const handler = { GET: (req: Request) => handler(req) };
 ```
 
 **Peer Dependencies:** `fresh@^1.0.0`
@@ -320,19 +289,14 @@ serve(handler);
 For custom implementations or unsupported frameworks:
 
 ```typescript
-import TabulaLens from '@tabula-lens/node';
+import http from 'http';
+import { TabulaLens, nativeAdapter } from '@tabula-lens/node';
 
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 
-// Use the native adapter for custom implementations
-async function customHandler(request: any, response: any) {
-  try {
-    const data = await tabulaLens.query(request.query);
-    response.json(data);
-  } catch (error) {
-    response.status(500).json({ error: error.message });
-  }
-}
+// Use the native adapter for custom HTTP server implementations
+const handler = nativeAdapter(tabulaLens);
+http.createServer(handler).listen(3000);
 ```
 
 ## TabulaLens Core
@@ -368,27 +332,28 @@ async query(params: QueryParams): Promise<QueryResult>
 
 **Parameters:**
 ```typescript
-interface QueryParams {
-  path: string;           // Table name
-  page?: number;          // Page number (default: 1)
-  pageSize?: number;      // Items per page (default: 10)
+interface QueryOptions {
+  table?: string;          // Table name (default: 'users')
+  page?: number;           // Page number (default: 1)
+  limit?: number;          // Items per page (default: 10)
   filter?: string;         // Filter string
-  sort?: string;          // Sort column
-  order?: 'asc' | 'desc'; // Sort order
+  filterColumns?: string[]; // Columns to filter on
+  sort?: string;           // Sort string, e.g. 'name:asc,created_at:desc'
+  columns?: string[];      // Columns to return
 }
 ```
 
 **Returns:**
 ```typescript
 interface QueryResult {
-  data: Record<string, any>[];
+  data: Record<string, unknown>[];
+  columns: string[];
   pagination: {
     page: number;
-    pageSize: number;
+    limit: number;
     total: number;
     totalPages: number;
   };
-  columns: ColumnInfo[];
 }
 ```
 
@@ -409,12 +374,11 @@ The query builder constructs safe SQL queries:
 
 ```typescript
 // Example: SELECT * FROM users WHERE name LIKE '%Alice%' ORDER BY name ASC LIMIT 10 OFFSET 0
-const query = tabulaLens.query({
-  path: 'users',
+const result = await tabulaLens.query({
+  table: 'users',
   filter: 'Alice',
-  sort: 'name',
-  order: 'asc',
-  pageSize: 10,
+  sort: 'name:asc',
+  limit: 10,
   page: 1
 });
 ```
@@ -635,12 +599,12 @@ Built-in performance monitoring:
 
 ```typescript
 import { describe, it, expect } from 'vitest';
-import TabulaLens from '@tabula-lens/node';
+import { TabulaLens } from '@tabula-lens/node';
 
 describe('TabulaLens', () => {
   it('should query database', async () => {
     const tabulaLens = new TabulaLens(testDatabaseUrl);
-    const result = await tabulaLens.query({ path: 'users' });
+    const result = await tabulaLens.query({ table: 'users' });
     expect(result.data).toBeDefined();
     expect(result.columns).toBeDefined();
   });
@@ -651,7 +615,7 @@ describe('TabulaLens', () => {
 
 ```typescript
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import TabulaLens from '@tabula-lens/node';
+import { TabulaLens } from '@tabula-lens/node';
 
 describe('TabulaLens Integration', () => {
   let tabulaLens: TabulaLens;
@@ -666,9 +630,9 @@ describe('TabulaLens Integration', () => {
 
   it('should handle pagination', async () => {
     const result = await tabulaLens.query({
-      path: 'users',
+      table: 'users',
       page: 1,
-      pageSize: 10
+      limit: 10
     });
     expect(result.pagination.page).toBe(1);
     expect(result.data.length).toBeLessThanOrEqual(10);
@@ -695,7 +659,7 @@ Implement health check endpoints:
 ```typescript
 app.get('/health', async (req, res) => {
   try {
-    await tabulaLens.query({ path: 'users', pageSize: 1 });
+    await tabulaLens.query({ table: 'users', limit: 1 });
     res.json({ status: 'healthy' });
   } catch (error) {
     res.status(503).json({ status: 'unhealthy' });

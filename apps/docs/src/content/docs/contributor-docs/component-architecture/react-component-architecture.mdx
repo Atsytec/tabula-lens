@@ -426,15 +426,23 @@ Manages table state (current table, sorting, filtering, pagination).
 import { useTableState } from '@tabula-lens/react';
 
 function MyComponent() {
-  const tableState = useTableState({
+  const {
+    selectedTable,
+    setSelectedTable,
+    sorting,
+    setSorting,
+    pagination,
+    setPagination,
+    filter,
+    setFilter,
+    debouncedFilter,
+  } = useTableState({
     initialTable: 'users',
     defaultSort: { column: 'id', direction: 'asc' },
-    pageSize: 20
+    pageSize: 20,
   });
   
-  const { currentTable, sort, filter, pagination } = tableState;
-  
-  return <div>Current table: {currentTable}</div>;
+  return <div>Current table: {selectedTable}</div>;
 }
 ```
 
@@ -452,17 +460,27 @@ Handles data fetching with caching and error handling.
 **Usage:**
 
 ```tsx
-import { useDatabaseData } from '@tabula-lens/react';
+import { useDatabaseData, buildQueryParams, useTableState } from '@tabula-lens/react';
 
 function MyComponent() {
-  const { data, loading, error, refetch } = useDatabaseData({
+  const { selectedTable, pagination, sorting, debouncedFilter } = useTableState({
+    initialTable: 'users',
+  });
+
+  const queryParams = buildQueryParams({
+    selectedTable,
+    pagination,
+    sorting,
+    filter: debouncedFilter,
+  });
+
+  const { data, isLoading, error, refetch } = useDatabaseData({
     path: '/api/tabula-lens',
-    table: 'users',
-    sort: { column: 'id', direction: 'asc' },
-    pagination: { page: 1, pageSize: 20 }
+    selectedTable,
+    queryParams,
   });
   
-  if (loading) return <div>Loading...</div>;
+  if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
   
   return <div>Data: {JSON.stringify(data)}</div>;
@@ -471,32 +489,29 @@ function MyComponent() {
 
 ### buildQueryParams Function
 
-Builds query parameters from table state.
+Builds a URL query string from table state.
 
 **Features:**
-- Type-safe parameter building
-- Handles complex state objects
-- URL encoding
-- Filter serialization
+- Type-safe parameter building using TanStack Table types
+- Handles sorting state (array of `{ id, desc }` objects)
+- Handles pagination state (`{ pageIndex, pageSize }`)
+- URL-encodes filter and sort values
 
 **Usage:**
 
 ```tsx
 import { buildQueryParams } from '@tabula-lens/react';
 
-function MyComponent() {
-  const params = buildQueryParams({
-    table: 'users',
-    sort: { column: 'id', direction: 'asc' },
-    filter: 'john',
-    pagination: { page: 1, pageSize: 20 }
-  });
-  
-  // Returns: ?table=users&sort_column=id&sort_direction=asc&filter=john&page=1&page_size=20
-  console.log(params);
-  
-  return <div>Query params: {params}</div>;
-}
+const queryString = buildQueryParams({
+  selectedTable: 'users',
+  pagination: { pageIndex: 0, pageSize: 20 },
+  sorting: [{ id: 'id', desc: false }],
+  filter: 'john',
+  filterColumns: ['name', 'email'],
+});
+
+// Result: "table=users&page=1&limit=20&sort=id%3Aasc&filter=john&filterColumns=name%2Cemail"
+console.log(queryString);
 ```
 
 ## Utility Functions
@@ -533,7 +548,7 @@ Validation utilities for data and parameters.
 ```tsx
 import { validatePagination } from '@tabula-lens/react';
 
-const isValid = validatePagination({ page: 1, pageSize: 20 });
+const isValid = validatePagination({ page: 1, limit: 20, total: 100, totalPages: 5 });
 // Returns: true or throws error
 ```
 

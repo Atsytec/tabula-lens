@@ -53,14 +53,15 @@ DATABASE_URL=postgresql://alice:secret@localhost:5432/mydb
 
 ### Connection Pooling
 
-TabulaLens implements efficient connection pooling:
+TabulaLens implements efficient connection pooling via the underlying Knex.js and `pg` driver. Connection pool settings are controlled through the PostgreSQL connection string parameters or `pg` environment variables, not through TabulaLens constructor options:
+
+```bash
+# Pool size via connection string
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?pool_min=2&pool_max=10"
+```
 
 ```typescript
-const tabulaLens = new TabulaLens(databaseUrl, {
-  maxConnections: 20,        // Maximum connections in pool
-  connectionTimeout: 30000,  // Connection timeout in ms
-  idleTimeout: 10000,        // Idle connection timeout
-});
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 ```
 
 **Benefits:**
@@ -166,12 +167,13 @@ TabulaLens accepts standardized query parameters:
 
 | Parameter | Type | Description | Example |
 |-----------|------|-------------|---------|
-| `path` | string | Table name to query | `users` |
+| `table` | string | Table name to query | `users` |
 | `page` | number | Page number (1-based) | `1` |
-| `pageSize` | number | Items per page | `10` |
+| `limit` | number | Items per page (default: 10) | `10` |
 | `filter` | string | Search filter string | `John` |
-| `sort` | string | Column to sort by | `name` |
-| `order` | string | Sort direction | `asc` or `desc` |
+| `filterColumns` | string[] | Columns to filter on | `['name', 'email']` |
+| `sort` | string | Sort string (`column:direction`) | `name:asc` |
+| `columns` | string[] | Columns to return | `['id', 'name']` |
 
 ### Query Examples
 
@@ -423,7 +425,7 @@ Implement database health checks:
 ```typescript
 async function healthCheck() {
   try {
-    await tabulaLens.query({ path: 'users', pageSize: 1 });
+    await tabulaLens.query({ table: 'users', limit: 1 });
     return { status: 'healthy', database: 'connected' };
   } catch (error) {
     return { status: 'unhealthy', database: 'disconnected', error: error.message };
