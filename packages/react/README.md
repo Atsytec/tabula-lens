@@ -6,6 +6,8 @@
 [![React](https://img.shields.io/badge/React-19+-61DAFB.svg)](https://reactjs.org/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+> 📚 **[Full Documentation](https://docs.tabula-lens.dev)** - Comprehensive guides, API reference, and examples
+
 A powerful React component for viewing database data with built-in pagination, sorting, and filtering. Designed to work seamlessly with the `@tabula-lens/node` backend SDK for a secure, full-stack database viewing solution.
 
 ## 📑 Table of Contents
@@ -19,6 +21,7 @@ A powerful React component for viewing database data with built-in pagination, s
 - [Styling](#-styling)
 - [Troubleshooting](#-troubleshooting)
 - [Browser Support](#-browser-support)
+- [Full Documentation](https://docs.tabula-lens.dev)
 
 ## 🎯 Features
 
@@ -45,7 +48,7 @@ yarn add @tabula-lens/react
 
 ### Peer Dependencies
 
-This package requires React 18+ and React DOM 18+:
+This package requires React 19.2.7+ and React DOM 19.2.7+:
 
 ```bash
 npm install react react-dom
@@ -87,6 +90,8 @@ function App() {
   return <DatabaseViewer path="/api/tabula-lens" tableSelector="dropdown" initialTable="users" />;
 }
 ```
+
+> 💡 **Need more examples?** Check out our [full documentation](https://docs.tabula-lens.dev) for comprehensive guides, advanced configurations, TanStack Query/Table integrations, and custom component patterns.
 
 ## 📖 API Reference
 
@@ -535,6 +540,7 @@ Need help? Check our [support documentation](https://github.com/Atsytec/tabula-l
 
 ## 🔗 Links
 
+- [📚 Full Documentation](https://docs.tabula-lens.dev) - Comprehensive guides, API reference, and examples
 - [Main Repository](https://github.com/Atsytec/tabula-lens)
 - [React Package](https://www.npmjs.com/package/@tabula-lens/react)
 - [Issues](https://github.com/Atsytec/tabula-lens/issues)

@@ -5,6 +5,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+> 📚 **[Full Documentation](https://docs.tabula-lens.dev)** - Comprehensive guides, API reference, and examples
+
 A secure, backend-agnostic Node.js SDK for database queries with framework adapters. Tabula Lens keeps your database credentials safe on the backend while providing a clean API for frontend data visualization.
 
 ## 📑 Table of Contents
@@ -18,6 +20,7 @@ A secure, backend-agnostic Node.js SDK for database queries with framework adapt
 - [Configuration](#-configuration)
 - [Troubleshooting](#-troubleshooting)
 - [Security Considerations](#-security-considerations)
+- [Full Documentation](https://docs.tabula-lens.dev)
 
 ## 🎯 Features
 
@@ -52,7 +55,7 @@ This package requires framework-specific peer dependencies. Install the appropri
 - **TanStack Start**: `npm install @tanstack/react-start@^1.0.0`
 - **Remix**: `npm install remix@^2.0.0`
 - **SvelteKit**: `npm install @sveltejs/kit@^2.0.0`
-- **Hono**: `npm install hono@^4.0.0`
+- **Hono**: `npm install hono@^4.12.29`
 - **Elysia**: `npm install elysia@^1.0.0`
 - **Fresh**: No additional peer dependencies (Deno native)
 
@@ -117,6 +120,8 @@ const handler = createNextRouteHandler(tabulaLens);
 
 export { handler as GET, handler as POST, handler as PUT, handler as DELETE };
 ```
+
+> 💡 **Need more examples?** Check out our [full documentation](https://docs.tabula-lens.dev) for comprehensive guides, advanced configurations, and integration examples for all 15+ framework adapters.
 
 ## 📖 API Reference
 
@@ -520,6 +525,7 @@ Need help? Check our [support documentation](https://github.com/Atsytec/tabula-l
 
 ## 🔗 Links
 
+- [📚 Full Documentation](https://docs.tabula-lens.dev) - Comprehensive guides, API reference, and examples
 - [Main Repository](https://github.com/Atsytec/tabula-lens)
 - [Node Package](https://www.npmjs.com/package/@tabula-lens/node)
 - [Issues](https://github.com/Atsytec/tabula-lens/issues)
