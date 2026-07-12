@@ -498,8 +498,10 @@ const OptimizedComponent = React.memo(({ data }) => {
 **2. Data Fetching Optimization**
 
 ```jsx
-// Implement debouncing
-const debouncedFilter = useDebouncedValue(filter, 300);
+// Use built-in debounced filtering from useTableState
+const { filter, setFilter, debouncedFilter } = useTableState({
+  filterDebounceMs: 300
+});
 
 // Use pagination
 const [page, setPage] = useState(1);

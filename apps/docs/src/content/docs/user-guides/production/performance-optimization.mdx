@@ -287,27 +287,34 @@ function useDatabaseData(query) {
       return response.json();
     },
     staleTime: 5 * 60 * 1000,  // 5 minutes
-    cacheTime: 10 * 60 * 1000,  // 10 minutes
+    gcTime: 10 * 60 * 1000,  // 10 minutes (formerly cacheTime in v4)
   });
 }
 ```
 
 #### 2. Implement Debounced Filtering
 
-```jsx
-import { useDebouncedValue } from '@tabula-lens/react';
+The `DatabaseViewer` component includes built-in debounced filtering via the `useTableState` hook. When you use the `filterDebounceMs` prop, the component automatically debounces filter changes:
 
-function DatabaseViewerWithDebounce() {
-  const [filter, setFilter] = useState('');
-  const debouncedFilter = useDebouncedValue(filter, 300);  // 300ms debounce
+```jsx
+<DatabaseViewer
+  path="/api/tabula-lens"
+  filterDebounceMs={300}  // 300ms debounce
+/>
+```
+
+For custom implementations, you can use the `useTableState` hook directly:
+
+```jsx
+import { useTableState } from '@tabula-lens/react';
+
+function CustomDatabaseViewer() {
+  const { filter, setFilter, debouncedFilter } = useTableState({
+    filterDebounceMs: 300  // 300ms debounce
+  });
   
-  return (
-    <DatabaseViewer
-      path="/api/tabula-lens"
-      filter={debouncedFilter}
-      onFilterChange={setFilter}
-    />
-  );
+  // Use debouncedFilter for API calls
+  // Use filter for UI input
 }
 ```
 
