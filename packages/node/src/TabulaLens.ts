@@ -247,7 +247,7 @@ export class TabulaLens {
           query = query.where(function () {
             columnsToSearch.forEach((column) => {
               // @ts-expect-error - Knex query builder context
-              this.orWhere(column, likeOperator, `%${filter}%`);
+              void this.orWhere(column, likeOperator, `%${filter}%`);
             });
           });
         }
@@ -273,7 +273,7 @@ export class TabulaLens {
             qb.where(function () {
               columnsToSearch.forEach((column) => {
                 // @ts-expect-error - Knex query builder context
-                this.orWhere(column, likeOperator, `%${filter}%`);
+                void this.orWhere(column, likeOperator, `%${filter}%`);
               });
             });
           }
