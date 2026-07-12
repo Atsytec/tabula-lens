@@ -281,17 +281,17 @@ separate future effort.
 
 ### Phase 2 — Dialect Strategy Layer
 
-- [ ] Create `src/dialects/` folder with proper module structure
-- [ ] Define `DialectStrategy` interface in `src/dialects/types.ts` with JSDoc documentation
-- [ ] Create `src/dialects/utils.ts` for shared dialect utilities (DRY principle)
-- [ ] Implement `PostgresDialect` in `src/dialects/postgres.ts` (extract existing logic from TabulaLens)
-- [ ] Implement `MySQLDialect` in `src/dialects/mysql.ts` (reuse shared utilities where possible)
-- [ ] Implement `SQLiteDialect` in `src/dialects/sqlite.ts` (handle PRAGMA queries specifically)
-- [ ] Implement `MSSQLDialect` in `src/dialects/mssql.ts` (handle MSSQL-specific syntax)
-- [ ] Implement `createDialect(type: DatabaseType): DialectStrategy` factory in `src/dialects/index.ts`
-- [ ] Create barrel export in `src/dialects/index.ts` for clean public API
-- [ ] Write unit tests for each dialect (mocked Knex, test error paths and edge cases)
-- [ ] Add integration tests for dialect factory function
+- [x] Create `src/dialects/` folder with proper module structure
+- [x] Define `DialectStrategy` interface in `src/dialects/types.ts` with JSDoc documentation
+- [x] Create `src/dialects/utils.ts` for shared dialect utilities (DRY principle)
+- [x] Implement `PostgresDialect` in `src/dialects/postgres.ts` (extract existing logic from TabulaLens)
+- [x] Implement `MySQLDialect` in `src/dialects/mysql.ts` (reuse shared utilities where possible)
+- [x] Implement `SQLiteDialect` in `src/dialects/sqlite.ts` (handle PRAGMA queries specifically)
+- [x] Implement `MSSQLDialect` in `src/dialects/mssql.ts` (handle MSSQL-specific syntax)
+- [x] Implement `createDialect(type: DatabaseType): DialectStrategy` factory in `src/dialects/index.ts`
+- [x] Create barrel export in `src/dialects/index.ts` for clean public API
+- [x] Write unit tests for each dialect (mocked Knex, test error paths and edge cases)
+- [x] Add integration tests for dialect factory function
 
 ### Phase 3 — Wire Dialects into TabulaLens
 
