@@ -223,7 +223,6 @@ sidebar: [
 
 **2.4 Delete Overview Pages** ✅
 
-- [x] Delete `index.mdx` (root overview)
 - [x] Delete `user-guides/index.mdx`
 - [x] Delete `user-guides/frontend/index.mdx`
 - [x] Delete `user-guides/backend/index.mdx`
@@ -234,6 +233,9 @@ sidebar: [
 - [x] Delete `contributor-docs/internal-systems/index.mdx`
 - [x] Delete `contributor-docs/performance-scaling/index.mdx`
 - [x] Delete `contributor-docs/security/index.mdx`
+- [x] Delete `contributor-docs/index.mdx`
+
+**Note**: The root `index.mdx` file is the home page with splash template and should NOT be deleted. This was corrected after Phase 2 implementation.
 
 **2.5 Delete Operations Content** ✅
 

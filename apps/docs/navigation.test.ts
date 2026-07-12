@@ -122,6 +122,7 @@ describe('Referenced Files Exist', () => {
   const docsRoot = resolve(__dirname, 'src/content/docs');
 
   const expectedFiles = [
+    'index.mdx',
     'user-guides/frontend/frontend-implementation.mdx',
     'user-guides/frontend/tanstack-query-integration.mdx',
     'user-guides/frontend/tanstack-table-integration.mdx',
