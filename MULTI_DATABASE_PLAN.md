@@ -295,22 +295,23 @@ separate future effort.
 
 ### Phase 3 — Wire Dialects into TabulaLens
 
-- [ ] Replace the hardcoded `client: 'pg'` Knex initialisation with dynamic client selection
-- [ ] Store `dialect` instance on `TabulaLens` class (private property with proper typing)
-- [ ] Replace `getTables()` body with `this.dialect.getTables(this.db)` (maintain error handling)
-- [ ] Replace `getColumns()` body with `this.dialect.getColumns(this.db, table)` (preserve caching logic)
-- [ ] Replace `getFilterableColumns()` text-type list with `this.dialect.getFilterableTypes()`
-- [ ] Replace `ILIKE` usage in `query()` with `this.dialect.getLikeOperator()` (note: dialect strategy handles operator selection dynamically)
-- [ ] Add logging for dialect initialization and database type detection
-- [ ] Ensure all error handling uses consistent `TabulaLensError` patterns
-- [ ] Run and fix all existing tests (verify backward compatibility)
-- [ ] Add integration test for multi-database functionality
+- [x] Replace the hardcoded `client: 'pg'` Knex initialisation with dynamic client selection
+- [x] Store `dialect` instance on `TabulaLens` class (private property with proper typing)
+- [x] Replace `getTables()` body with `this.dialect.getTables(this.db)` (maintain error handling)
+- [x] Replace `getColumns()` body with `this.dialect.getColumns(this.db, table)` (preserve caching logic)
+- [x] Replace `getFilterableColumns()` text-type list with `this.dialect.getFilterableTypes()`
+- [x] Replace `ILIKE` usage in `query()` with `this.dialect.getLikeOperator()` (note: dialect strategy handles operator selection dynamically)
+- [x] Add logging for dialect initialization and database type detection
+- [x] Ensure all error handling uses consistent `TabulaLensError` patterns
+- [x] Run and fix all existing tests (verify backward compatibility)
+- [x] Add integration test for multi-database functionality
 
 ### Phase 4 — Dependency Management
 
 - [ ] Move `pg` from `dependencies` to `peerDependencies` in `packages/node/package.json`
 - [ ] Add `mysql2`, `better-sqlite3`, `tedious` to `peerDependencies` with appropriate version ranges
 - [ ] Add `@types/mysql2`, `@types/better-sqlite3` type packages to `devDependencies`
+- [ ] Investigate and make sure all the database dependecies versions are up to date. Read official documentation from each one.
 - [ ] Update package.json keywords to include MySQL, SQLite, MSSQL
 - [ ] Verify build still passes with `npm run build`
 - [ ] Verify type check still passes with `npm run check-types`
