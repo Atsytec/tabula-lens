@@ -78,8 +78,23 @@ export default defineConfig({
 				{
 					label: 'User Guides',
 					items: [
-						{ label: 'Frontend Setup', slug: 'user-guides/frontend/frontend-implementation' },
+						{
+							label: 'Frontend',
+							items: [
+								{ label: 'Frontend Setup', slug: 'user-guides/frontend/frontend-implementation' },
+								{ label: 'Styling Customization', slug: 'user-guides/frontend/styling-customization' },
+							],
+						},
 						{ label: 'Backend Setup', slug: 'user-guides/backend/backend-implementation' },
+						{
+							label: 'Database Providers',
+							items: [
+								{ label: 'PostgreSQL', slug: 'user-guides/postgresql' },
+								{ label: 'MySQL', slug: 'user-guides/mysql' },
+								{ label: 'SQLite', slug: 'user-guides/sqlite' },
+								{ label: 'SQL Server', slug: 'user-guides/mssql' },
+							],
+						},
 						{
 							label: 'Authentication',
 							items: [
@@ -92,15 +107,6 @@ export default defineConfig({
 								{ label: 'Kinde', slug: 'user-guides/authentication/kinde' },
 								{ label: 'Lucia Auth', slug: 'user-guides/authentication/lucia' },
 								{ label: 'Supabase Auth', slug: 'user-guides/authentication/supabase-auth' },
-							],
-						},
-						{
-							label: 'Database Providers',
-							items: [
-								{ label: 'PostgreSQL', slug: 'user-guides/postgresql' },
-								{ label: 'MySQL', slug: 'user-guides/mysql' },
-								{ label: 'SQLite', slug: 'user-guides/sqlite' },
-								{ label: 'SQL Server', slug: 'user-guides/mssql' },
 							],
 						},
 						{ label: 'Best Practices', slug: 'user-guides/best-practices' },
@@ -126,6 +132,10 @@ export default defineConfig({
 								{
 									label: 'Backend Architecture',
 									slug: 'contributor-docs/architecture/backend-architecture',
+								},
+								{
+									label: 'Backend Adapter Implementation',
+									slug: 'contributor-docs/architecture/backend-implementation',
 								},
 								{
 									label: 'Database Architecture',

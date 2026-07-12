@@ -13,6 +13,7 @@ describe('Navigation Structure', () => {
 
   it('should have User Guides section with nested structure', () => {
     expect(configContent).toContain("label: 'User Guides'");
+    expect(configContent).toContain("label: 'Frontend'");
     expect(configContent).toContain("label: 'Authentication'");
     expect(configContent).toContain("label: 'Database Providers'");
   });
@@ -59,6 +60,13 @@ describe('File Structure', () => {
   it('should have user-guides/frontend directory', async () => {
     const files = await glob('**/*', { cwd: resolve(docsRoot, 'user-guides/frontend') });
     expect(files.length).toBeGreaterThan(0);
+  });
+
+  it('should not have user-guides/integrations directory', async () => {
+    const exists = await glob('**/*', { cwd: resolve(docsRoot, 'user-guides/integrations') }).catch(
+      () => []
+    );
+    expect(exists.length).toBe(0);
   });
 
   it('should have user-guides/backend directory', async () => {
@@ -124,8 +132,6 @@ describe('Referenced Files Exist', () => {
   const expectedFiles = [
     'index.mdx',
     'user-guides/frontend/frontend-implementation.mdx',
-    'user-guides/frontend/tanstack-query-integration.mdx',
-    'user-guides/frontend/tanstack-table-integration.mdx',
     'user-guides/frontend/styling-customization.mdx',
     'user-guides/backend/backend-implementation.mdx',
     'user-guides/authentication.mdx',
@@ -144,6 +150,7 @@ describe('Referenced Files Exist', () => {
     'user-guides/best-practices.mdx',
     'contributor-docs/architecture/architecture.mdx',
     'contributor-docs/architecture/backend-architecture.mdx',
+    'contributor-docs/architecture/backend-implementation.mdx',
     'contributor-docs/architecture/database-architecture.mdx',
     'contributor-docs/architecture/architecture-decisions.mdx',
     'contributor-docs/component-architecture/react-component-architecture.mdx',
