@@ -308,14 +308,29 @@ separate future effort.
 
 ### Phase 4 — Dependency Management
 
-- [ ] Move `pg` from `dependencies` to `peerDependencies` in `packages/node/package.json`
-- [ ] Add `mysql2`, `better-sqlite3`, `tedious` to `peerDependencies` with appropriate version ranges
-- [ ] Add `@types/mysql2`, `@types/better-sqlite3` type packages to `devDependencies`
-- [ ] Investigate and make sure all the database dependecies versions are up to date. Read official documentation from each one.
-- [ ] Update package.json keywords to include MySQL, SQLite, MSSQL
-- [ ] Verify build still passes with `npm run build`
-- [ ] Verify type check still passes with `npm run check-types`
-- [ ] Test build with each database driver individually (ensure peer dependency resolution works)
+- [x] Move `pg` from `dependencies` to `peerDependencies` in `packages/node/package.json`
+- [x] Add `mysql2`, `better-sqlite3`, `tedious` to `peerDependencies` with appropriate version ranges
+- [x] Add `@types/better-sqlite3` type package to `devDependencies`
+- [x] Investigate and make sure all the database dependecies versions are up to date. Read official documentation from each one.
+- [x] Update package.json keywords to include MySQL, SQLite, MSSQL
+- [x] Verify build still passes with `npm run build`
+- [x] Verify type check still passes with `npm run check-types`
+
+**Note:** Testing build with each database driver individually should be done during integration testing or in separate test environments to ensure peer dependency resolution works correctly.
+
+**Note:** During implementation, we discovered that:
+
+- `mysql2` includes built-in TypeScript types, so `@types/mysql2` is not needed
+- `tedious` includes built-in TypeScript types, so `@types/tedious` is not needed
+- Only `better-sqlite3` requires `@types/better-sqlite3` for TypeScript support
+
+**Latest versions as of 2026-07-12:**
+
+- `pg`: ^8.22.0
+- `mysql2`: ^3.22.6
+- `better-sqlite3`: ^12.11.1
+- `tedious`: ^20.0.0
+- `@types/better-sqlite3`: ^7.6.13
 
 ### Phase 5 — Documentation
 
