@@ -167,7 +167,9 @@ const tabulaLens = new TabulaLens({
 DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"
 ```
 
-> ⚠️ **Important**: When using Supabase, ensure you have enabled Row Level Security (RLS) policies or use a service role key with appropriate permissions. See the [Supabase integration guide](/user-guides/integrations/supabase) for more details.
+:::caution[Supabase RLS]
+When using Supabase, ensure you have enabled Row Level Security (RLS) policies or use a service role key with appropriate permissions. See the [Supabase integration guide](/user-guides/integrations/supabase) for more details.
+:::
 
 ### Neon
 

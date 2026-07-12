@@ -50,7 +50,9 @@ Tabula Lens auto-detects `postgresql://` URLs and uses Knex.js with the standard
 
 **Use the pooled connection** when running on Vercel Functions, AWS Lambda, or any serverless platform.
 
-> **Note:** The `@neondatabase/serverless` driver uses HTTP/WebSocket transport and is not compatible with Tabula Lens. Tabula Lens uses Knex.js with the standard `pg` TCP driver and only accepts a connection string. Use the standard connection string formats shown above.
+:::note[Driver Compatibility]
+The `@neondatabase/serverless` driver uses HTTP/WebSocket transport and is not compatible with Tabula Lens. Tabula Lens uses Knex.js with the standard `pg` TCP driver and only accepts a connection string. Use the standard connection string formats shown above.
+:::
 
 ## Important Notes
 

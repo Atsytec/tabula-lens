@@ -150,6 +150,7 @@ export default defineConfig({
 								{ label: 'Overview', slug: 'user-guides/production' },
 								{ label: 'Deployment', slug: 'user-guides/production/deployment' },
 								{ label: 'Performance Optimization', slug: 'user-guides/production/performance-optimization' },
+								{ label: 'Monitoring & Observability', slug: 'user-guides/production/monitoring-observability' },
 								{ label: 'Testing', slug: 'user-guides/production/testing' },
 							],
 						},
@@ -170,6 +171,10 @@ export default defineConfig({
 							label: 'Overview',
 							slug: 'contributor-docs',
 						},
+							{
+								label: 'Onboarding',
+								slug: 'contributor-docs/onboarding',
+							},
 						{
 							label: 'Architecture',
 							items: [
@@ -229,3 +234,4 @@ export default defineConfig({
 		}),
 	],
 });
+

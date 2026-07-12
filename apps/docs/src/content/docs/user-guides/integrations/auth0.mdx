@@ -105,7 +105,9 @@ export const GET = withApiAuthRequired(async function (request: Request) {
 });
 ```
 
-> **Note:** `@auth0/nextjs-auth0` manages its own session cookies for Next.js. If you are building a standalone API (not a Next.js full-stack app), use the Express pattern with `express-oauth2-jwt-bearer` and validate the `Authorization` header instead.
+:::note[Next.js Specific]
+`@auth0/nextjs-auth0` manages its own session cookies for Next.js. If you are building a standalone API (not a Next.js full-stack app), use the Express pattern with `express-oauth2-jwt-bearer` and validate the `Authorization` header instead.
+:::
 
 ## Frontend Integration
 

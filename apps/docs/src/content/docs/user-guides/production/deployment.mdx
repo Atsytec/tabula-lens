@@ -209,7 +209,28 @@ LOG_FORMAT=json
 CORS_ORIGIN=https://your-frontend.com
 ```
 
-> **Database driver peer dependency:** `@tabula-lens/node` ships with Knex but does not bundle the underlying database driver. Install the peer dependency that matches your `DATABASE_URL` dialect (`pg`, `mysql2`, `better-sqlite3`, or `tedious`) before deploying.
+:::note[Database driver peer dependency]
+`@tabula-lens/node` ships with Knex but does not bundle the underlying database driver. Install the peer dependency that matches your `DATABASE_URL` dialect (`pg`, `mysql2`, `better-sqlite3`, or `tedious`) before deploying.
+
+```bash
+# For PostgreSQL
+npm install pg
+
+# For MySQL/MariaDB
+npm install mysql2
+
+# For SQLite
+npm install better-sqlite3
+
+# For SQL Server
+npm install tedious
+```
+:::
+
+:::tip[Related Documentation]
+- [Database Support](/user-guides/backend/database-integration) - Database connection configuration
+- [Logging System](/user-guides/backend/logging-system) - Production logging configuration
+:::
 
 ### Option 1: Vercel Deployment
 
@@ -398,22 +419,6 @@ docker-compose up -d
 # View logs
 docker-compose logs -f api
 ```
-
-> **Database driver note:** The underlying database drivers (`pg`, `mysql2`, `better-sqlite3`, and `tedious`) are peer dependencies and are not installed by default. When deploying to production, install the driver that matches your chosen database:
->
-> ```bash
-> # For PostgreSQL
-> npm install pg
->
-> # For MySQL/MariaDB
-> npm install mysql2
->
-> # For SQLite
-> npm install better-sqlite3
->
-> # For SQL Server
-> npm install tedious
-> ```
 
 ### Option 5: Kubernetes Deployment
 

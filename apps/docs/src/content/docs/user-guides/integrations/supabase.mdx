@@ -7,7 +7,9 @@ description: Connect Tabula Lens to a Supabase PostgreSQL database.
 
 [Supabase](https://supabase.com) is a hosted PostgreSQL platform. Because Tabula Lens uses a standard PostgreSQL connection, it integrates directly with Supabase's underlying database.
 
-> **Note:** This guide covers connecting Tabula Lens to the Supabase PostgreSQL database. To protect your Tabula Lens endpoint using Supabase user sessions and JWTs, see the [Supabase Auth Integration](./supabase-auth) guide.
+:::note[Scope]
+This guide covers connecting Tabula Lens to the Supabase PostgreSQL database. To protect your Tabula Lens endpoint using Supabase user sessions and JWTs, see the [Supabase Auth Integration](./supabase-auth) guide.
+:::
 
 ## Connection Strings
 
@@ -53,7 +55,9 @@ Tabula Lens auto-detects `postgresql://` URLs and selects the PostgreSQL/Knex dr
 
 ## Row Level Security
 
-> **Note:** Tabula Lens connects using your database credentials (typically the `postgres` user or service role). This connection **bypasses all Row Level Security (RLS) policies** — Tabula Lens can read all tables and rows regardless of any RLS configuration.
+:::caution[Row Level Security Bypass]
+Tabula Lens connects using your database credentials (typically the `postgres` user or service role). This connection **bypasses all Row Level Security (RLS) policies** — Tabula Lens can read all tables and rows regardless of any RLS configuration.
+:::
 
 This is intentional: Tabula Lens is an admin database viewer designed for backend services with elevated privileges. To limit exposure, create a dedicated read-only role for the Tabula Lens connection:
 

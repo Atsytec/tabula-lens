@@ -1,0 +1,400 @@
+---
+title: Advanced Testing
+description: Learn advanced testing strategies for Tabula Lens applications including performance testing, security testing, and visual regression testing.
+---
+
+# Advanced Testing
+
+This guide covers advanced testing strategies for Tabula Lens applications, including performance testing, security testing, and visual regression testing.
+
+## Performance Testing
+
+### Load Testing with Artillery
+
+Test your Tabula Lens API under load:
+
+```yaml
+# artillery-config.yml
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 10
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 50
+      name: "Ramp up"
+    - duration: 300
+      arrivalRate: 100
+      name: "Sustained load"
+scenarios:
+  - name: "Query Users Table"
+    flow:
+      - get:
+          url: "/api/tabula-lens?table=users&page=1&limit=10"
+  - name: "Query with Filter"
+    flow:
+      - get:
+          url: "/api/tabula-lens?table=users&filter=john&page=1&limit=10"
+  - name: "Query with Sort"
+    flow:
+      - get:
+          url: "/api/tabula-lens?table=users&sort=name&order=asc&page=1&limit=10"
+```
+
+Run the load test:
+
+```bash
+artillery run artillery-config.yml
+```
+
+### Performance Benchmarking
+
+Create performance benchmarks:
+
+```typescript
+import { describe, it, expect, beforeAll } from 'vitest';
+import { TabulaLens } from '@tabula-lens/node';
+
+describe('Performance Benchmarks', () => {
+  let tabulaLens: TabulaLens;
+
+  beforeAll(() => {
+    tabulaLens = new TabulaLens(process.env.TEST_DATABASE_URL);
+  });
+
+  it('should query 1000 records in under 500ms', async () => {
+    const start = Date.now();
+    const result = await tabulaLens.query({
+      table: 'users',
+      page: 1,
+      limit: 1000,
+    });
+    const duration = Date.now() - start;
+
+    expect(duration).toBeLessThan(500);
+    expect(result.data.length).toBe(1000);
+  });
+
+  it('should handle 100 consecutive queries efficiently', async () => {
+    const start = Date.now();
+
+    for (let i = 0; i < 100; i++) {
+      await tabulaLens.query({
+        table: 'users',
+        page: 1,
+        limit: 10,
+      });
+    }
+
+    const duration = Date.now() - start;
+    const avgDuration = duration / 100;
+
+    expect(avgDuration).toBeLessThan(50); // Average under 50ms per query
+  });
+});
+```
+
+## Security Testing
+
+### Authentication Testing
+
+Test authentication and authorization:
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { TabulaLens } from '@tabula-lens/node';
+
+describe('Security Tests', () => {
+  it('should reject requests without authentication', async () => {
+    const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+      authenticate: async (req) => {
+        throw new Error('Unauthorized');
+      },
+    });
+
+    await expect(
+      tabulaLens.query({
+        table: 'users',
+        page: 1,
+        limit: 10,
+      })
+    ).rejects.toThrow('Unauthorized');
+  });
+
+  it('should validate JWT tokens', async () => {
+    const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+      authenticate: async (req) => {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (!token) {
+          throw new Error('No token provided');
+        }
+        // Validate token logic here
+        return { userId: 'test-user' };
+      },
+    });
+
+    const result = await tabulaLens.query({
+      table: 'users',
+      page: 1,
+      limit: 10,
+      headers: {
+        authorization: 'Bearer valid-token',
+      },
+    });
+
+    expect(result).toBeDefined();
+  });
+});
+```
+
+### SQL Injection Testing
+
+Test for SQL injection vulnerabilities:
+
+```typescript
+describe('SQL Injection Tests', () => {
+  it('should sanitize filter input', async () => {
+    const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+    const maliciousInput = "'; DROP TABLE users; --";
+
+    const result = await tabulaLens.query({
+      table: 'users',
+      filter: maliciousInput,
+      page: 1,
+      limit: 10,
+    });
+
+    // Should return empty result or handle gracefully
+    expect(result).toBeDefined();
+  });
+
+  it('should handle special characters in table names', async () => {
+    const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+    await expect(
+      tabulaLens.query({
+        table: "users'; DROP TABLE users; --",
+        page: 1,
+        limit: 10,
+      })
+    ).rejects.toThrow();
+  });
+});
+```
+
+## Test Data Management
+
+### Test Database Setup
+
+Set up a dedicated test database:
+
+```typescript
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { TabulaLens } from '@tabula-lens/node';
+
+describe('Test Database Setup', () => {
+  let tabulaLens: TabulaLens;
+
+  beforeAll(async () => {
+    // Connect to test database
+    tabulaLens = new TabulaLens(process.env.TEST_DATABASE_URL);
+
+    // Seed test data
+    await tabulaLens.query({
+      query: `
+        CREATE TABLE IF NOT EXISTS test_users (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255),
+          email VARCHAR(255)
+        )
+      `,
+    });
+
+    await tabulaLens.query({
+      query: `
+        INSERT INTO test_users (name, email) VALUES
+        ('John Doe', 'john@example.com'),
+        ('Jane Smith', 'jane@example.com')
+      `,
+    });
+  });
+
+  afterAll(async () => {
+    // Clean up test data
+    await tabulaLens.query({
+      query: 'DROP TABLE IF EXISTS test_users',
+    });
+
+    await tabulaLens.close();
+  });
+
+  it('should query test data', async () => {
+    const result = await tabulaLens.query({
+      table: 'test_users',
+      page: 1,
+      limit: 10,
+    });
+
+    expect(result.data.length).toBe(2);
+  });
+});
+```
+
+### Data Factories
+
+Use data factories for test data:
+
+```typescript
+class UserFactory {
+  static create(overrides = {}) {
+    return {
+      name: 'Test User',
+      email: 'test@example.com',
+      ...overrides,
+    };
+  }
+
+  static createMany(count: number, overrides = {}) {
+    return Array.from({ length: count }, (_, i) =>
+      this.create({
+        ...overrides,
+        email: `test${i}@example.com`,
+      })
+    );
+  }
+}
+
+describe('Data Factory Tests', () => {
+  it('should create test user', () => {
+    const user = UserFactory.create({ name: 'Custom User' });
+    expect(user.name).toBe('Custom User');
+  });
+
+  it('should create multiple users', () => {
+    const users = UserFactory.createMany(5);
+    expect(users.length).toBe(5);
+  });
+});
+```
+
+## Mocking Strategies
+
+### Mocking Database Connections
+
+Mock database connections for unit tests:
+
+```typescript
+import { describe, it, expect, vi } from 'vitest';
+import { TabulaLens } from '@tabula-lens/node';
+
+describe('Mocked Database Tests', () => {
+  it('should mock database query', async () => {
+    const mockQuery = vi.fn().mockResolvedValue({
+      data: [{ id: 1, name: 'Test' }],
+      total: 1,
+    });
+
+    const tabulaLens = new TabulaLens('mock://database', {
+      logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+    });
+
+    // Mock the internal query method
+    tabulaLens.query = mockQuery;
+
+    const result = await tabulaLens.query({
+      table: 'users',
+      page: 1,
+      limit: 10,
+    });
+
+    expect(mockQuery).toHaveBeenCalled();
+    expect(result.data).toEqual([{ id: 1, name: 'Test' }]);
+  });
+});
+```
+
+### Mocking HTTP Requests
+
+Mock HTTP requests for React component tests:
+
+```typescript
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+describe('Mocked HTTP Tests', () => {
+  it('should mock fetch requests', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: [{ id: 1, name: 'Test' }],
+        total: 1,
+      }),
+    });
+
+    global.fetch = mockFetch;
+
+    render(<DatabaseViewer path="/api/tabula-lens" table="users" />);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/tabula-lens?table=users&page=1&limit=10'
+    );
+  });
+});
+```
+
+## Snapshot Testing
+
+### Component Snapshot Testing
+
+Use snapshot testing for UI components:
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { render } from '@testing-library/react';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+describe('Snapshot Tests', () => {
+  it('should match snapshot', () => {
+    const { asFragment } = render(
+      <DatabaseViewer path="/api/tabula-lens" table="users" />
+    );
+    expect(asFragment()).toMatchSnapshot();
+  });
+});
+```
+
+Update snapshots:
+
+```bash
+npm test -- -u
+```
+
+## Visual Regression Testing
+
+### Percy Integration
+
+Set up visual regression testing with Percy:
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { render } from '@testing-library/react';
+import { DatabaseViewer } from '@tabula-lens/react';
+
+describe('Visual Regression Tests', () => {
+  it('should match visual snapshot', () => {
+    const { container } = render(
+      <DatabaseViewer path="/api/tabula-lens" table="users" />
+    );
+    expect(container).toMatchSnapshot();
+  });
+});
+```
+
+## Related Documentation
+
+- [Testing Guide](/user-guides/production/testing) - Basic testing setup and patterns
+- [Monitoring & Observability](/user-guides/production/monitoring-observability) - Monitoring production applications
+- [Security](/contributor-docs/security/security) - Security best practices

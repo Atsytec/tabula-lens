@@ -1,0 +1,659 @@
+---
+title: Monitoring & Observability
+description: Learn how to monitor and observe Tabula Lens applications in production with comprehensive logging, metrics, and alerting strategies.
+---
+
+# Monitoring & Observability
+
+This guide covers monitoring and observability strategies for Tabula Lens applications in production, including logging, metrics, tracing, and alerting.
+
+## Overview
+
+Effective monitoring and observability are essential for maintaining healthy Tabula Lens applications in production. This guide covers:
+
+- **Logging** - Structured logging with the built-in logging system
+- **Metrics** - Key performance indicators and custom metrics
+- **Tracing** - Request tracing and distributed tracing
+- **Alerting** - Setting up alerts for critical issues
+- **Dashboards** - Creating monitoring dashboards
+
+## Logging
+
+Tabula Lens includes a comprehensive logging system that provides structured logs for monitoring and debugging.
+
+### Production Logging Configuration
+
+Configure logging for production environments:
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+  enableQueryLogging: false, // Disable in production for performance
+});
+```
+
+### Log Aggregation
+
+Send logs to centralized log aggregation services:
+
+#### Logstash
+
+```typescript
+import winston from 'winston';
+import { TabulaLens } from '@tabula-lens/node';
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.Http({
+      host: 'logstash.example.com',
+      port: 5044,
+      path: '/logstash',
+    }),
+  ],
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+#### Datadog
+
+```typescript
+import { createLogger } from 'winston';
+import { DatadogTransport } from 'winston-datadog-logs-transport';
+
+const logger = createLogger({
+  transports: [
+    new DatadogTransport({
+      apiKey: process.env.DATADOG_API_KEY,
+      hostname: process.env.HOSTNAME,
+      service: 'tabula-lens',
+    }),
+  ],
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+#### CloudWatch
+
+```typescript
+import winston from 'winston';
+import CloudWatchTransport from 'winston-cloudwatch';
+
+const logger = winston.createLogger({
+  transports: [
+    new CloudWatchTransport({
+      logGroupName: '/aws/lambda/tabula-lens',
+      logStreamName: 'production',
+      awsRegion: 'us-east-1',
+    }),
+  ],
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+### Log Analysis
+
+Use log analysis tools to gain insights:
+
+- **ELK Stack** - Elasticsearch, Logstash, Kibana for log aggregation and analysis
+- **Splunk** - Enterprise log analysis and monitoring
+- **Grafana Loki** - Cloud-native log aggregation
+- **Papertrail** - Simple log management service
+- **Logtail** - Real-time log analysis
+
+## Metrics
+
+Track key performance indicators to monitor application health.
+
+### Key Performance Indicators
+
+Monitor these metrics for Tabula Lens applications:
+
+| Metric | Description | Target |
+|--------|-------------|--------|
+| Request Rate | Number of requests per second | Baseline established by traffic |
+| Response Time | Average request response time | < 200ms (p95) |
+| Error Rate | Percentage of failed requests | < 1% |
+| Database Connection Pool | Active database connections | < 80% of pool size |
+| Query Duration | Average database query duration | < 100ms (p95) |
+| Memory Usage | Application memory consumption | < 80% of allocated memory |
+| CPU Usage | Application CPU consumption | < 70% |
+
+### Custom Metrics
+
+Implement custom metrics tracking:
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import { Counter, Histogram, Registry } from 'prom-client';
+
+const register = new Registry();
+
+// Request counter
+const requestCounter = new Counter({
+  name: 'tabula_lens_requests_total',
+  help: 'Total number of requests',
+  registers: [register],
+});
+
+// Response time histogram
+const responseTimeHistogram = new Histogram({
+  name: 'tabula_lens_response_time_seconds',
+  help: 'Response time in seconds',
+  buckets: [0.1, 0.5, 1, 2, 5],
+  registers: [register],
+});
+
+// Query duration histogram
+const queryDurationHistogram = new Histogram({
+  name: 'tabula_lens_query_duration_seconds',
+  help: 'Database query duration in seconds',
+  buckets: [0.01, 0.05, 0.1, 0.5, 1],
+  registers: [register],
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    info: (msg) => {
+      requestCounter.inc();
+      console.log(msg);
+    },
+    error: (msg) => {
+      console.error(msg);
+    },
+  },
+});
+```
+
+### Metrics Collection
+
+Use metrics collection platforms:
+
+#### Prometheus
+
+```typescript
+import express from 'express';
+import { register } from 'prom-client';
+
+const app = express();
+
+// Expose metrics endpoint
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
+
+app.listen(9090);
+```
+
+#### New Relic
+
+```typescript
+import newrelic from 'newrelic';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    info: (msg) => {
+      newrelic.recordCustomEvent('TabulaLensRequest', {
+        table: msg.table,
+        duration: msg.duration,
+      });
+      console.log(msg);
+    },
+    error: (msg) => {
+      newrelic.noticeError(new Error(msg.message));
+      console.error(msg);
+    },
+  },
+});
+```
+
+#### Datadog
+
+```typescript
+import { StatsD } from 'node-dogstatsd';
+
+const statsd = new StatsD();
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    info: (msg) => {
+      statsd.increment('tabula_lens.requests');
+      statsd.histogram('tabula_lens.response_time', msg.duration);
+      console.log(msg);
+    },
+    error: (msg) => {
+      statsd.increment('tabula_lens.errors');
+      console.error(msg);
+    },
+  },
+});
+```
+
+## Tracing
+
+Implement distributed tracing to track requests across services.
+
+### OpenTelemetry Integration
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import { trace } from '@opentelemetry/api';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { Resource } from '@opentelemetry/resources';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+
+const provider = new NodeTracerProvider({
+  resource: new Resource({
+    [SemanticResourceAttributes.SERVICE_NAME]: 'tabula-lens',
+  }),
+});
+
+provider.register();
+
+const tracer = trace.getTracer('tabula-lens');
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    info: (msg) => {
+      const span = tracer.startSpan('tabula_lens_request');
+      span.setAttribute('table', msg.table);
+      span.setAttribute('query', msg.query);
+      span.end();
+      console.log(msg);
+    },
+    error: (msg) => {
+      const span = tracer.startSpan('tabula_lens_error');
+      span.setAttribute('error', msg.message);
+      span.end();
+      console.error(msg);
+    },
+  },
+});
+```
+
+### Jaeger Tracing
+
+```typescript
+import { JaegerExporter } from '@opentelemetry/exporter-trace-jaeger';
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
+
+const exporter = new JaegerExporter({
+  endpoint: 'http://jaeger:14268/api/traces',
+});
+
+provider.addSpanProcessor(new BatchSpanProcessor(exporter));
+```
+
+### AWS X-Ray
+
+```typescript
+import AWSXRay from 'aws-xray-sdk-core';
+import { TabulaLens } from '@tabula-lens/node';
+
+AWSXRay.captureHTTPsGlobal(require('http'));
+AWSXRay.captureHTTPsGlobal(require('https'));
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    info: (msg) => {
+      AWSXRay.captureFunc('tabula_lens_request', (subsegment) => {
+        subsegment.addAnnotation('table', msg.table);
+        subsegment.addAnnotation('query', msg.query);
+        console.log(msg);
+      });
+    },
+  },
+});
+```
+
+## Alerting
+
+Set up alerts to notify you of critical issues.
+
+### Alert Configuration
+
+Configure alerts for key metrics:
+
+#### High Error Rate
+
+```yaml
+# Prometheus AlertManager
+groups:
+  - name: tabula_lens
+    rules:
+      - alert: HighErrorRate
+        expr: rate(tabula_lens_errors_total[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors/sec"
+```
+
+#### Slow Response Time
+
+```yaml
+groups:
+  - name: tabula_lens
+    rules:
+      - alert: SlowResponseTime
+        expr: histogram_quantile(0.95, rate(tabula_lens_response_time_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow response time detected"
+          description: "95th percentile response time is {{ $value }}s"
+```
+
+#### Database Connection Pool Exhaustion
+
+```yaml
+groups:
+  - name: tabula_lens
+    rules:
+      - alert: ConnectionPoolExhaustion
+        expr: tabula_lens_db_connections / tabula_lens_db_pool_size > 0.8
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "Connection pool usage is {{ $value }}%"
+```
+
+### Alert Channels
+
+Configure alert notification channels:
+
+#### Slack
+
+```yaml
+receivers:
+  - name: 'slack-notifications'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/...'
+        channel: '#alerts'
+        title: '{{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+```
+
+#### Email
+
+```yaml
+receivers:
+  - name: 'email-notifications'
+    email_configs:
+      - to: 'team@example.com'
+        from: 'alerts@example.com'
+        smarthost: 'smtp.example.com:587'
+        auth_username: 'alerts@example.com'
+        auth_password: 'password'
+```
+
+#### PagerDuty
+
+```yaml
+receivers:
+  - name: 'pagerduty-notifications'
+    pagerduty_configs:
+      - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+        description: '{{ .GroupLabels.alertname }}'
+```
+
+## Dashboards
+
+Create monitoring dashboards to visualize metrics and logs.
+
+### Grafana Dashboard
+
+Create a comprehensive Grafana dashboard for Tabula Lens:
+
+```json
+{
+  "dashboard": {
+    "title": "Tabula Lens Monitoring",
+    "panels": [
+      {
+        "title": "Request Rate",
+        "targets": [
+          {
+            "expr": "rate(tabula_lens_requests_total[1m])"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Response Time",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(tabula_lens_response_time_seconds_bucket[5m]))"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Error Rate",
+        "targets": [
+          {
+            "expr": "rate(tabula_lens_errors_total[5m])"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Database Query Duration",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(tabula_lens_query_duration_seconds_bucket[5m]))"
+          }
+        ],
+        "type": "graph"
+      }
+    ]
+  }
+}
+```
+
+### Datadog Dashboard
+
+Create a Datadog dashboard with key metrics:
+
+- Request rate over time
+- Response time percentiles (p50, p95, p99)
+- Error rate by endpoint
+- Database query performance
+- Connection pool utilization
+- Memory and CPU usage
+
+### CloudWatch Dashboard
+
+Create a CloudWatch dashboard for AWS deployments:
+
+- API Gateway metrics
+- Lambda function metrics
+- RDS database metrics
+- CloudWatch Logs insights
+
+## Health Checks
+
+Implement health checks to monitor application status.
+
+### Health Check Endpoint
+
+```typescript
+import express from 'express';
+import { TabulaLens } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+app.get('/health', async (req, res) => {
+  try {
+    // Check database connection
+    const tables = await tabulaLens.getTables();
+    
+    res.json({
+      status: 'healthy',
+      database: 'connected',
+      tables: tables.length,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'unhealthy',
+      database: 'disconnected',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+app.listen(3000);
+```
+
+### Health Check Monitoring
+
+Configure health check monitoring:
+
+```yaml
+# Kubernetes liveness probe
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+# Kubernetes readiness probe
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 5
+```
+
+## Best Practices
+
+### Logging Best Practices
+
+- Use structured logging (JSON format) in production
+- Enable sensitive data masking to protect credentials
+- Log at appropriate levels (error for production, debug for development)
+- Include request IDs for traceability
+- Send logs to centralized log aggregation
+- Set up log retention policies
+
+### Metrics Best Practices
+
+- Monitor key performance indicators consistently
+- Set up alerts for critical thresholds
+- Use histograms for response time metrics
+- Track both absolute values and rates
+- Correlate metrics with logs for debugging
+- Review metrics regularly to establish baselines
+
+### Alerting Best Practices
+
+- Set up alerts for critical issues only
+- Use appropriate severity levels
+- Include actionable information in alerts
+- Configure escalation policies
+- Test alert configurations regularly
+- Avoid alert fatigue by tuning thresholds
+
+### Dashboard Best Practices
+
+- Create role-specific dashboards
+- Include both real-time and historical data
+- Use consistent time ranges
+- Highlight anomalies and outliers
+- Make dashboards shareable and accessible
+- Update dashboards as requirements change
+
+## Troubleshooting
+
+### Common Monitoring Issues
+
+#### High Memory Usage
+
+**Symptoms**: Memory usage consistently above 80%
+
+**Solutions**:
+- Check for memory leaks in custom code
+- Review connection pool configuration
+- Monitor query result sizes
+- Implement query result pagination
+- Consider implementing result caching
+
+#### Slow Response Times
+
+**Symptoms**: Response times above 200ms (p95)
+
+**Solutions**:
+- Analyze slow query logs
+- Add database indexes
+- Optimize connection pool settings
+- Implement query caching
+- Review network latency
+
+#### High Error Rate
+
+**Symptoms**: Error rate above 1%
+
+**Solutions**:
+- Review error logs for patterns
+- Check database connection health
+- Verify authentication configuration
+- Monitor rate limiting
+- Review API endpoint configuration
+
+### Monitoring Tools
+
+- **Prometheus + Grafana** - Open-source monitoring stack
+- **Datadog** - Cloud-native monitoring and analytics
+- **New Relic** - Application performance monitoring
+- **Splunk** - Enterprise monitoring and observability
+- **AWS CloudWatch** - AWS-native monitoring
+- **Google Cloud Monitoring** - GCP-native monitoring
+
+## Related Documentation
+
+- [Logging System](/user-guides/backend/logging-system) - Built-in logging system configuration
+- [Performance Optimization](/user-guides/production/performance-optimization) - Performance tuning strategies
+- [Deployment](/user-guides/production/deployment) - Production deployment guide
+- [Security](/contributor-docs/security/security) - Security best practices

@@ -5,9 +5,11 @@ description: Integrate Tabula Lens into your existing full-stack application in 
 
 This guide will help you integrate Tabula Lens into your existing full-stack application. Tabula Lens provides a secure, interactive database viewer that works with your current database, backend framework, and React frontend.
 
-> 💡 **Quick Reference**: For installation and basic usage examples, check out the package READMEs:
-> - [@tabula-lens/node README](https://github.com/Atsytec/tabula-lens/blob/main/packages/node/README.md)
-> - [@tabula-lens/react README](https://github.com/Atsytec/tabula-lens/blob/main/packages/react/README.md)
+:::tip[Quick Reference]
+For installation and basic usage examples, check out the package READMEs:
+- [@tabula-lens/node README](https://github.com/Atsytec/tabula-lens/blob/main/packages/node/README.md)
+- [@tabula-lens/react README](https://github.com/Atsytec/tabula-lens/blob/main/packages/react/README.md)
+:::
 
 ## Prerequisites
 
@@ -50,7 +52,9 @@ npm install better-sqlite3
 npm install tedious
 ```
 
-> **Note:** Tabula Lens auto-detects your database type from the connection string, so you only need to install the driver for your specific database.
+:::note[Auto-Detection]
+Tabula Lens auto-detects your database type from the connection string, so you only need to install the driver for your specific database.
+:::
 
 ## Step 2: Add Backend API Endpoint
 
@@ -105,7 +109,9 @@ const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
 app.use(koaAdapter(tabulaLens));
 ```
 
-> **Note:** Tabula Lens supports Express, Fastify, Koa, Hapi, Restify, Hono, Elysia, Next.js, Remix, SvelteKit, TanStack Start, and Fresh. See the [Backend Architecture](/contributor-docs/architecture/backend-architecture/) page for the full list.
+:::note[Framework Support]
+Tabula Lens supports Express, Fastify, Koa, Hapi, Restify, Hono, Elysia, Next.js, Remix, SvelteKit, TanStack Start, and Fresh. See the [Backend Architecture](/contributor-docs/architecture/backend-architecture/) page for the full list.
+:::
 
 ## Step 3: Install Frontend Package
 
