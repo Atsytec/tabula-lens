@@ -1,6 +1,7 @@
 ---
 // Tabula Lens landing page content component
 // Rendered below the Starlight splash hero on the docs index page
+import { PackageManagers } from 'starlight-package-managers';
 ---
 
 <section class="landing">
@@ -141,8 +142,8 @@
         <h3 class="step-title">Install</h3>
         <div class="code-block">
           <div class="code-file">terminal</div>
-          <pre class="code-pre">npm install @tabula-lens/node
-npm install @tabula-lens/react</pre>
+          <PackageManagers pkg="@tabula-lens/node" />
+          <PackageManagers pkg="@tabula-lens/react" />
         </div>
         <p class="step-desc">
           One backend package for your Node.js server. One React component library for your

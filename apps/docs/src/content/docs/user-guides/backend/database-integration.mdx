@@ -3,6 +3,8 @@ title: Database Support
 description: Learn how to connect Tabula Lens to PostgreSQL, MySQL, SQLite, or SQL Server databases with configuration, optimization, and troubleshooting guidance.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # Database Support
 
 Tabula Lens supports four major SQL database engines: PostgreSQL, MySQL, SQLite, and SQL Server. This guide covers connection patterns, configuration, and best practices that apply across all supported databases, with database-specific details for each engine.
@@ -28,19 +30,10 @@ PostgreSQL-specific details are included in the sections below and in the integr
 
 Install `@tabula-lens/node` and the database driver for your chosen engine:
 
-```bash
-# PostgreSQL / CockroachDB
-npm install @tabula-lens/node pg
-
-# MySQL / MariaDB
-npm install @tabula-lens/node mysql2
-
-# SQLite
-npm install @tabula-lens/node better-sqlite3
-
-# SQL Server
-npm install @tabula-lens/node tedious
-```
+<PackageManagers pkg="@tabula-lens/node pg" comment="# PostgreSQL / CockroachDB" />
+<PackageManagers pkg="@tabula-lens/node mysql2" comment="# MySQL / MariaDB" />
+<PackageManagers pkg="@tabula-lens/node better-sqlite3" comment="# SQLite" />
+<PackageManagers pkg="@tabula-lens/node tedious" comment="# SQL Server" />
 
 Database drivers are peer dependencies. Only the driver for your chosen database needs to be installed.
 
@@ -379,19 +372,10 @@ const tabulaLens = new TabulaLens({
 
 **Solution:** Install the correct peer dependency:
 
-```bash
-# For PostgreSQL
-npm install pg
-
-# For MySQL
-npm install mysql2
-
-# For SQLite
-npm install better-sqlite3
-
-# For SQL Server
-npm install tedious
-```
+<PackageManagers pkg="pg" comment="# For PostgreSQL" />
+<PackageManagers pkg="mysql2" comment="# For MySQL" />
+<PackageManagers pkg="better-sqlite3" comment="# For SQLite" />
+<PackageManagers pkg="tedious" comment="# For SQL Server" />
 
 ### Connection Issues
 

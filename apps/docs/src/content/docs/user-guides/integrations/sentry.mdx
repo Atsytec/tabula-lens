@@ -3,6 +3,8 @@ title: Sentry Integration
 description: Add Sentry error tracking and database query monitoring to Tabula Lens.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # Sentry Integration
 
 [Sentry](https://sentry.io) provides error tracking and performance monitoring. Because Tabula Lens uses Knex.js internally, Sentry's `knexIntegration` automatically instruments all database queries made by Tabula Lens — capturing query text, duration, and errors without any manual configuration beyond a standard Sentry setup.
@@ -11,15 +13,11 @@ description: Add Sentry error tracking and database query monitoring to Tabula L
 
 **Express:**
 
-```bash
-npm install @sentry/node @sentry/profiling-node
-```
+<PackageManagers pkg="@sentry/node @sentry/profiling-node" />
 
 **Next.js:**
 
-```bash
-npm install @sentry/nextjs
-```
+<PackageManagers pkg="@sentry/nextjs" />
 
 `knexIntegration()` is available in `@sentry/node` >= 8.38.0. Run `npm list @sentry/node` to confirm your installed version meets this requirement.
 

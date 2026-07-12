@@ -3,6 +3,8 @@ title: Kinde Integration
 description: Integrate Kinde authentication with Tabula Lens to secure your database endpoints.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # Kinde Integration
 
 [Kinde](https://kinde.com) is a modern authentication and user management platform with built-in support for Next.js and Express. This guide shows how to protect your Tabula Lens endpoints using Kinde's session helpers and pass access tokens to the `DatabaseViewer` component.
@@ -11,16 +13,9 @@ description: Integrate Kinde authentication with Tabula Lens to secure your data
 
 Install the appropriate Kinde package for your framework:
 
-```bash
-# Next.js
-npm install @kinde-oss/kinde-auth-nextjs
-
-# Express
-npm install @kinde-oss/kinde-node-express
-
-# React (client-side, if using a standalone React app)
-npm install @kinde-oss/kinde-auth-react
-```
+<PackageManagers pkg="@kinde-oss/kinde-auth-nextjs" comment="# Next.js" />
+<PackageManagers pkg="@kinde-oss/kinde-node-express" comment="# Express" />
+<PackageManagers pkg="@kinde-oss/kinde-auth-react" comment="# React (client-side, if using a standalone React app)" />
 
 Add the following environment variables from your Kinde application settings:
 

@@ -3,6 +3,8 @@ title: SQL Server Support
 description: Learn how to connect Tabula Lens to your SQL Server database with comprehensive configuration and optimization guides.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # SQL Server Support
 
 This guide covers how to connect Tabula Lens to your Microsoft SQL Server database with comprehensive configuration, optimization, and troubleshooting information.
@@ -15,9 +17,7 @@ Tabula Lens supports Microsoft SQL Server (MSSQL) databases through Knex.js usin
 
 Install `@tabula-lens/node` and the SQL Server driver:
 
-```bash
-npm install @tabula-lens/node tedious
-```
+<PackageManagers pkg="@tabula-lens/node tedious" />
 
 > 📚 **Related Documentation**
 > - [Database Support](./database-integration) - General database connection patterns and configuration

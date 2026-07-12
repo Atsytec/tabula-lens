@@ -3,6 +3,8 @@ title: Backend Implementation
 description: Learn how to set up Tabula Lens on your Node.js backend with comprehensive framework adapter documentation.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # Backend Implementation
 
 This guide covers how to integrate Tabula Lens into your Node.js backend with comprehensive documentation for all 15 supported framework adapters.
@@ -13,13 +15,7 @@ For installation and basic usage examples, check out the [@tabula-lens/node READ
 
 ## Installation
 
-```bash
-npm install @tabula-lens/node
-# or
-pnpm add @tabula-lens/node
-# or
-yarn add @tabula-lens/node
-```
+<PackageManagers pkg="@tabula-lens/node" />
 
 ## Basic Setup
 
@@ -105,9 +101,7 @@ Tabula Lens supports 15+ Node.js frameworks through dedicated adapters:
 ### Express (4.x & 5.x)
 
 **Peer Dependencies:**
-```bash
-npm install express@^4.18.0 || ^5.0.0
-```
+<PackageManagers pkg="express@^4.18.0 || ^5.0.0" />
 
 **Basic Setup:**
 
@@ -172,9 +166,7 @@ app.listen(3000);
 ### Fastify
 
 **Peer Dependencies:**
-```bash
-npm install fastify@^4.0.0
-```
+<PackageManagers pkg="fastify@^4.0.0" />
 
 **Basic Setup:**
 
@@ -230,10 +222,8 @@ fastify.listen({ port: 3000 });
 ### Koa
 
 **Peer Dependencies:**
-```bash
-npm install koa@^2.14.0
-npm install @koa/router
-```
+<PackageManagers pkg="koa@^2.14.0" />
+<PackageManagers pkg="@koa/router" />
 
 **Basic Setup:**
 
@@ -295,9 +285,7 @@ app.listen(3000);
 ### Hapi
 
 **Peer Dependencies:**
-```bash
-npm install @hapi/hapi@^21.0.0
-```
+<PackageManagers pkg="@hapi/hapi@^21.0.0" />
 
 **Basic Setup:**
 
@@ -371,9 +359,7 @@ init();
 ### Restify
 
 **Peer Dependencies:**
-```bash
-npm install restify@^11.0.0
-```
+<PackageManagers pkg="restify@^11.0.0" />
 
 **Basic Setup:**
 
@@ -426,10 +412,8 @@ server.listen(3000);
 ### Next.js
 
 **Peer Dependencies:**
-```bash
-npm install next@latest
+<PackageManagers pkg="next@latest" />
 # No additional peer dependencies for Tabula Lens
-```
 
 **App Router Setup:**
 
@@ -493,9 +477,7 @@ export default async function handlerWrapper(
 ### TanStack Start
 
 **Peer Dependencies:**
-```bash
-npm install @tanstack/react-start@^1.0.0
-```
+<PackageManagers pkg="@tanstack/react-start@^1.0.0" />
 
 **Basic Setup:**
 
@@ -547,9 +529,7 @@ export const Route = createFileRoute('/api/tabula-lens')({
 ### Remix
 
 **Peer Dependencies:**
-```bash
-npm install remix@^2.0.0
-```
+<PackageManagers pkg="remix@^2.0.0" />
 
 **Basic Setup:**
 
@@ -589,9 +569,7 @@ export const action = authenticatedHandler;
 ### SvelteKit
 
 **Peer Dependencies:**
-```bash
-npm install @sveltejs/kit@^2.0.0
-```
+<PackageManagers pkg="@sveltejs/kit@^2.0.0" />
 
 **Basic Setup:**
 
@@ -634,9 +612,7 @@ export const POST = authenticatedHandler;
 ### Hono
 
 **Peer Dependencies:**
-```bash
-npm install hono@^4.0.0
-```
+<PackageManagers pkg="hono@^4.0.0" />
 
 **Basic Setup:**
 
@@ -682,9 +658,7 @@ export default app;
 ### Elysia
 
 **Peer Dependencies:**
-```bash
-npm install elysia@^1.0.0
-```
+<PackageManagers pkg="elysia@^1.0.0" />
 
 **Basic Setup:**
 

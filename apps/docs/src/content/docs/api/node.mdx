@@ -3,6 +3,8 @@ title: Node API
 description: Complete API reference for the @tabula-lens/node package.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # Node API Reference
 
 Complete API reference for the `@tabula-lens/node` package.
@@ -16,24 +18,20 @@ Complete API reference for the `@tabula-lens/node` package.
 
 ## Installation
 
-```bash
-npm install @tabula-lens/node
-```
+<PackageManagers pkg="@tabula-lens/node" />
 
 You must also install the database driver for your chosen database engine:
 
-| Database | Driver package | Install command |
-|----------|---------------|-----------------|
-| PostgreSQL / CockroachDB | `pg` | `npm install pg` |
-| MySQL / MariaDB | `mysql2` | `npm install mysql2` |
-| SQLite | `better-sqlite3` | `npm install better-sqlite3` |
-| SQL Server | `tedious` | `npm install tedious` |
+| Database | Driver package |
+|----------|---------------|
+| PostgreSQL / CockroachDB | `pg` |
+| MySQL / MariaDB | `mysql2` |
+| SQLite | `better-sqlite3` |
+| SQL Server | `tedious` |
 
 **Example for PostgreSQL:**
 
-```bash
-npm install @tabula-lens/node pg
-```
+<PackageManagers pkg="@tabula-lens/node pg" />
 
 :::tip[Quick Reference]
 For a quick start guide and basic usage examples, check out the [@tabula-lens/node README](https://github.com/Atsytec/tabula-lens/blob/main/packages/node/README.md).

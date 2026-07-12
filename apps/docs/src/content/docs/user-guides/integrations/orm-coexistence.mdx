@@ -3,6 +3,8 @@ title: ORM Coexistence (Prisma & Drizzle)
 description: Use Tabula Lens alongside Prisma or Drizzle in the same application.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # ORM Coexistence (Prisma & Drizzle)
 
 Many applications use an ORM like Prisma or Drizzle for application data access and want a database viewer for debugging and admin use. Tabula Lens is designed to coexist with these tools without any conflicts.
@@ -15,10 +17,8 @@ Tabula Lens, Prisma, and Drizzle each maintain their own independent connection 
 
 Install Prisma and initialize your schema if you haven't already:
 
-```bash
-npm install @prisma/client prisma
-npx prisma init
-```
+<PackageManagers pkg="@prisma/client prisma" />
+<PackageManagers type="exec" pkg="prisma" args="init" />
 
 Initialize both clients in a shared module:
 
@@ -59,9 +59,7 @@ export async function GET() {
 
 Install Drizzle and its PostgreSQL driver:
 
-```bash
-npm install drizzle-orm postgres
-```
+<PackageManagers pkg="drizzle-orm postgres" />
 
 Initialize both clients in a shared module:
 

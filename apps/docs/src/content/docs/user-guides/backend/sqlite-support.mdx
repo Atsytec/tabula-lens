@@ -3,6 +3,8 @@ title: SQLite Support
 description: Learn how to connect Tabula Lens to your SQLite database with comprehensive configuration and optimization guides.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # SQLite Support
 
 This guide covers how to connect Tabula Lens to your SQLite database with comprehensive configuration, optimization, and troubleshooting information.
@@ -15,9 +17,7 @@ Tabula Lens supports SQLite databases through Knex.js using the `better-sqlite3`
 
 Install `@tabula-lens/node` and the SQLite driver:
 
-```bash
-npm install @tabula-lens/node better-sqlite3
-```
+<PackageManagers pkg="@tabula-lens/node better-sqlite3" />
 
 On some platforms, `better-sqlite3` requires a C++ compiler and Python to build native bindings. See the [better-sqlite3 documentation](https://github.com/WiseLibs/better-sqlite3/blob/master/docs/troubleshooting.md) for platform-specific build instructions.
 
