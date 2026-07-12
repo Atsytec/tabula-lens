@@ -336,13 +336,13 @@ separate future effort.
 
 #### Package Documentation
 
-- [ ] Update `packages/node/README.md` with new API, install commands, and examples per database
-- [ ] Add migration guide for existing PostgreSQL users (emphasize backward compatibility)
-- [ ] Update package.json keywords to include MySQL, SQLite, MSSQL
+- [x] Update `packages/node/README.md` with new API, install commands, and examples per database
+- [x] Add migration guide for existing PostgreSQL users (emphasize backward compatibility)
+- [x] Update package.json keywords to include MySQL, SQLite, MSSQL
 
 #### API Documentation Updates
 
-- [ ] Update `apps/docs/src/content/docs/api/node.mdx`:
+- [x] Update `apps/docs/src/content/docs/api/node.mdx`:
   - Update constructor signature to show `string | TabulaLensConfig` overload
   - Add `TabulaLensConfig` interface documentation
   - Add `DatabaseType` union type documentation
@@ -353,7 +353,7 @@ separate future effort.
 
 #### User Guides - Backend Integration
 
-- [ ] Restructure `apps/docs/src/content/docs/user-guides/backend/database-integration.mdx`:
+- [x] Restructure `apps/docs/src/content/docs/user-guides/backend/database-integration.mdx`:
   - Rename from "PostgreSQL Support" to "Database Support"
   - Add overview section for multi-database support
   - Create subsections for each database type (PostgreSQL, MySQL, SQLite, MSSQL)
@@ -368,12 +368,12 @@ separate future effort.
 
 #### Architecture Documentation Updates
 
-- [ ] Update `apps/docs/src/content/docs/contributor-docs/architecture/database-architecture.mdx`:
+- [x] Update `apps/docs/src/content/docs/contributor-docs/architecture/database-architecture.mdx`:
   - Update "Database Support" section to reflect current multi-database support
   - Remove "Future Database Support" section (now implemented)
   - Add "Dialect Strategy Pattern" section explaining the architecture
   - Add "Database-Specific Behaviors" section
-  - Update connection architecture diagrams to show dynamic client selection
+  - Update connection architecture to show dynamic client selection
   - Add auto-detection architecture explanation
   - Update query architecture to show dialect-specific query building
   - Add database driver dependency management section
@@ -381,7 +381,7 @@ separate future effort.
 
 #### New Documentation Pages
 
-- [ ] Create `apps/docs/src/content/docs/user-guides/backend/mysql-support.mdx`:
+- [x] Create `apps/docs/src/content/docs/user-guides/backend/mysql-support.mdx`:
   - Follow same structure as existing PostgreSQL guide
   - MySQL-specific connection strings and parameters
   - MySQL setup and configuration
@@ -389,7 +389,7 @@ separate future effort.
   - MySQL user permissions and security
   - Code examples specific to MySQL
 
-- [ ] Create `apps/docs/src/content/docs/user-guides/backend/sqlite-support.mdx`:
+- [x] Create `apps/docs/src/content/docs/user-guides/backend/sqlite-support.mdx`:
   - Follow same structure as existing PostgreSQL guide
   - SQLite-specific connection strings (file paths, in-memory)
   - SQLite setup and configuration
@@ -397,7 +397,7 @@ separate future effort.
   - SQLite file permissions and security
   - Code examples specific to SQLite
 
-- [ ] Create `apps/docs/src/content/docs/user-guides/backend/mssql-support.mdx`:
+- [x] Create `apps/docs/src/content/docs/user-guides/backend/mssql-support.mdx`:
   - Follow same structure as existing PostgreSQL guide
   - MSSQL-specific connection strings and parameters
   - MSSQL setup and configuration
@@ -407,7 +407,7 @@ separate future effort.
 
 #### Contributor Documentation
 
-- [ ] Update `apps/docs/src/content/docs/contributor-docs/architecture/architecture-decisions.mdx`:
+- [x] Update `apps/docs/src/content/docs/contributor-docs/architecture/architecture-decisions.mdx`:
   - Add ADR for multi-database support decision
   - Document the decision to use Knex.js over Drizzle
   - Document the dialect strategy pattern decision
@@ -415,18 +415,18 @@ separate future effort.
 
 #### Integration Guides
 
-- [ ] Update relevant integration guides to mention database driver requirements
-- [ ] Update deployment guides to include database-specific considerations
+- [x] Update relevant integration guides to mention database driver requirements
+- [x] Update deployment guides to include database-specific considerations
 
 #### AGENTS.md Updates
 
-- [ ] Update `AGENTS.md` with any new build/test notes
-- [ ] Add multi-database testing instructions
-- [ ] Add database driver installation notes for development
+- [x] Update `AGENTS.md` with any new build/test notes
+- [x] Add multi-database testing instructions
+- [x] Add database driver installation notes for development
 
 #### Troubleshooting Documentation
 
-- [ ] Add troubleshooting section for common multi-database issues:
+- [x] Add troubleshooting section for common multi-database issues:
   - Auto-detection failures
   - Driver installation problems
   - Database-specific connection issues

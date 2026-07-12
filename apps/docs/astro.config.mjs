@@ -97,7 +97,15 @@ export default defineConfig({
 							items: [
 								{ label: 'Overview', slug: 'user-guides/backend' },
 								{ label: 'Backend Implementation', slug: 'user-guides/backend/backend-implementation' },
-								{ label: 'Database Integration', slug: 'user-guides/backend/database-integration' },
+								{
+									label: 'Database Integration',
+									items: [
+										{ label: 'Overview', slug: 'user-guides/backend/database-integration' },
+										{ label: 'MySQL', slug: 'user-guides/backend/mysql-support' },
+										{ label: 'SQLite', slug: 'user-guides/backend/sqlite-support' },
+										{ label: 'SQL Server', slug: 'user-guides/backend/mssql-support' },
+									],
+								},
 								{ label: 'Logging System', slug: 'user-guides/backend/logging-system' },
 							],
 						},

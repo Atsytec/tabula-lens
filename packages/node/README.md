@@ -29,7 +29,7 @@ A secure, backend-agnostic Node.js SDK for database queries with framework adapt
 - **Type Safe**: Full TypeScript support with strict type checking
 - **Framework Adapters**: Pre-built adapters for Express, Fastify, Koa, Hapi, Restify, Next.js, TanStack Start, Remix, SvelteKit, Hono, Elysia, Fresh, and native Node.js HTTP
 - **Query Capabilities**: Built-in pagination, sorting, and filtering
-- **PostgreSQL Support**: Optimized for PostgreSQL with Knex.js
+- **Multi-Database Support**: PostgreSQL, MySQL, SQLite, and SQL Server support with auto-detection
 - **Zero Config**: Minimal setup required
 
 ## 📦 Installation
@@ -44,7 +44,9 @@ yarn add @tabula-lens/node
 
 ## 🔗 Peer Dependencies
 
-This package requires framework-specific peer dependencies. Install the appropriate package for your framework:
+This package requires framework-specific peer dependencies and database drivers. Install the appropriate packages for your setup:
+
+### Framework Dependencies
 
 - **Express**: `npm install express@^4.18.0 || ^5.0.0`
 - **Fastify**: `npm install fastify@^4.0.0`
@@ -59,14 +61,43 @@ This package requires framework-specific peer dependencies. Install the appropri
 - **Elysia**: `npm install elysia@^1.0.0`
 - **Fresh**: No additional peer dependencies (Deno native)
 
-## �🚀 Quick Start
+### Database Drivers
+
+You must install the database driver for your chosen database:
+
+- **PostgreSQL / CockroachDB**: `npm install pg@^8.22.0`
+- **MySQL / MariaDB**: `npm install mysql2@^3.22.6`
+- **SQLite**: `npm install better-sqlite3@^12.11.1`
+- **SQL Server**: `npm install tedious@^20.0.0`
+
+**Example installation for PostgreSQL:**
+
+```bash
+npm install @tabula-lens/node pg
+```
+
+**Example installation for MySQL:**
+
+```bash
+npm install @tabula-lens/node mysql2
+```
+
+## 🚀 Quick Start
 
 ### Basic Setup
 
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
 
+// String form (auto-detects database type from URL)
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Config object form (explicit database type)
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql', // optional - auto-detected from URL if omitted
+  logLevel: 'info',
+});
 
 // Query data
 const result = await tabulaLens.query({
@@ -77,6 +108,60 @@ const result = await tabulaLens.query({
 
 console.log(result.data);
 // => [{ id: 1, name: 'John', email: 'john@example.com' }, ...]
+```
+
+### Database-Specific Examples
+
+#### PostgreSQL
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens('postgresql://user:password@localhost:5432/mydb');
+// or with config object
+const tabulaLens = new TabulaLens({
+  url: 'postgresql://user:password@localhost:5432/mydb',
+  type: 'pg',
+});
+```
+
+#### MySQL
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens('mysql://user:password@localhost:3306/mydb');
+// or with config object
+const tabulaLens = new TabulaLens({
+  url: 'mysql://user:password@localhost:3306/mydb',
+  type: 'mysql',
+});
+```
+
+#### SQLite
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens('./mydb.sqlite');
+// or with config object
+const tabulaLens = new TabulaLens({
+  url: './mydb.sqlite',
+  type: 'sqlite',
+});
+```
+
+#### SQL Server
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens('mssql://user:password@localhost:1433/mydb');
+// or with config object
+const tabulaLens = new TabulaLens({
+  url: 'mssql://user:password@localhost:1433/mydb',
+  type: 'mssql',
+});
 ```
 
 ### Using with Express
@@ -130,15 +215,47 @@ export { handler as GET, handler as POST, handler as PUT, handler as DELETE };
 #### Constructor
 
 ```typescript
-constructor(databaseUrl: string, options?: TabulaLensOptions)
+constructor(config: string | TabulaLensConfig, options?: TabulaLensOptions)
 ```
 
-Creates a new TabulaLens instance with a PostgreSQL database connection.
+Creates a new TabulaLens instance with database connection. Supports both string and config object forms.
 
 **Parameters:**
 
-- `databaseUrl` - PostgreSQL connection string (e.g., `postgresql://user:password@host:port/database`)
-- `options` - Optional configuration object
+- `config` - Database connection string or config object
+- `options` - Optional configuration object (only used when config is a string)
+
+**String Form:**
+
+```typescript
+const tabulaLens = new TabulaLens('postgresql://user:password@host:port/database');
+```
+
+**Config Object Form:**
+
+```typescript
+const tabulaLens = new TabulaLens({
+  url: 'postgresql://user:password@host:port/database',
+  type: 'pg', // optional - auto-detected from URL if omitted
+  logLevel: 'info',
+  sensitiveDataMasking: true,
+});
+```
+
+**TabulaLensConfig:**
+
+```typescript
+interface TabulaLensConfig extends TabulaLensOptions {
+  url: string;
+  type?: DatabaseType;
+}
+```
+
+**DatabaseType:**
+
+```typescript
+type DatabaseType = 'pg' | 'mysql' | 'sqlite' | 'mssql';
+```
 
 **TabulaLensOptions:**
 
@@ -152,6 +269,15 @@ interface TabulaLensOptions {
   logFormat?: 'json' | 'text' | 'pretty';
 }
 ```
+
+**Auto-Detection:**
+
+When using the string form or omitting `type` in the config object, TabulaLens automatically detects the database type from the URL:
+
+- `postgresql://`, `postgres://`, `pgsql://` → PostgreSQL
+- `mysql://`, `mysql2://`, `mysqlx://`, `mariadb://` → MySQL
+- `sqlite:`, `sqlite://`, `sqlite3://`, `file:`, `:memory:`, or file paths ending in `.db`, `.sqlite`, `.sqlite3`, `.db3` → SQLite
+- `mssql://`, `sqlserver://`, `mssql+tcp://`, `mssql+udp://` → SQL Server
 
 **Logging Configuration:**
 
@@ -243,7 +369,102 @@ async close(): Promise<void>
 
 Closes the database connection.
 
-## 🔌 Framework Adapters
+### Database Type Helpers
+
+#### detectDatabaseType()
+
+```typescript
+function detectDatabaseType(url: string): DatabaseType;
+```
+
+Detects the database type from a connection URL or file path. Throws a `TabulaLensError` if the type cannot be detected.
+
+**Supported URL patterns:**
+
+| URL pattern                                                                                    | Detected type |
+| ---------------------------------------------------------------------------------------------- | ------------- |
+| `postgresql://`, `postgres://`, `pgsql://`                                                     | `pg`          |
+| `mysql://`, `mysql2://`, `mysqlx://`, `mariadb://`                                             | `mysql`       |
+| `sqlite://`, `sqlite:`, `file:`, `:memory:`, paths ending in `.db`/`.sqlite`/`.sqlite3`/`.db3` | `sqlite`      |
+| `mssql://`, `sqlserver://`, `mssql+tcp://`, `mssql+udp://`                                     | `mssql`       |
+
+**Example:**
+
+```typescript
+import { detectDatabaseType } from '@tabula-lens/node';
+
+const type = detectDatabaseType('mysql://user:password@localhost:3306/mydb');
+console.log(type); // 'mysql'
+```
+
+#### validateDatabaseType()
+
+```typescript
+function validateDatabaseType(type: string): DatabaseType;
+```
+
+Validates that a database type is supported. Returns the type as `DatabaseType` if valid, or throws a `TabulaLensError` otherwise.
+
+**Example:**
+
+```typescript
+import { validateDatabaseType } from '@tabula-lens/node';
+
+try {
+  validateDatabaseType('sqlite'); // 'sqlite'
+  validateDatabaseType('oracle'); // throws TabulaLensError
+} catch (error) {
+  // Invalid database type
+}
+```
+
+## 🔄 Migration Guide for Existing PostgreSQL Users
+
+If you're already using Tabula Lens with PostgreSQL, **no changes are required**. Your existing code will continue to work exactly as before.
+
+### What Changed
+
+- Tabula Lens now supports multiple databases (PostgreSQL, MySQL, SQLite, SQL Server)
+- The constructor now accepts both string and config object forms
+- Database type is auto-detected from the connection string
+
+### What Stayed the Same
+
+- All existing APIs remain unchanged
+- All existing options work exactly as before
+- No breaking changes to any functionality
+
+### Optional: Migrate to Config Object Form
+
+While not required, you can optionally migrate to the config object form for more explicit configuration:
+
+**Before:**
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'info',
+  sensitiveDataMasking: true,
+});
+```
+
+**After (optional):**
+
+```typescript
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'pg', // optional - auto-detected
+  logLevel: 'info',
+  sensitiveDataMasking: true,
+});
+```
+
+Both forms work identically. The config object form is useful when you want to:
+
+- Explicitly specify the database type
+- Keep all configuration in a single object
+- Take advantage of TypeScript's better type inference for config objects
+
+## �🔌 Framework Adapters
 
 ### Express
 
@@ -532,4 +753,4 @@ Need help? Check our [support documentation](https://github.com/Atsytec/tabula-l
 
 ## 🙏 Acknowledgments
 
-Built with [Knex.js](https://knexjs.org/) for database queries and supports PostgreSQL databases.
+Built with [Knex.js](https://knexjs.org/) for database queries and supports PostgreSQL, MySQL, SQLite, and SQL Server databases.

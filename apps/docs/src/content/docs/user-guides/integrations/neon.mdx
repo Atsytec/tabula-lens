@@ -35,7 +35,7 @@ import { TabulaLens } from '@tabula-lens/node';
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
 ```
 
-Tabula Lens uses Knex.js with the standard `pg` TCP driver, which is fully compatible with both Neon connection types.
+Tabula Lens auto-detects `postgresql://` URLs and uses Knex.js with the standard `pg` TCP driver, which is fully compatible with both Neon connection types.
 
 ## Choosing a Connection Type
 

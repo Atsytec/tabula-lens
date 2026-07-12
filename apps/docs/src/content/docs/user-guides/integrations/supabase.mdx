@@ -34,6 +34,8 @@ import { TabulaLens } from '@tabula-lens/node';
 const tabulaLens = new TabulaLens(process.env.DATABASE_URL!);
 ```
 
+Tabula Lens auto-detects `postgresql://` URLs and selects the PostgreSQL/Knex driver.
+
 ## Choosing a Connection Mode
 
 | | Direct | Session Pooler | Transaction Pooler |

@@ -1,0 +1,659 @@
+---
+title: SQLite Support
+description: Learn how to connect Tabula Lens to your SQLite database with comprehensive configuration and optimization guides.
+---
+
+# SQLite Support
+
+This guide covers how to connect Tabula Lens to your SQLite database with comprehensive configuration, optimization, and troubleshooting information.
+
+## Supported Databases
+
+Tabula Lens supports SQLite databases through Knex.js using the `better-sqlite3` driver. SQLite is a serverless, self-contained database engine ideal for local development, embedded applications, and small to medium workloads.
+
+## Installation
+
+Install the Tabula Lens Node package and the SQLite driver:
+
+```bash
+npm install @tabula-lens/node better-sqlite3
+```
+
+On some platforms, `better-sqlite3` requires a C++ compiler and Python to build native bindings. See the [better-sqlite3 documentation](https://github.com/WiseLibs/better-sqlite3/blob/master/docs/troubleshooting.md) for platform-specific build instructions.
+
+## Database Connection
+
+### Connection String Format
+
+Set your database connection string as an environment variable:
+
+```bash
+# File-based database
+DATABASE_URL="./database.sqlite"
+
+# In-memory database (useful for tests)
+DATABASE_URL=":memory:"
+
+# Explicit sqlite protocol
+DATABASE_URL="sqlite:./database.sqlite"
+```
+
+### Connection String Components
+
+SQLite connection strings are simpler than network databases. Tabula Lens accepts:
+
+```
+./path/to/database.sqlite
+sqlite:./path/to/database.sqlite
+:memory:
+```
+
+**Components:**
+
+- File path - Relative or absolute path to the SQLite database file
+- `:memory:` - In-memory database (data is lost when the process exits)
+- `sqlite:` protocol - Optional protocol prefix
+
+### Connection Parameters
+
+Common connection parameters:
+
+```bash
+# Enable foreign key constraints
+DATABASE_URL="./database.sqlite?foreign_keys=true"
+
+# Set busy timeout (milliseconds)
+DATABASE_URL="./database.sqlite?busyTimeout=5000"
+
+# Journal mode for concurrency
+DATABASE_URL="./database.sqlite?journal_mode=WAL"
+
+# Synchronous mode
+DATABASE_URL="./database.sqlite?synchronous=NORMAL"
+```
+
+For better concurrency, use Write-Ahead Logging (WAL) mode:
+
+```bash
+DATABASE_URL="./database.sqlite?journal_mode=WAL"
+```
+
+## Connection Patterns
+
+### Local Development
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Test connection
+const tables = await tabulaLens.getTables();
+console.log('Available tables:', tables);
+```
+
+### Production
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### With Config Object
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
+  logLevel: 'info',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### With Custom Logger
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import winston from 'winston';
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'database.log' }),
+  ],
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+## Connection Pooling
+
+SQLite with `better-sqlite3` uses a single database connection per Knex instance. Unlike client-server databases, SQLite does not use a network connection pool. Concurrency is handled through SQLite's file locking and WAL mode.
+
+### Concurrency Best Practices
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+```
+
+For read-heavy workloads, enable WAL mode through the connection string:
+
+```bash
+DATABASE_URL="./database.sqlite?journal_mode=WAL"
+```
+
+### Busy Timeout
+
+Set a busy timeout to avoid `SQLITE_BUSY` errors under concurrent access:
+
+```bash
+DATABASE_URL="./database.sqlite?busyTimeout=5000"
+```
+
+## Database Setup
+
+### Creating a Database
+
+SQLite databases are created automatically when the file is first accessed. You can create tables directly after connecting.
+
+```bash
+# Ensure the directory exists
+mkdir -p ./data
+```
+
+### Creating Tables
+
+```sql
+-- Create users table
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create products table
+CREATE TABLE products (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  price REAL NOT NULL,
+  description TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create orders table
+CREATE TABLE orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  total REAL NOT NULL,
+  status TEXT DEFAULT 'pending',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+```
+
+### Adding Sample Data
+
+```sql
+-- Insert sample users
+INSERT INTO users (name, email) VALUES
+  ('John Doe', 'john@example.com'),
+  ('Jane Smith', 'jane@example.com'),
+  ('Bob Johnson', 'bob@example.com');
+
+-- Insert sample products
+INSERT INTO products (name, price, description) VALUES
+  ('Product A', 29.99, 'Description for Product A'),
+  ('Product B', 49.99, 'Description for Product B'),
+  ('Product C', 19.99, 'Description for Product C');
+
+-- Insert sample orders
+INSERT INTO orders (user_id, total, status) VALUES
+  (1, 29.99, 'completed'),
+  (2, 49.99, 'pending'),
+  (1, 19.99, 'shipped');
+```
+
+## User Permissions
+
+SQLite does not have a user permission system like client-server databases. Access control is handled at the file-system level.
+
+### File Permissions
+
+Restrict access to the database file:
+
+```bash
+# Set restrictive permissions on Linux/macOS
+chmod 600 ./database.sqlite
+
+# Ensure the parent directory is writable by the application
+chmod 700 ./data
+```
+
+On Windows, use NTFS permissions to restrict access to the database file and directory.
+
+### Application-Level Security
+
+Since SQLite relies on file-system security:
+
+- Run the application process under a dedicated user account
+- Restrict database file access to that user account
+- Store backups in a location with restricted access
+- Avoid placing the database file inside publicly accessible directories
+
+## Security Best Practices
+
+### Environment Variables
+
+Use environment variables for connection strings:
+
+```bash
+# .env file
+DATABASE_URL=./database.sqlite
+```
+
+```typescript
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config();
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+```
+
+### Connection Security
+
+```typescript
+// Production configuration with security
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### File Security
+
+- Restrict file permissions to the application user
+- Keep the database file outside of web-accessible directories
+- Encrypt backups at rest
+- Use full-disk encryption on the host system
+- Avoid committing database files to version control
+
+### Network Security
+
+SQLite is file-based and does not expose a network port. However, if the database file is stored on a network share, ensure the share is secured and accessible only to the application.
+
+## Query Optimization
+
+### Indexing
+
+Create indexes for frequently queried columns:
+
+```sql
+-- Create index on email column
+CREATE INDEX idx_users_email ON users(email);
+
+-- Create index on created_at column
+CREATE INDEX idx_users_created_at ON users(created_at);
+
+-- Create composite index
+CREATE INDEX idx_orders_user_status ON orders(user_id, status);
+```
+
+### Query Performance
+
+Optimize queries for better performance:
+
+```typescript
+// Select only needed columns
+const result = await tabulaLens.query({
+  table: 'users',
+  columns: ['id', 'name', 'email'], // Only select needed columns
+  page: 1,
+  limit: 20,
+});
+
+// Use appropriate page sizes
+const result = await tabulaLens.query({
+  table: 'users',
+  page: 1,
+  limit: 50, // Balance between data transfer and number of requests
+});
+
+// Use filtering to reduce data transfer
+const result = await tabulaLens.query({
+  table: 'users',
+  filter: 'john', // Filter results using LIKE (case-insensitive for ASCII by default)
+  page: 1,
+  limit: 20,
+});
+```
+
+### Database Configuration
+
+Configure SQLite for better performance:
+
+```sql
+-- Enable foreign key constraints
+PRAGMA foreign_keys = ON;
+
+-- Use WAL mode for better concurrency
+PRAGMA journal_mode = WAL;
+
+-- Set synchronous mode (NORMAL balances safety and performance)
+PRAGMA synchronous = NORMAL;
+
+-- Increase cache size (pages)
+PRAGMA cache_size = -64000; -- 64MB
+
+-- Set busy timeout (milliseconds)
+PRAGMA busy_timeout = 5000;
+```
+
+### Filter Behavior
+
+SQLite filtering in Tabula Lens uses the `LIKE` operator. SQLite `LIKE` is case-insensitive for ASCII characters by default. For Unicode case-insensitivity, use `PRAGMA case_sensitive_like` or lowercase comparisons, but note that Tabula Lens uses `LIKE` directly.
+
+## Database-Specific Features and Limitations
+
+### Supported Text Types
+
+Tabula Lens recognizes the following SQLite text types for filtering:
+
+- `TEXT`
+- `VARCHAR`
+- `CHAR`
+- `CLOB`
+
+SQLite uses dynamic typing, so any column can store any value. However, Tabula Lens uses the declared type affinity to determine whether a column is filterable. Columns declared with non-text types are excluded from global filter searches unless explicitly selected with `filterColumns`.
+
+### Metadata Queries
+
+Tabula Lens reads SQLite metadata using `sqlite_master` for table discovery and `PRAGMA table_info` for column discovery:
+
+```sql
+-- List tables
+SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%';
+
+-- Get column information
+PRAGMA table_info(users);
+```
+
+### JSON Data Types
+
+SQLite 3.38+ supports built-in JSON functions. You can store JSON in `TEXT` columns:
+
+```sql
+-- Create table with JSON stored as TEXT
+CREATE TABLE user_profiles (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  profile TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Insert JSON data
+INSERT INTO user_profiles (user_id, profile) VALUES
+  (1, '{"age": 30, "city": "New York", "interests": ["coding", "music"]}');
+```
+
+Tabula Lens reads JSON values as text but does not automatically search inside JSON documents with the global filter.
+
+### Known Limitations
+
+- SQLite is serverless; concurrent writes are serialized at the database level.
+- Very large datasets or high-write workloads may require a client-server database such as PostgreSQL or MySQL.
+- Altering column types after table creation is limited compared to other databases.
+- `better-sqlite3` uses a synchronous API wrapped by Knex; keep queries lightweight.
+
+## Monitoring and Observability
+
+### Query Logging
+
+Enable query logging for monitoring:
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'debug',
+  enableQueryLogging: true,
+  logFormat: 'json',
+});
+```
+
+### Performance Monitoring
+
+Monitor SQLite performance using built-in PRAGMAs:
+
+```sql
+-- Check query planner statistics
+PRAGMA stats;
+
+-- List active indexes
+PRAGMA index_list('users');
+
+-- Analyze tables for better query plans
+ANALYZE;
+
+-- Query planner information
+EXPLAIN QUERY PLAN SELECT * FROM users WHERE email = 'john@example.com';
+```
+
+### Connection Monitoring
+
+Since SQLite is file-based, monitor file-level metrics:
+
+- Database file size
+- WAL file size (if WAL mode is enabled)
+- Disk I/O on the database file
+- Backup file sizes and ages
+
+## Backup and Recovery
+
+### Database Backup
+
+SQLite backups are simple file copies. Ensure no transactions are active during the copy, or use SQLite's built-in backup tools.
+
+```bash
+# File copy backup (safe with WAL mode)
+cp ./database.sqlite ./backups/database-$(date +%Y%m%d).sqlite
+
+# Backup with SQLite command-line tool
+sqlite3 ./database.sqlite ".backup './backups/database-backup.sqlite'"
+
+# Export to SQL file
+sqlite3 ./database.sqlite ".dump" > backup.sql
+```
+
+### Database Restore
+
+```bash
+# Restore from file copy
+cp ./backups/database-20260101.sqlite ./database.sqlite
+
+# Restore from SQL dump
+sqlite3 ./database.sqlite < backup.sql
+```
+
+### In-Memory Databases
+
+`:memory:` databases are destroyed when the Node.js process exits. Do not use `:memory:` for persistent data:
+
+```bash
+# For testing only
+DATABASE_URL=":memory:"
+```
+
+## Troubleshooting
+
+### Connection Issues
+
+If you encounter connection issues:
+
+```typescript
+// Verify connection string
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
+
+// Test connection
+try {
+  const tables = await tabulaLens.getTables();
+  console.log('Connected successfully. Tables:', tables);
+} catch (error) {
+  console.error('Connection failed:', error);
+}
+```
+
+**Common connection issues:**
+
+1. **File does not exist**
+   ```bash
+   # SQLite will create the file when tables are created
+   # Ensure the parent directory exists
+   mkdir -p ./data
+   ```
+
+2. **Permission denied**
+   ```bash
+   # Check file permissions on Linux/macOS
+   ls -l ./database.sqlite
+   
+   # Fix permissions
+   chmod 600 ./database.sqlite
+   ```
+
+3. **Native module build errors**
+   ```bash
+   # Rebuild better-sqlite3
+   npm rebuild better-sqlite3
+   ```
+
+4. **Database is locked**
+   ```bash
+   # Enable WAL mode and busy timeout
+   DATABASE_URL="./database.sqlite?journal_mode=WAL&busyTimeout=5000"
+   ```
+
+### Performance Issues
+
+For performance optimization:
+
+1. **Check query plan**
+   ```sql
+   EXPLAIN QUERY PLAN SELECT * FROM users WHERE email = 'john@example.com';
+   ```
+
+2. **Check index usage**
+   ```sql
+   PRAGMA index_list('users');
+   PRAGMA index_info('idx_users_email');
+   ```
+
+3. **Analyze tables**
+   ```sql
+   ANALYZE users;
+   ```
+
+4. **Check database size**
+   ```bash
+   ls -lh ./database.sqlite
+   ```
+
+### Memory Issues
+
+If you encounter memory issues:
+
+1. **Limit cache size**
+   ```sql
+   PRAGMA cache_size = 2000; -- ~2MB page cache
+   ```
+
+2. **Use WAL mode**
+   ```sql
+   PRAGMA journal_mode = WAL;
+   ```
+
+3. **Vacuum database**
+   ```sql
+   VACUUM;
+   ```
+
+### Lock Issues
+
+If you encounter lock issues:
+
+```sql
+-- Set busy timeout
+PRAGMA busy_timeout = 10000;
+
+-- Check journal mode
+PRAGMA journal_mode;
+```
+
+For persistent lock contention, enable WAL mode and review long-running transactions in your application code.
+
+## Advanced Configuration
+
+### Foreign Keys
+
+```bash
+# Enable foreign key enforcement
+DATABASE_URL="./database.sqlite?foreign_keys=true"
+```
+
+### WAL Mode
+
+```bash
+# Enable Write-Ahead Logging for better concurrency
+DATABASE_URL="./database.sqlite?journal_mode=WAL"
+```
+
+### Synchronous Mode
+
+```bash
+# NORMAL mode balances durability and performance
+DATABASE_URL="./database.sqlite?synchronous=NORMAL"
+```
+
+### In-Memory Mode
+
+```bash
+# Use an in-memory database for tests
+DATABASE_URL=":memory:"
+```
+
+## Best Practices
+
+1. **Use environment variables** for connection strings
+2. **Enable WAL mode** for better concurrency
+3. **Enable foreign key constraints** for referential integrity
+4. **Set busy timeout** to avoid `SQLITE_BUSY` errors
+5. **Implement proper indexing** for frequently queried columns
+6. **Restrict file permissions** on the database file
+7. **Store the database outside** of web-accessible directories
+8. **Back up the database file regularly**
+9. **Monitor database file size** and WAL file growth
+10. **Use full-disk encryption** on the host system
+11. **Do not use `:memory:` databases** for persistent data
+12. **Run `ANALYZE` periodically** for optimal query plans
+
+SQLite provides a lightweight, reliable database option for Tabula Lens. Follow these best practices to ensure optimal performance, security, and reliability.

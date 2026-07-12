@@ -246,7 +246,6 @@ export class TabulaLens {
           const likeOperator = this.dialect.getLikeOperator();
           query = query.where(function () {
             columnsToSearch.forEach((column) => {
-              // @ts-expect-error - Knex query builder context
               void this.orWhere(column, likeOperator, `%${filter}%`);
             });
           });
@@ -272,7 +271,6 @@ export class TabulaLens {
           if (filter && columnsToSearch.length > 0) {
             qb.where(function () {
               columnsToSearch.forEach((column) => {
-                // @ts-expect-error - Knex query builder context
                 void this.orWhere(column, likeOperator, `%${filter}%`);
               });
             });
