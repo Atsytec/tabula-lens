@@ -1,0 +1,388 @@
+---
+title: SQL Server
+description: Connect Tabula Lens to Microsoft SQL Server and Azure SQL Database.
+---
+
+import { PackageManagers } from 'starlight-package-managers'
+
+# SQL Server
+
+This guide covers how to connect Tabula Lens to Microsoft SQL Server (MSSQL) databases, including Azure SQL Database and Amazon RDS for SQL Server.
+
+## Installation
+
+Install `@tabula-lens/node` and the SQL Server driver:
+
+<PackageManagers pkg="@tabula-lens/node tedious" />
+
+## Database Connection
+
+### Connection String Format
+
+Set your database connection string as an environment variable:
+
+```bash
+DATABASE_URL="mssql://user:password@localhost:1433/mydb"
+```
+
+### Connection String Components
+
+A SQL Server connection string has the following format:
+
+```
+mssql://[user[:password]@][host][:port][/database][?parameters]
+```
+
+**Components:**
+
+- `user` - Database username
+- `password` - Database password (optional)
+- `host` - Database host (default: localhost)
+- `port` - Database port (default: 1433)
+- `database` - Database name
+- `parameters` - Additional connection parameters
+
+### Alternative Connection String Formats
+
+SQL Server supports several connection string variations:
+
+```bash
+# Standard URL format
+DATABASE_URL="mssql://user:password@localhost:1433/mydb"
+
+# SQL Server-specific scheme
+DATABASE_URL="sqlserver://user:password@localhost:1433/mydb"
+
+# With TCP variant
+DATABASE_URL="mssql+tcp://user:password@localhost:1433/mydb"
+```
+
+### Connection Parameters
+
+Common connection parameters:
+
+```bash
+# Encrypt connection (recommended for production)
+DATABASE_URL="mssql://user:password@localhost:1433/mydb?encrypt=true"
+
+# Trust server certificate (development only)
+DATABASE_URL="mssql://user:password@localhost:1433/mydb?trustServerCertificate=true"
+
+# Connection timeout (milliseconds)
+DATABASE_URL="mssql://user:password@localhost:1433/mydb?connectTimeout=15000"
+
+# Request timeout (milliseconds)
+DATABASE_URL="mssql://user:password@localhost:1433/mydb?requestTimeout=30000"
+
+# Connection pool settings
+DATABASE_URL="mssql://user:password@localhost:1433/mydb?pool_min=2&pool_max=10"
+```
+
+## Connection Patterns
+
+### Local Development
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mssql',
+});
+
+// Test connection
+const tables = await tabulaLens.getTables();
+console.log('Available tables:', tables);
+```
+
+### Production
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mssql',
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### With Custom Logger
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import winston from 'winston';
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'database.log' }),
+  ],
+});
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mssql',
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+## Connection Pooling
+
+Tabula Lens automatically manages connection pooling through Knex.js for optimal performance.
+
+### Default Pool Configuration
+
+```typescript
+// Default pool settings (handled by Knex.js)
+{
+  min: 2,
+  max: 10,
+}
+```
+
+### Custom Pool Configuration
+
+```typescript
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mssql',
+  // Connection pool settings in connection string
+  // DATABASE_URL="mssql://user:password@localhost:1433/mydb?pool_min=5&pool_max=20"
+});
+```
+
+### Pool Configuration Options
+
+```bash
+# Minimum connections
+DATABASE_URL="mssql://user:password@localhost:1433/mydb?pool_min=5"
+
+# Maximum connections
+DATABASE_URL="mssql://user:password@localhost:1433/mydb?pool_max=20"
+
+# Idle timeout (milliseconds)
+DATABASE_URL="mssql://user:password@localhost:1433/mydb?pool_idle_timeout=30000"
+```
+
+## Database Setup
+
+### Creating a Database
+
+```sql
+-- Create database
+CREATE DATABASE tabula_lens_db;
+
+-- Use the database
+USE tabula_lens_db;
+
+-- Set recovery model (recommended for production)
+ALTER DATABASE tabula_lens_db SET RECOVERY FULL;
+```
+
+### Creating Tables
+
+```sql
+-- Create users table
+CREATE TABLE users (
+  id INT IDENTITY(1,1) PRIMARY KEY,
+  name NVARCHAR(255) NOT NULL,
+  email NVARCHAR(255) UNIQUE NOT NULL,
+  created_at DATETIME2 DEFAULT GETDATE(),
+  updated_at DATETIME2 DEFAULT GETDATE()
+);
+
+-- Create products table
+CREATE TABLE products (
+  id INT IDENTITY(1,1) PRIMARY KEY,
+  name NVARCHAR(255) NOT NULL,
+  price DECIMAL(10, 2) NOT NULL,
+  description NVARCHAR(MAX),
+  created_at DATETIME2 DEFAULT GETDATE()
+);
+
+-- Create orders table
+CREATE TABLE orders (
+  id INT IDENTITY(1,1) PRIMARY KEY,
+  user_id INT,
+  total DECIMAL(10, 2) NOT NULL,
+  status NVARCHAR(50) DEFAULT 'pending',
+  created_at DATETIME2 DEFAULT GETDATE(),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+```
+
+### Adding Sample Data
+
+```sql
+-- Insert sample users
+INSERT INTO users (name, email) VALUES
+  ('John Doe', 'john@example.com'),
+  ('Jane Smith', 'jane@example.com'),
+  ('Bob Johnson', 'bob@example.com');
+
+-- Insert sample products
+INSERT INTO products (name, price, description) VALUES
+  ('Product A', 29.99, 'Description for Product A'),
+  ('Product B', 49.99, 'Description for Product B'),
+  ('Product C', 19.99, 'Description for Product C');
+
+-- Insert sample orders
+INSERT INTO orders (user_id, total, status) VALUES
+  (1, 29.99, 'completed'),
+  (2, 49.99, 'pending'),
+  (1, 19.99, 'shipped');
+```
+
+## User Permissions
+
+### Creating Read-Only User
+
+```sql
+-- Create login at server level
+CREATE LOGIN tabula_lens_readonly WITH PASSWORD = 'secure_password';
+
+-- Create user in the database
+USE tabula_lens_db;
+CREATE USER tabula_lens_readonly FOR LOGIN tabula_lens_readonly;
+
+-- Grant select permission
+ALTER ROLE db_datareader ADD MEMBER tabula_lens_readonly;
+```
+
+### Creating Read-Write User
+
+```sql
+-- Create login at server level
+CREATE LOGIN tabula_lens_user WITH PASSWORD = 'secure_password';
+
+-- Create user in the database
+USE tabula_lens_db;
+CREATE USER tabula_lens_user FOR LOGIN tabula_lens_user;
+
+-- Grant read and write permissions
+ALTER ROLE db_datareader ADD MEMBER tabula_lens_user;
+ALTER ROLE db_datawriter ADD MEMBER tabula_lens_user;
+```
+
+### Schema-Scoped Permissions
+
+For finer-grained control, grant permissions on specific schemas:
+
+```sql
+USE tabula_lens_db;
+
+-- Create custom role
+CREATE ROLE tabula_lens_reader;
+
+-- Grant select on schema
+GRANT SELECT ON SCHEMA::dbo TO tabula_lens_reader;
+
+-- Add user to role
+ALTER ROLE tabula_lens_reader ADD MEMBER tabula_lens_user;
+```
+
+## Security Best Practices
+
+### Environment Variables
+
+Use environment variables for connection strings:
+
+```bash
+# .env file
+DATABASE_URL=mssql://user:password@localhost:1433/mydb
+```
+
+```typescript
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config();
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mssql',
+});
+```
+
+### Connection Security
+
+- **Use encryption in production**: Set `encrypt=true` for encrypted connections
+- **Validate certificates**: Only set `trustServerCertificate=true` in development
+- **Use strong passwords**: Use environment variables or secret management
+- **Limit user permissions**: Create users with minimal required permissions
+- **Use Windows Authentication**: When possible, use integrated security
+- **Rotate credentials regularly**: Change database passwords periodically
+- **Use connection pooling**: Configure appropriate pool sizes
+- **Monitor connections**: Track connection usage and patterns
+
+### Network Security
+
+- Use firewall rules to restrict database access
+- Use VPC peering or private endpoints for cloud databases
+- Implement IP whitelisting for database connections
+- Use VPNs for remote database access
+- Disable SA account or use strong password
+- Run SQL Server on non-default port if required by network policy
+
+### Azure SQL Database
+
+For Azure SQL Database, use the following security best practices:
+
+- **Use Azure Active Directory authentication**: When possible, use managed identities
+- **Configure firewall rules**: Restrict access to specific IP ranges
+- **Use TLS 1.2**: Ensure connections use TLS 1.2 or higher
+- **Enable threat detection**: Use Azure's built-in threat detection
+- **Use transparent data encryption**: Enable TDE for data at rest encryption
+- **Implement row-level security**: Use RLS for fine-grained access control
+
+## Troubleshooting
+
+### Connection Issues
+
+**`ELOGIN` or Login failed**
+
+Verify the username and password in your connection string. Check that the user has the necessary permissions and that the login exists at the server level.
+
+**`ETIMEOUT` or Connection timeout**
+
+Increase the connection timeout in your connection string. Check network connectivity and firewall settings.
+
+**`ECONNREFUSED`**
+
+Ensure SQL Server is running and accessible. Check that the SQL Server Browser service is running if using named instances.
+
+### SSL/TLS Issues
+
+**SSL handshake failed**
+
+Verify that SSL is properly configured on your SQL Server. In production, use `encrypt=true` without `trustServerCertificate=true`. In development, you may need to set `trustServerCertificate=true` for self-signed certificates.
+
+### Performance Issues
+
+**Slow queries**
+
+- Check for missing indexes on frequently queried columns
+- Use `SET STATISTICS IO ON` and `SET STATISTICS TIME ON` to analyze query performance
+- Consider updating statistics and rebuilding indexes
+- Monitor using SQL Server Profiler or Extended Events
+
+**Connection pool exhaustion**
+
+Increase the maximum pool size in your connection string or reduce connection usage in your application.
+
+## Additional Resources
+
+- [SQL Server Documentation](https://docs.microsoft.com/en-us/sql/sql-server/)
+- [tedious driver documentation](https://tediousjs.github.io/tedious/)
+- [Knex.js SQL Server dialect](https://knexjs.org/guide/query-builder.html#mssql)
+- [Azure SQL Database Documentation](https://docs.microsoft.com/en-us/azure/azure-sql/database/)

@@ -1,0 +1,345 @@
+---
+title: MySQL
+description: Connect Tabula Lens to MySQL and MariaDB databases.
+---
+
+import { PackageManagers } from 'starlight-package-managers'
+
+# MySQL
+
+This guide covers how to connect Tabula Lens to MySQL and MariaDB databases.
+
+## Installation
+
+Install `@tabula-lens/node` and the MySQL driver:
+
+<PackageManagers pkg="@tabula-lens/node mysql2" />
+
+## Database Connection
+
+### Connection String Format
+
+Set your database connection string as an environment variable:
+
+```bash
+DATABASE_URL="mysql://user:password@localhost:3306/mydb"
+```
+
+### Connection String Components
+
+A MySQL connection string has the following format:
+
+```
+mysql://[user[:password]@][host][:port][/database][?parameters]
+```
+
+**Components:**
+
+- `user` - Database username
+- `password` - Database password (optional)
+- `host` - Database host (default: localhost)
+- `port` - Database port (default: 3306)
+- `database` - Database name
+- `parameters` - Additional connection parameters
+
+### Connection Parameters
+
+Common connection parameters:
+
+```bash
+# SSL mode
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?ssl=true"
+
+# Connection pool settings
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?pool_min=2&pool_max=10"
+
+# Connection timeout
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?connect_timeout=10000"
+
+# Support BigInt values
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?supportBigNumbers=true&bigNumberStrings=true"
+
+# Multiple statements (disabled by default for security)
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?multipleStatements=false"
+```
+
+## Connection Patterns
+
+### Local Development
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql',
+});
+
+// Test connection
+const tables = await tabulaLens.getTables();
+console.log('Available tables:', tables);
+```
+
+### Production
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql',
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### With Custom Logger
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import winston from 'winston';
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'database.log' }),
+  ],
+});
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql',
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+## Connection Pooling
+
+Tabula Lens automatically manages connection pooling through Knex.js for optimal performance.
+
+### Default Pool Configuration
+
+```typescript
+// Default pool settings (handled by Knex.js)
+{
+  min: 2,
+  max: 10,
+}
+```
+
+### Custom Pool Configuration
+
+```typescript
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql',
+  // Connection pool settings in connection string
+  // DATABASE_URL="mysql://user:password@localhost:3306/mydb?pool_min=5&pool_max=20"
+});
+```
+
+### Pool Configuration Options
+
+```bash
+# Minimum connections
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?pool_min=5"
+
+# Maximum connections
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?pool_max=20"
+
+# Idle timeout (milliseconds)
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?pool_idle_timeout=30000"
+```
+
+## Database Setup
+
+### Creating a Database
+
+```sql
+-- Create database with UTF-8 collation
+CREATE DATABASE tabula_lens_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+-- Use the database
+USE tabula_lens_db;
+```
+
+### Creating Tables
+
+```sql
+-- Create users table
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Create products table
+CREATE TABLE products (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  price DECIMAL(10, 2) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Create orders table
+CREATE TABLE orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  total DECIMAL(10, 2) NOT NULL,
+  status VARCHAR(50) DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### Adding Sample Data
+
+```sql
+-- Insert sample users
+INSERT INTO users (name, email) VALUES
+  ('John Doe', 'john@example.com'),
+  ('Jane Smith', 'jane@example.com'),
+  ('Bob Johnson', 'bob@example.com');
+
+-- Insert sample products
+INSERT INTO products (name, price, description) VALUES
+  ('Product A', 29.99, 'Description for Product A'),
+  ('Product B', 49.99, 'Description for Product B'),
+  ('Product C', 19.99, 'Description for Product C');
+
+-- Insert sample orders
+INSERT INTO orders (user_id, total, status) VALUES
+  (1, 29.99, 'completed'),
+  (2, 49.99, 'pending'),
+  (1, 19.99, 'shipped');
+```
+
+## User Permissions
+
+### Creating Read-Only User
+
+```sql
+-- Create read-only user
+CREATE USER 'tabula_lens_readonly'@'%' IDENTIFIED BY 'secure_password';
+
+-- Grant select privileges
+GRANT SELECT ON tabula_lens_db.* TO 'tabula_lens_readonly'@'%';
+
+-- Apply privileges
+FLUSH PRIVILEGES;
+```
+
+### Creating Read-Write User
+
+```sql
+-- Create read-write user
+CREATE USER 'tabula_lens_user'@'%' IDENTIFIED BY 'secure_password';
+
+-- Grant data manipulation privileges
+GRANT SELECT, INSERT, UPDATE, DELETE ON tabula_lens_db.* TO 'tabula_lens_user'@'%';
+
+-- Apply privileges
+FLUSH PRIVILEGES;
+```
+
+### Restricting to Specific Host
+
+```sql
+-- Restrict user to localhost only
+CREATE USER 'tabula_lens_app'@'localhost' IDENTIFIED BY 'secure_password';
+GRANT SELECT, INSERT, UPDATE, DELETE ON tabula_lens_db.* TO 'tabula_lens_app'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+## Security Best Practices
+
+### Environment Variables
+
+Use environment variables for connection strings:
+
+```bash
+# .env file
+DATABASE_URL=mysql://user:password@localhost:3306/mydb
+```
+
+```typescript
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config();
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql',
+});
+```
+
+### Connection Security
+
+- **Use SSL in production**: Enable SSL for encrypted connections
+- **Use strong passwords**: Use environment variables or secret management
+- **Limit user permissions**: Create users with minimal required permissions
+- **Restrict host access**: Use host-based access control
+- **Rotate credentials regularly**: Change database passwords periodically
+- **Use connection pooling**: Configure appropriate pool sizes
+- **Monitor connections**: Track connection usage and patterns
+
+### Network Security
+
+- Use firewall rules to restrict database access
+- Use VPC peering or private endpoints for cloud databases
+- Implement IP whitelisting for database connections
+- Use VPNs for remote database access
+- Disable remote access to the root user
+- Run MySQL on a non-default port only if your network policy requires it
+
+## Troubleshooting
+
+### Connection Issues
+
+**`ECONNREFUSED`**
+
+Ensure MySQL is running and accessible. Check your firewall settings and verify the host and port in your connection string.
+
+**`ER_ACCESS_DENIED_ERROR`**
+
+Verify the username and password in your connection string. Check that the user has the necessary permissions.
+
+**`ER_BAD_DB_ERROR`**
+
+Ensure the database specified in your connection string exists. Create the database if needed.
+
+### SSL Issues
+
+**SSL connection errors**
+
+Verify that SSL is properly configured on your MySQL server and that your connection string includes the appropriate SSL parameters.
+
+### Performance Issues
+
+**Slow queries**
+
+- Check for missing indexes on frequently queried columns
+- Use `EXPLAIN` to analyze query execution plans
+- Consider increasing connection pool size for high-traffic applications
+- Monitor slow query log for optimization opportunities
+
+## Additional Resources
+
+- [MySQL Documentation](https://dev.mysql.com/doc/)
+- [mysql2 driver documentation](https://github.com/sidorares/node-mysql2)
+- [Knex.js MySQL dialect](https://knexjs.org/guide/query-builder.html#mysql)
+- [MySQL Performance Tuning](https://dev.mysql.com/doc/refman/8.0/en/optimization.html)
