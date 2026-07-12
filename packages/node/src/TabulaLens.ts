@@ -1,5 +1,6 @@
 import knex from 'knex';
 import { Logger, createLogger, LogLevel, generateId, maskSensitiveData } from './logger';
+import { TabulaLensConfig, DatabaseType, detectDatabaseType } from './database';
 
 export interface TabulaLensOptions {
   logger?: Logger;
@@ -74,26 +75,106 @@ export class TabulaLens {
   private enableRequestLogging: boolean;
   private sensitiveDataMasking: boolean;
   private columnCache: Map<string, string[]> = new Map();
+  private databaseType: DatabaseType;
 
-  constructor(databaseUrl: string, options: TabulaLensOptions = {}) {
+  /**
+   * Constructor overloads for backward compatibility
+   *
+   * @param config - Either a database URL string or a TabulaLensConfig object
+   * @param options - Optional TabulaLensOptions (only used when config is a string)
+   *
+   * @example
+   * ```ts
+   * // String form (existing behavior)
+   * const tabulaLens = new TabulaLens('postgresql://localhost/mydb', { logLevel: 'info' });
+   *
+   * // Config object form (new)
+   * const tabulaLens = new TabulaLens({
+   *   url: 'mysql://localhost/mydb',
+   *   type: 'mysql',
+   *   logLevel: 'info'
+   * });
+   * ```
+   */
+  constructor(config: string, options?: TabulaLensOptions);
+  constructor(config: TabulaLensConfig);
+  constructor(config: string | TabulaLensConfig, options?: TabulaLensOptions) {
+    // Determine if config is a string or object
+    const isStringConfig = typeof config === 'string';
+
+    // Extract URL and options based on config type
+    const databaseUrl = isStringConfig ? config : config.url;
+    const explicitType = isStringConfig ? undefined : config.type;
+    const mergedOptions = isStringConfig
+      ? options || {}
+      : {
+          logger: config.logger,
+          logLevel: config.logLevel,
+          enableQueryLogging: config.enableQueryLogging,
+          enableRequestLogging: config.enableRequestLogging,
+          sensitiveDataMasking: config.sensitiveDataMasking,
+          logFormat: config.logFormat,
+        };
+
+    // Detect or validate database type
+    let detectedType: DatabaseType;
+    if (explicitType) {
+      detectedType = explicitType;
+    } else {
+      try {
+        detectedType = detectDatabaseType(databaseUrl);
+      } catch (error) {
+        if (error instanceof TabulaLensError) {
+          throw error;
+        }
+        throw new TabulaLensError(
+          400,
+          'AUTO_DETECTION_FAILED',
+          "Unable to detect database type from URL. Please specify the 'type' field in the config. Valid types: pg, mysql, sqlite, mssql"
+        );
+      }
+    }
+
+    this.databaseType = detectedType;
+
+    // Map database type to Knex client
+    const knexClient = this.getKnexClient(detectedType);
+
     this.db = knex({
-      client: 'pg',
+      client: knexClient,
       connection: databaseUrl,
     });
 
     this.logger =
-      options.logger ||
+      mergedOptions.logger ||
       createLogger({
-        level: options.logLevel,
-        format: options.logFormat,
+        level: mergedOptions.logLevel,
+        format: mergedOptions.logFormat,
       });
-    this.enableQueryLogging = options.enableQueryLogging ?? true;
-    this.enableRequestLogging = options.enableRequestLogging ?? true;
-    this.sensitiveDataMasking = options.sensitiveDataMasking ?? true;
+    this.enableQueryLogging = mergedOptions.enableQueryLogging ?? true;
+    this.enableRequestLogging = mergedOptions.enableRequestLogging ?? true;
+    this.sensitiveDataMasking = mergedOptions.sensitiveDataMasking ?? true;
 
     this.logger.info('TabulaLens initialized', {
       databaseUrl: this.sensitiveDataMasking ? maskSensitiveData(databaseUrl) : databaseUrl,
+      databaseType: this.databaseType,
     });
+  }
+
+  /**
+   * Maps database type to Knex client name
+   *
+   * @param type - Database type
+   * @returns Knex client name
+   */
+  private getKnexClient(type: DatabaseType): string {
+    const clientMap: Record<DatabaseType, string> = {
+      pg: 'pg',
+      mysql: 'mysql2',
+      sqlite: 'better-sqlite3',
+      mssql: 'tedious',
+    };
+    return clientMap[type];
   }
 
   getLogger(): Logger {

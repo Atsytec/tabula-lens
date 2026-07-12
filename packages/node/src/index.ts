@@ -8,6 +8,8 @@ export type {
   FilterOption,
   TabulaLensOptions,
 } from './TabulaLens';
+export type { DatabaseType, TabulaLensConfig } from './database';
+export { detectDatabaseType, validateDatabaseType } from './database';
 export {
   expressAdapter,
   express4Adapter,

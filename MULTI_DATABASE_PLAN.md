@@ -89,12 +89,12 @@ overloads keep both call forms valid and fully typed.
 **Decision:** `type` is optional in both the string and config-object forms.
 Auto-detection reads the URL prefix:
 
-| URL prefix                                                                                                | Detected type |
-| --------------------------------------------------------------------------------------------------------- | ------------- |
-| `postgresql://` / `postgres://`                                                                           | `pg`          |
-| `mysql://` / `mariadb://`                                                                                 | `mysql`       |
-| `sqlite:` / `sqlite://` / relative path ending `.db` / `.sqlite` / absolute path ending `.db` / `.sqlite` | `sqlite`      |
-| `mssql://` / `sqlserver://`                                                                               | `mssql`       |
+| URL prefix / pattern                                                                                                                                                          | Detected type |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `postgresql://` / `postgres://` / `pgsql://` (also covers Neon, Supabase, AWS RDS, Heroku Postgres, Railway, TimescaleDB, Azure, DigitalOcean, CockroachDB, Google Cloud SQL) | `pg`          |
+| `mysql://` / `mysql2://` / `mysqlx://` / `mariadb://` (also covers PlanetScale, AWS RDS MySQL/MariaDB, Azure, DigitalOcean, Google Cloud SQL, Upstash)                        | `mysql`       |
+| `sqlite:` / `sqlite://` / `sqlite3://` / `file:` / `:memory:` / relative or absolute path ending `.db` / `.sqlite` / `.sqlite3` / `.db3`                                      | `sqlite`      |
+| `mssql://` / `sqlserver://` / `mssql+tcp://` / `mssql+udp://` (also covers Azure SQL Database, AWS RDS SQL Server)                                                            | `mssql`       |
 
 **On detection failure:** throw a clear `TabulaLensError` with a list of valid type values and
 instructions. Never silently default to `pg`.
@@ -269,15 +269,15 @@ separate future effort.
 
 ### Phase 1 — Foundation: Types, Config, and Auto-Detection
 
-- [ ] Define `DatabaseType` union type (`'pg' | 'mysql' | 'sqlite' | 'mssql'`)
-- [ ] Define `TabulaLensConfig` interface (extends `TabulaLensOptions`, adds `url` and optional `type`)
-- [ ] Implement `detectDatabaseType(url: string): DatabaseType` utility function (pure function, no side effects)
-- [ ] Add URL validation and error handling with consistent `TabulaLensError` usage
-- [ ] Update `TabulaLens` constructor to accept `string | TabulaLensConfig` with TypeScript overloads
-- [ ] Throw `TabulaLensError` with specified error message format when auto-detection fails
-- [ ] Update `packages/node/src/index.ts` to export new types (barrel export pattern)
-- [ ] Write unit tests for `detectDatabaseType` (edge cases: malformed URLs, unknown schemes, file paths)
-- [ ] Add JSDoc comments to new types and functions
+- [x] Define `DatabaseType` union type (`'pg' | 'mysql' | 'sqlite' | 'mssql'`)
+- [x] Define `TabulaLensConfig` interface (extends `TabulaLensOptions`, adds `url` and optional `type`)
+- [x] Implement `detectDatabaseType(url: string): DatabaseType` utility function (pure function, no side effects)
+- [x] Add URL validation and error handling with consistent `TabulaLensError` usage
+- [x] Update `TabulaLens` constructor to accept `string | TabulaLensConfig` with TypeScript overloads
+- [x] Throw `TabulaLensError` with specified error message format when auto-detection fails
+- [x] Update `packages/node/src/index.ts` to export new types (barrel export pattern)
+- [x] Write unit tests for `detectDatabaseType` (edge cases: malformed URLs, unknown schemes, file paths)
+- [x] Add JSDoc comments to new types and functions
 
 ### Phase 2 — Dialect Strategy Layer
 
