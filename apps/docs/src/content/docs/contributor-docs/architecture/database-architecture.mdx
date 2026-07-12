@@ -1,62 +1,92 @@
 ---
 title: Database Architecture
-description: Understand Tabula Lens database architecture, connection patterns, and PostgreSQL integration.
+description: Understand Tabula Lens database architecture, multi-database support, connection patterns, and dialect strategies.
 ---
 
 # Database Architecture
 
-Tabula Lens is designed to work seamlessly with PostgreSQL, providing a robust database layer that handles connections, queries, and data management efficiently and securely.
+Tabula Lens supports **PostgreSQL**, **MySQL**, **SQLite**, and **Microsoft SQL Server** through a unified query layer built on [Knex.js](https://knexjs.org/). The same `TabulaLens` API works across all supported engines: the library auto-detects the database type from the connection URL, selects the appropriate driver, and delegates engine-specific SQL syntax to a dialect strategy.
 
-## Database Support
+## Supported Databases
 
-### Primary Support: PostgreSQL
+| Engine | Identifier | Knex Client | Driver Package |
+|--------|------------|-------------|----------------|
+| PostgreSQL | `pg` | `pg` | `pg` |
+| MySQL / MariaDB | `mysql` | `mysql2` | `mysql2` |
+| SQLite | `sqlite` | `better-sqlite3` | `better-sqlite3` |
+| Microsoft SQL Server | `mssql` | `tedious` | `tedious` |
 
-Tabula Lens is built primarily for PostgreSQL, leveraging its powerful features:
+Each engine brings different strengths:
 
-- **Advanced Querying**: Complex queries with joins, aggregations, and subqueries
-- **Data Types**: Rich data type support including JSON, arrays, and custom types
-- **Performance**: Excellent performance with proper indexing and query optimization
-- **Reliability**: ACID compliance and robust transaction support
-- **Scalability**: Handles large datasets efficiently
-- **Extensions**: Support for PostgreSQL extensions (PostGIS, pgcrypto, etc.)
+- **PostgreSQL**: Advanced querying, rich data types (JSON/JSONB, arrays), strong consistency, and extensibility through extensions.
+- **MySQL / MariaDB**: Widely deployed, strong ecosystem, and good performance for read-heavy workloads.
+- **SQLite**: Serverless, file-based, and ideal for local development, embedded applications, or small deployments.
+- **SQL Server**: Enterprise features, strong tooling, and common in Microsoft-centric environments.
 
-### Future Database Support
-
-While PostgreSQL is the primary focus, the architecture is designed to support other databases:
-
-- **MySQL**: Not currently implemented
-- **SQLite**: Not currently implemented
-- **Custom Adapters**: Extensible architecture for custom database adapters
+The architecture is extensible: adding another relational database only requires a new `DialectStrategy` implementation and a corresponding Knex client mapping.
 
 ## Connection Architecture
 
 ### Connection String Format
 
-Tabula Lens uses standard PostgreSQL connection strings:
+Tabula Lens accepts standard connection strings for each supported engine. The scheme is used by `detectDatabaseType` to determine which driver to load.
 
+**PostgreSQL**
 ```bash
 postgresql://[user[:password]@][host][:port][/database][?parameters]
-```
-
-**Example:**
-```bash
 DATABASE_URL=postgresql://alice:secret@localhost:5432/mydb
 ```
 
-**Connection Parameters:**
-- `user`: Database username
-- `password`: Database password
-- `host`: Database host (default: localhost)
-- `port`: Database port (default: 5432)
-- `database`: Database name
-- `parameters`: Additional connection parameters
+**MySQL**
+```bash
+mysql://[user[:password]@][host][:port][/database][?parameters]
+DATABASE_URL=mysql://alice:secret@localhost:3306/mydb
+```
+
+**SQLite**
+```bash
+# File path or in-memory database
+DATABASE_URL=./data.db
+DATABASE_URL=:memory:
+DATABASE_URL=sqlite:./data.db
+```
+
+**Microsoft SQL Server**
+```bash
+mssql://[user[:password]@][host][:port][/database][?parameters]
+DATABASE_URL=mssql://alice:secret@localhost:1433/mydb
+```
+
+You can also pass an explicit `type` in the config object to bypass auto-detection:
+
+```typescript
+const tabulaLens = new TabulaLens({
+  url: 'mysql://localhost/mydb',
+  type: 'mysql',
+});
+```
+
+### Dynamic Client Selection
+
+The `TabulaLens` constructor maps the detected (or explicit) `DatabaseType` to the Knex client that should be used:
+
+```typescript
+const clientMap: Record<DatabaseType, string> = {
+  pg: 'pg',
+  mysql: 'mysql2',
+  sqlite: 'better-sqlite3',
+  mssql: 'tedious',
+};
+```
+
+This means `pg` connections use the `pg` driver, `mysql` connections use `mysql2`, `sqlite` connections use `better-sqlite3`, and `mssql` connections use `tedious`. All query construction still goes through Knex, so the rest of the codebase remains database-agnostic.
 
 ### Connection Pooling
 
-TabulaLens implements efficient connection pooling via the underlying Knex.js and `pg` driver. Connection pool settings are controlled through the PostgreSQL connection string parameters or `pg` environment variables, not through TabulaLens constructor options:
+TabulaLens relies on Knex and the underlying driver for connection pooling. Pool settings are controlled through driver-specific connection string parameters or environment variables, not through `TabulaLens` constructor options:
 
 ```bash
-# Pool size via connection string
+# PostgreSQL / MySQL / MSSQL pool hints via connection string
 DATABASE_URL="postgresql://user:password@localhost:5432/mydb?pool_min=2&pool_max=10"
 ```
 
@@ -79,7 +109,8 @@ const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
        │ 1. Request Connection
        ▼
 ┌─────────────┐
-│ Connection  │
+│   Knex /    │
+│   Driver    │
 │    Pool     │
 └──────┬──────┘
        │ 2. Get Available Connection
@@ -102,10 +133,13 @@ const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
        │ 5. Return to Pool
        ▼
 ┌─────────────┐
-│ Connection  │
+│   Knex /    │
+│   Driver    │
 │    Pool     │
 └─────────────┘
 ```
+
+The lifecycle is the same for every supported database: Knex acquires a connection from the configured driver pool, runs the parameterized query, returns the results, and releases the connection.
 
 ## Query Architecture
 
@@ -184,18 +218,35 @@ SELECT * FROM users LIMIT 10 OFFSET 0;
 
 **Filtered Query:**
 ```sql
-SELECT * FROM users 
-WHERE name ILIKE '%John%' 
-ORDER BY name ASC 
+-- PostgreSQL
+SELECT * FROM users
+WHERE name ILIKE '%John%'
+ORDER BY name ASC
+LIMIT 10 OFFSET 0;
+
+-- MySQL, SQLite, and SQL Server (LIKE is case-insensitive by default for most collations)
+SELECT * FROM users
+WHERE name LIKE '%John%'
+ORDER BY name ASC
 LIMIT 10 OFFSET 0;
 ```
 
 **Paginated Query:**
 ```sql
-SELECT * FROM users 
-ORDER BY created_at DESC 
+SELECT * FROM users
+ORDER BY created_at DESC
 LIMIT 20 OFFSET 40;
 ```
+
+### Dialect-Specific Query Building
+
+Although most queries are built through Knex's shared API, some operations need engine-specific syntax:
+
+- **Case-insensitive search**: PostgreSQL uses `ILIKE`, while MySQL, SQLite, and SQL Server use `LIKE` (case-insensitive in typical configurations).
+- **Metadata queries**: PostgreSQL, MySQL, and SQL Server read from `information_schema`, while SQLite uses `PRAGMA table_info(...)` and `sqlite_master`.
+- **Type names**: Each engine returns different type names for the same conceptual type (e.g., `character varying`, `varchar`, `TEXT`, `nvarchar`). The dialect strategy normalizes these for filtering.
+
+These differences are encapsulated behind the `DialectStrategy` interface so that the rest of the query builder stays generic.
 
 ### SQL Injection Prevention
 
@@ -214,6 +265,121 @@ const params = ['Alice'];
 // Never happens: Direct string interpolation
 // const query = `SELECT * FROM users WHERE name = '${userInput}'`;
 ```
+
+## Dialect Strategy Pattern
+
+Engine-specific behavior is isolated behind the `DialectStrategy` interface. This keeps `TabulaLens` generic while still supporting the metadata queries and operators that differ between databases.
+
+```typescript
+export interface DialectStrategy {
+  getTables(db: Knex): Promise<string[]>;
+  getColumns(db: Knex, table: string): Promise<ColumnInfo[]>;
+  getFilterableTypes(): string[];
+  getLikeOperator(): 'LIKE' | 'ILIKE';
+}
+```
+
+The `createDialect` factory instantiates the correct implementation based on the detected `DatabaseType`:
+
+```typescript
+import { createDialect } from './dialects';
+
+const dialect = createDialect('mysql');
+const tables = await dialect.getTables(knexInstance);
+const columns = await dialect.getColumns(knexInstance, 'users');
+const likeOperator = dialect.getLikeOperator(); // 'LIKE' for MySQL
+```
+
+Current implementations:
+
+- `PostgresDialect` — `information_schema` metadata and `ILIKE`
+- `MySQLDialect` — `information_schema` with `DATABASE()` and `LIKE`
+- `SQLiteDialect` — `sqlite_master` / `PRAGMA table_info` and `LIKE`
+- `MSSQLDialect` — `information_schema` metadata and `LIKE`
+
+Adding a new database only requires implementing this interface and registering it in `createDialect`.
+
+## Database-Specific Behaviors
+
+The table below summarizes how each engine handles the operations that vary across databases.
+
+| Behavior | PostgreSQL | MySQL | SQLite | SQL Server |
+|----------|------------|-------|--------|------------|
+| **Case-insensitive LIKE** | `ILIKE` | `LIKE` | `LIKE` | `LIKE` |
+| **List tables** | `information_schema.tables` (`public` schema, `BASE TABLE`) | `information_schema.tables` (`DATABASE()`, `BASE TABLE`) | `sqlite_master` (`type = 'table'`, excluding `sqlite_*`) | `information_schema.tables` (`BASE TABLE`) |
+| **List columns** | `information_schema.columns` (`public` schema) | `information_schema.columns` (`DATABASE()`) | `PRAGMA table_info(?)` | `information_schema.columns` |
+| **Filterable text types** | `character varying`, `varchar`, `text`, `char`, `character`, `uuid` | `varchar`, `text`, `tinytext`, `mediumtext`, `longtext`, `char` | `TEXT`, `text`, `VARCHAR`, `varchar`, `CHAR`, `char`, `CLOB`, `clob` | `varchar`, `nvarchar`, `text`, `ntext`, `char`, `nchar` |
+
+### LIKE Operator
+
+- **PostgreSQL** returns `ILIKE` so searches are case-insensitive.
+- **MySQL**, **SQLite**, and **SQL Server** return `LIKE`. For the collations used by most MySQL and SQL Server installations, and for ASCII characters in SQLite, `LIKE` is already case-insensitive.
+
+### Table Listing
+
+- PostgreSQL and MySQL filter `information_schema.tables` to the current/default database schema.
+- SQLite reads from `sqlite_master` because it has no `information_schema`.
+- SQL Server reads from `information_schema.tables` without a schema filter, relying on the connection's default database.
+
+### Column Listing
+
+- PostgreSQL, MySQL, and SQL Server query `information_schema.columns`.
+- SQLite uses `PRAGMA table_info(?)`, which returns a different shape that the dialect normalizes to `{ name, type }`.
+
+### Filterable Types
+
+Only text-like columns participate in full-text filtering. The exact type names match what each engine returns from its metadata query. Comparisons are case-insensitive, so variations like `TEXT` and `text` are treated the same.
+
+## Auto-Detection
+
+`detectDatabaseType(url)` inspects the connection string scheme or file extension and returns one of the supported identifiers:
+
+```typescript
+detectDatabaseType('postgresql://localhost/mydb'); // 'pg'
+detectDatabaseType('mysql://localhost/mydb');      // 'mysql'
+detectDatabaseType('./database.db');                // 'sqlite'
+detectDatabaseType('mssql://localhost/mydb');      // 'mssql'
+```
+
+Recognized URL patterns:
+
+| Engine | Detected Schemes / Patterns |
+|--------|-----------------------------|
+| PostgreSQL | `postgresql://`, `postgres://`, `pgsql://` |
+| MySQL / MariaDB | `mysql://`, `mariadb://`, `mysql2://`, `mysqlx://` |
+| SQLite | `sqlite://`, `sqlite3://`, `file:`, `:memory:`, paths ending in `.db`, `.sqlite`, `.sqlite3`, `.db3` |
+| SQL Server | `mssql://`, `sqlserver://`, `mssql+tcp://`, `mssql+udp://` |
+
+If the type cannot be determined, `TabulaLensError` (`AUTO_DETECTION_FAILED`) is thrown. You can avoid this by supplying `type` explicitly in the config object.
+
+## Database Driver Dependency Management
+
+Tabula Lens declares all database drivers as **optional peer dependencies**. Only the driver for the database you actually connect to needs to be installed.
+
+| Engine | Peer Dependency | Typical Version |
+|--------|-----------------|-----------------|
+| PostgreSQL | `pg` | `^8.0.0` |
+| MySQL | `mysql2` | `^3.0.0` |
+| SQLite | `better-sqlite3` | `^12.0.0` |
+| SQL Server | `tedious` | `^20.0.0` |
+
+Install only the drivers you need:
+
+```bash
+# PostgreSQL only
+npm install pg
+
+# MySQL only
+npm install mysql2
+
+# SQLite only
+npm install better-sqlite3
+
+# SQL Server only
+npm install tedious
+```
+
+Knex loads the peer driver that matches the configured client name. If a driver is missing at runtime, the underlying database client will raise an error when the first query is attempted. This approach keeps installs small and avoids forcing native build toolchains for engines you do not use.
 
 ## Data Types
 
@@ -266,22 +432,37 @@ TabulaLens supports all major PostgreSQL data types:
 - `composite` - Custom composite types
 - `domain` - Custom domains
 
-### Type Mapping
+### Common Type Mapping
 
-TabulaLens automatically maps PostgreSQL types to JavaScript types:
+TabulaLens automatically maps database types to JavaScript types. The table below covers common mappings across all supported engines.
 
-| PostgreSQL Type | JavaScript Type |
-|-----------------|-----------------|
-| `integer` | `number` |
-| `bigint` | `string` (or `number` if in range) |
-| `varchar` | `string` |
-| `text` | `string` |
-| `boolean` | `boolean` |
-| `json` | `object` |
-| `jsonb` | `object` |
-| `date` | `string` (ISO format) |
-| `timestamp` | `string` (ISO format) |
-| `bytea` | `Buffer` |
+| Database | Source Type(s) | JavaScript Type |
+|----------|----------------|-----------------|
+| PostgreSQL | `integer` | `number` |
+| PostgreSQL | `bigint` | `string` (or `number` if in range) |
+| PostgreSQL | `varchar`, `text` | `string` |
+| PostgreSQL | `boolean` | `boolean` |
+| PostgreSQL | `json`, `jsonb` | `object` |
+| PostgreSQL | `date`, `timestamp`, `timestamptz` | `string` (ISO format) |
+| PostgreSQL | `bytea` | `Buffer` |
+| MySQL | `int`, `integer` | `number` |
+| MySQL | `bigint` | `string` |
+| MySQL | `varchar`, `text` | `string` |
+| MySQL | `tinyint(1)`, `boolean` | `boolean` |
+| MySQL | `json` | `object` |
+| MySQL | `date`, `timestamp` | `string` (ISO format) |
+| MySQL | `blob`, `binary` | `Buffer` |
+| SQLite | `INTEGER` | `number` |
+| SQLite | `TEXT`, `VARCHAR`, `CHAR` | `string` |
+| SQLite | `REAL` | `number` |
+| SQLite | `BLOB` | `Buffer` |
+| SQLite | `NUMERIC` | `number` or `string` (depends on stored value) |
+| SQL Server | `int` | `number` |
+| SQL Server | `bigint` | `string` |
+| SQL Server | `varchar`, `nvarchar`, `text` | `string` |
+| SQL Server | `bit` | `boolean` |
+| SQL Server | `date`, `datetime`, `datetime2` | `string` (ISO format) |
+| SQL Server | `varbinary` | `Buffer` |
 
 ## Performance Optimization
 
@@ -296,9 +477,6 @@ CREATE INDEX idx_users_email ON users(email);
 
 -- Create composite index for multiple columns
 CREATE INDEX idx_users_name_email ON users(name, email);
-
--- Create partial index for filtered queries
-CREATE INDEX idx_users_active ON users(created_at) WHERE active = true;
 ```
 
 ### Query Optimization Tips
@@ -313,45 +491,24 @@ CREATE INDEX idx_users_active ON users(created_at) WHERE active = true;
 
 ### Connection Optimization
 
-```typescript
-const tabulaLens = new TabulaLens(databaseUrl, {
-  maxConnections: 20,        // Adjust based on your workload
-  connectionTimeout: 30000,  // Timeout for establishing connections
-  idleTimeout: 10000,        // Close idle connections
-  statementTimeout: 30000,   // Query execution timeout
-});
-```
+Connection pooling is handled by the underlying Knex driver. Configure pool size, timeouts, and other driver-specific settings through the connection string or the driver environment variables. The exact parameters vary by engine, so consult the documentation for `pg`, `mysql2`, `better-sqlite3`, or `tedious`.
 
 ## Transaction Support
 
-TabulaLens supports database transactions for complex operations:
+TabulaLens relies on the database driver for transactions. Use the standard SQL transaction pattern through the underlying query layer:
 
 ```typescript
 async function transferFunds(fromId: number, toId: number, amount: number) {
-  const client = await tabulaLens.getClient();
-  
-  try {
-    await client.query('BEGIN');
-    
-    // Deduct from sender
-    await client.query(
-      'UPDATE accounts SET balance = balance - $1 WHERE id = $2',
-      [amount, fromId]
-    );
-    
-    // Add to recipient
-    await client.query(
-      'UPDATE accounts SET balance = balance + $1 WHERE id = $2',
-      [amount, toId]
-    );
-    
-    await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
+  // Driver-specific transaction API
+  await db.transaction(async (trx) => {
+    await trx('accounts')
+      .where({ id: fromId })
+      .decrement('balance', amount);
+
+    await trx('accounts')
+      .where({ id: toId })
+      .increment('balance', amount);
+  });
 }
 ```
 
@@ -359,7 +516,7 @@ async function transferFunds(fromId: number, toId: number, amount: number) {
 
 1. **Keep Transactions Short**: Minimize time in transactions
 2. **Handle Errors Properly**: Always rollback on errors
-3. **Use Appropriate Isolation Levels**: Choose the right isolation level
+3. **Use Appropriate Isolation Levels**: Choose the right isolation level for your engine
 4. **Avoid Long-Running Transactions**: They can block other operations
 5. **Test Transaction Logic**: Ensure rollback works correctly
 
@@ -383,23 +540,22 @@ async function transferFunds(fromId: number, toId: number, amount: number) {
 
 - **Input Validation**: Validate all inputs
 - **Parameterized Queries**: Prevent SQL injection
-- **Row-Level Security**: Implement row-level security in PostgreSQL
+- **Row-Level Security**: Implement row-level security where your engine supports it
 - **Audit Logging**: Log database access and modifications
 
 ## Monitoring and Observability
 
 ### Connection Monitoring
 
-Monitor connection pool health:
+Monitor connection pool health through the underlying driver or Knex. Most drivers expose pool statistics such as total, idle, and waiting connections.
 
 ```typescript
-// Get connection pool statistics
-const poolStats = tabulaLens.getPoolStats();
-console.log({
-  totalCount: poolStats.totalCount,
-  idleCount: poolStats.idleCount,
-  waitingCount: poolStats.waitingCount
-});
+// Example for pg; other drivers expose similar metrics
+const poolStats = {
+  totalCount: pool.totalCount,
+  idleCount: pool.idleCount,
+  waitingCount: pool.waitingCount,
+};
 ```
 
 ### Query Monitoring
@@ -413,8 +569,8 @@ const tabulaLens = new TabulaLens(databaseUrl, {
       if (message.queryTime > 1000) {
         console.warn('Slow query:', message);
       }
-    }
-  }
+    },
+  },
 });
 ```
 
@@ -438,35 +594,41 @@ async function healthCheck() {
 ### Backup Strategies
 
 1. **Regular Backups**: Schedule regular database backups
-2. **Point-in-Time Recovery**: Enable WAL archiving for PITR
+2. **Point-in-Time Recovery**: Enable transaction log / WAL archiving where supported
 3. **Offsite Backups**: Store backups in multiple locations
 4. **Backup Testing**: Regularly test backup restoration
 
-### Example Backup Script
+### Example Backup Commands
 
 ```bash
-# Full backup
+# PostgreSQL
 pg_dump -U username -h localhost -d mydb > backup.sql
 
-# Compressed backup
-pg_dump -U username -h localhost -d mydb | gzip > backup.sql.gz
+# MySQL
+mysqldump -u username -p mydb > backup.sql
 
-# Schema-only backup
-pg_dump -U username -h localhost -d mydb --schema-only > schema.sql
+# SQLite (file copy)
+cp mydb.db mydb-backup.db
+
+# SQL Server
+sqlcmd -S localhost -Q "BACKUP DATABASE [mydb] TO DISK = 'backup.bak'"
 ```
 
 ## Migration and Schema Management
 
 ### Schema Migrations
 
-Use migration tools for schema changes:
+Use the migration tool appropriate for your engine:
 
 ```bash
-# Using pgmigrate
-npx pgmigrate up
-
-# Using node-pg-migrate
+# PostgreSQL
 npx node-pg-migrate up
+
+# MySQL / general SQL
+npx knex migrate:latest
+
+# SQLite
+npx knex migrate:latest --client better-sqlite3
 ```
 
 ### Migration Best Practices
@@ -482,14 +644,14 @@ npx node-pg-migrate up
 ### Common Issues
 
 **Connection Issues:**
-- Check DATABASE_URL is correct
-- Verify PostgreSQL is running
+- Check `DATABASE_URL` is correct
+- Verify the database server is running
 - Check network connectivity
 - Verify firewall rules
 
 **Performance Issues:**
 - Check for missing indexes
-- Analyze slow queries with EXPLAIN
+- Analyze slow queries with `EXPLAIN`
 - Monitor connection pool usage
 - Check database server resources
 
@@ -506,14 +668,14 @@ Enable debug logging:
 ```typescript
 const tabulaLens = new TabulaLens(databaseUrl, {
   logLevel: 'debug',
-  logFormat: 'pretty'
+  logFormat: 'pretty',
 });
 ```
 
 ## Best Practices
 
 1. **Use Environment Variables**: Never hardcode credentials
-2. **Implement Connection Pooling**: Configure appropriate pool sizes
+2. **Implement Connection Pooling**: Configure appropriate pool sizes for your engine
 3. **Use Indexes**: Index frequently queried columns
 4. **Monitor Performance**: Track query performance and connection usage
 5. **Handle Errors Gracefully**: Provide meaningful error messages

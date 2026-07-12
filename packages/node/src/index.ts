@@ -8,6 +8,8 @@ export type {
   FilterOption,
   TabulaLensOptions,
 } from './TabulaLens';
+export type { DatabaseType, TabulaLensConfig } from './database';
+export { detectDatabaseType, validateDatabaseType } from './database';
 export {
   expressAdapter,
   express4Adapter,
@@ -36,3 +38,11 @@ export type {
 } from './adapters';
 export { createLogger, generateId, maskSensitiveData } from './logger';
 export type { Logger, LogContext, LogLevel, LoggerOptions } from './logger';
+export {
+  createDialect,
+  PostgresDialect,
+  MySQLDialect,
+  SQLiteDialect,
+  MSSQLDialect,
+} from './dialects';
+export type { DialectStrategy, ColumnInfo } from './dialects';

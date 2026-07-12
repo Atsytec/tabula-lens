@@ -1,0 +1,695 @@
+---
+title: MySQL Support
+description: Learn how to connect Tabula Lens to your MySQL database with comprehensive configuration and optimization guides.
+---
+
+# MySQL Support
+
+This guide covers how to connect Tabula Lens to your MySQL database with comprehensive configuration, optimization, and troubleshooting information.
+
+## Supported Databases
+
+Tabula Lens supports MySQL and MariaDB databases through Knex.js using the `mysql2` driver. MariaDB URLs using the `mariadb://` scheme are also auto-detected.
+
+## Installation
+
+Install the Tabula Lens Node package and the MySQL driver:
+
+```bash
+npm install @tabula-lens/node mysql2
+```
+
+## Database Connection
+
+### Connection String Format
+
+Set your database connection string as an environment variable:
+
+```bash
+DATABASE_URL="mysql://user:password@localhost:3306/mydb"
+```
+
+### Connection String Components
+
+A MySQL connection string has the following format:
+
+```
+mysql://[user[:password]@][host][:port][/database][?parameters]
+```
+
+**Components:**
+
+- `user` - Database username
+- `password` - Database password (optional)
+- `host` - Database host (default: localhost)
+- `port` - Database port (default: 3306)
+- `database` - Database name
+- `parameters` - Additional connection parameters
+
+### Connection Parameters
+
+Common connection parameters:
+
+```bash
+# SSL mode
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?ssl=true"
+
+# Connection pool settings
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?pool_min=2&pool_max=10"
+
+# Connection timeout
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?connect_timeout=10000"
+
+# Support BigInt values
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?supportBigNumbers=true&bigNumberStrings=true"
+
+# Multiple statements (disabled by default for security)
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?multipleStatements=false"
+```
+
+## Connection Patterns
+
+### Local Development
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Test connection
+const tables = await tabulaLens.getTables();
+console.log('Available tables:', tables);
+```
+
+### Production
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### With Config Object
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql',
+  logLevel: 'info',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### With Custom Logger
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import winston from 'winston';
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'database.log' }),
+  ],
+});
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+## Connection Pooling
+
+Tabula Lens automatically manages connection pooling through Knex.js for optimal performance.
+
+### Default Pool Configuration
+
+```typescript
+// Default pool settings (handled by Knex.js)
+{
+  min: 2,
+  max: 10,
+}
+```
+
+### Custom Pool Configuration
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  // Connection pool settings in connection string
+  // DATABASE_URL="mysql://user:password@localhost:3306/mydb?pool_min=5&pool_max=20"
+});
+```
+
+### Pool Configuration Options
+
+```bash
+# Minimum connections
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?pool_min=5"
+
+# Maximum connections
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?pool_max=20"
+
+# Idle timeout (milliseconds)
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?pool_idle_timeout=30000"
+```
+
+## Database Setup
+
+### Creating a Database
+
+```sql
+-- Create database with UTF-8 collation
+CREATE DATABASE tabula_lens_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+-- Use the database
+USE tabula_lens_db;
+```
+
+### Creating Tables
+
+```sql
+-- Create users table
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Create products table
+CREATE TABLE products (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  price DECIMAL(10, 2) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Create orders table
+CREATE TABLE orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  total DECIMAL(10, 2) NOT NULL,
+  status VARCHAR(50) DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### Adding Sample Data
+
+```sql
+-- Insert sample users
+INSERT INTO users (name, email) VALUES
+  ('John Doe', 'john@example.com'),
+  ('Jane Smith', 'jane@example.com'),
+  ('Bob Johnson', 'bob@example.com');
+
+-- Insert sample products
+INSERT INTO products (name, price, description) VALUES
+  ('Product A', 29.99, 'Description for Product A'),
+  ('Product B', 49.99, 'Description for Product B'),
+  ('Product C', 19.99, 'Description for Product C');
+
+-- Insert sample orders
+INSERT INTO orders (user_id, total, status) VALUES
+  (1, 29.99, 'completed'),
+  (2, 49.99, 'pending'),
+  (1, 19.99, 'shipped');
+```
+
+## User Permissions
+
+### Creating Read-Only User
+
+```sql
+-- Create read-only user
+CREATE USER 'tabula_lens_readonly'@'%' IDENTIFIED BY 'secure_password';
+
+-- Grant select privileges
+GRANT SELECT ON tabula_lens_db.* TO 'tabula_lens_readonly'@'%';
+
+-- Apply privileges
+FLUSH PRIVILEGES;
+```
+
+### Creating Read-Write User
+
+```sql
+-- Create read-write user
+CREATE USER 'tabula_lens_user'@'%' IDENTIFIED BY 'secure_password';
+
+-- Grant data manipulation privileges
+GRANT SELECT, INSERT, UPDATE, DELETE ON tabula_lens_db.* TO 'tabula_lens_user'@'%';
+
+-- Apply privileges
+FLUSH PRIVILEGES;
+```
+
+### Restricting to Specific Host
+
+```sql
+-- Restrict user to localhost only
+CREATE USER 'tabula_lens_app'@'localhost' IDENTIFIED BY 'secure_password';
+GRANT SELECT, INSERT, UPDATE, DELETE ON tabula_lens_db.* TO 'tabula_lens_app'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+## Security Best Practices
+
+### Environment Variables
+
+Use environment variables for connection strings:
+
+```bash
+# .env file
+DATABASE_URL=mysql://user:password@localhost:3306/mydb
+```
+
+```typescript
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config();
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+```
+
+### SSL Connections
+
+Use SSL connections in production:
+
+```bash
+# Enable SSL
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?ssl=true"
+
+# Provide CA certificate
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?ssl=./ca.pem"
+```
+
+For production deployments, use Knex configuration with explicit SSL options rather than passing complex objects through the URL.
+
+### Connection Security
+
+```typescript
+// Production configuration with security
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### Network Security
+
+- Use firewall rules to restrict database access
+- Use VPNs for remote database access
+- Implement IP whitelisting for database connections
+- Use strong passwords for database users
+- Rotate database credentials regularly
+- Disable remote root access
+- Run MySQL on a non-default port only if your network policy requires it
+
+## Query Optimization
+
+### Indexing
+
+Create indexes for frequently queried columns:
+
+```sql
+-- Create index on email column
+CREATE INDEX idx_users_email ON users(email);
+
+-- Create index on created_at column
+CREATE INDEX idx_users_created_at ON users(created_at);
+
+-- Create composite index
+CREATE INDEX idx_orders_user_status ON orders(user_id, status);
+
+-- Create full-text index for text search
+CREATE FULLTEXT INDEX idx_products_description ON products(description);
+```
+
+### Query Performance
+
+Optimize queries for better performance:
+
+```typescript
+// Select only needed columns
+const result = await tabulaLens.query({
+  table: 'users',
+  columns: ['id', 'name', 'email'], // Only select needed columns
+  page: 1,
+  limit: 20,
+});
+
+// Use appropriate page sizes
+const result = await tabulaLens.query({
+  table: 'users',
+  page: 1,
+  limit: 50, // Balance between data transfer and number of requests
+});
+
+// Use filtering to reduce data transfer
+const result = await tabulaLens.query({
+  table: 'users',
+  filter: 'john', // Filter results using LIKE (case-insensitive for most collations)
+  page: 1,
+  limit: 20,
+});
+```
+
+### Database Configuration
+
+Optimize MySQL configuration:
+
+```sql
+-- Increase InnoDB buffer pool size
+SET GLOBAL innodb_buffer_pool_size = 1073741824; -- 1GB
+
+-- Enable slow query log
+SET GLOBAL slow_query_log = 'ON';
+SET GLOBAL long_query_time = 2;
+
+-- Configure query cache (MySQL 5.7 and earlier)
+SET GLOBAL query_cache_type = 1;
+SET GLOBAL query_cache_size = 67108864; -- 64MB
+```
+
+For MariaDB and MySQL 8.0+, prefer `performance_schema` for query analysis instead of the query cache, which was removed in MySQL 8.0.
+
+### Filter Behavior
+
+MySQL filtering in Tabula Lens uses the `LIKE` operator. MySQL `LIKE` is case-insensitive by default for `utf8mb4_unicode_ci` and similar case-insensitive collations. If you need case-sensitive filtering, use a binary or case-sensitive collation.
+
+## Database-Specific Features and Limitations
+
+### Supported Text Types
+
+Tabula Lens recognizes the following MySQL text types for filtering:
+
+- `varchar`
+- `text`
+- `tinytext`
+- `mediumtext`
+- `longtext`
+- `char`
+
+Non-text types such as `INT`, `DECIMAL`, `DATE`, `JSON`, `BLOB`, and `DATETIME` are not included in global filter searches unless explicitly selected with `filterColumns`.
+
+### JSON Data Types
+
+MySQL 5.7+ supports JSON columns:
+
+```sql
+-- Create table with JSON column
+CREATE TABLE user_profiles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  profile JSON,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Insert JSON data
+INSERT INTO user_profiles (user_id, profile) VALUES
+  (1, '{"age": 30, "city": "New York", "interests": ["coding", "music"]}');
+```
+
+Tabula Lens reads JSON values as text but does not automatically search inside JSON documents with the global filter.
+
+### Metadata Queries
+
+MySQL metadata is read from `information_schema.tables` and `information_schema.columns` filtered by `DATABASE()`. Tables must be created in the database specified by the connection URL to be discovered.
+
+### Known Limitations
+
+- Tabula Lens does not generate or alter MySQL views through the query API.
+- Stored procedures and functions are not exposed through the standard query interface.
+- Full-text search requires explicit indexes and is not used by the default global filter, which uses `LIKE`.
+
+## Monitoring and Observability
+
+### Query Logging
+
+Enable query logging for monitoring:
+
+```typescript
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'debug',
+  enableQueryLogging: true,
+  logFormat: 'json',
+});
+```
+
+### Performance Monitoring
+
+Monitor database performance:
+
+```sql
+-- Enable slow query log
+SET GLOBAL slow_query_log = 'ON';
+SET GLOBAL long_query_time = 2;
+
+-- View running processes
+SHOW PROCESSLIST;
+
+-- View InnoDB status
+SHOW ENGINE INNODB STATUS;
+```
+
+### Performance Schema Queries
+
+```sql
+-- Find slow queries using performance_schema (MySQL 5.6+)
+SELECT
+  DIGEST_TEXT,
+  COUNT_STAR,
+  SUM_TIMER_WAIT / 1000000000 AS total_latency_ms,
+  AVG_TIMER_WAIT / 1000000000 AS avg_latency_ms
+FROM performance_schema.events_statements_summary_by_digest
+ORDER BY SUM_TIMER_WAIT DESC
+LIMIT 10;
+```
+
+### Connection Monitoring
+
+```sql
+-- View maximum connections
+SHOW VARIABLES LIKE 'max_connections';
+
+-- View current connections
+SHOW STATUS LIKE 'Threads_connected';
+SHOW STATUS LIKE 'Threads_running';
+```
+
+## Backup and Recovery
+
+### Database Backup
+
+```bash
+# Create backup
+mysqldump -u user -p -h localhost tabula_lens_db > backup.sql
+
+# Create compressed backup
+mysqldump -u user -p -h localhost tabula_lens_db | gzip > backup.sql.gz
+
+# Create schema-only backup
+mysqldump -u user -p -h localhost tabula_lens_db --no-data > schema.sql
+
+# Backup with consistent snapshot for InnoDB
+mysqldump -u user -p -h localhost --single-transaction tabula_lens_db > backup.sql
+```
+
+### Database Restore
+
+```bash
+# Restore from backup
+mysql -u user -p -h localhost tabula_lens_db < backup.sql
+
+# Restore from compressed backup
+gunzip -c backup.sql.gz | mysql -u user -p -h localhost tabula_lens_db
+```
+
+### Point-in-Time Recovery
+
+For production environments, enable binary logging to support point-in-time recovery:
+
+```ini
+[mysqld]
+log_bin = /var/lib/mysql/mysql-bin
+expire_logs_days = 7
+binlog_format = ROW
+```
+
+## Troubleshooting
+
+### Connection Issues
+
+If you encounter connection issues:
+
+```typescript
+// Verify connection string
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
+
+// Test connection
+try {
+  const tables = await tabulaLens.getTables();
+  console.log('Connected successfully. Tables:', tables);
+} catch (error) {
+  console.error('Connection failed:', error);
+}
+```
+
+**Common connection issues:**
+
+1. **Incorrect connection string**
+   ```bash
+   # Verify format
+   mysql://user:password@host:port/database
+   ```
+
+2. **Database server not running**
+   ```bash
+   # Check MySQL status
+   sudo systemctl status mysql
+   ```
+
+3. **Network connectivity issues**
+   ```bash
+   # Test network connectivity
+   ping localhost
+   telnet localhost 3306
+   ```
+
+4. **Authentication issues**
+   ```sql
+   -- Verify user permissions
+   SELECT user, host FROM mysql.user;
+   SHOW GRANTS FOR 'tabula_lens_user'@'%';
+   ```
+
+### Performance Issues
+
+For performance optimization:
+
+1. **Check query performance**
+   ```sql
+   EXPLAIN SELECT * FROM users WHERE email = 'john@example.com';
+   ```
+
+2. **Check index usage**
+   ```sql
+   SHOW INDEX FROM users;
+   ```
+
+3. **Check table statistics**
+   ```sql
+   ANALYZE TABLE users;
+   SHOW TABLE STATUS LIKE 'users';
+   ```
+
+4. **Check database size**
+   ```sql
+   SELECT
+     table_name,
+     ROUND((data_length + index_length) / 1024 / 1024, 2) AS size_mb
+   FROM information_schema.tables
+   WHERE table_schema = 'tabula_lens_db'
+   ORDER BY size_mb DESC;
+   ```
+
+### Memory Issues
+
+If you encounter memory issues:
+
+1. **Increase InnoDB buffer pool size**
+   ```sql
+   SET GLOBAL innodb_buffer_pool_size = 2147483648; -- 2GB
+   ```
+
+2. **Increase query cache (MySQL 5.7 and earlier)**
+   ```sql
+   SET GLOBAL query_cache_size = 134217728; -- 128MB
+   ```
+
+3. **Tune sort buffer**
+   ```sql
+   SET GLOBAL sort_buffer_size = 2097152; -- 2MB
+   ```
+
+### Lock Issues
+
+If you encounter lock issues:
+
+```sql
+-- View active locks and transactions
+SHOW ENGINE INNODB STATUS;
+
+-- View running processes
+SHOW PROCESSLIST;
+
+-- Kill specific query
+KILL <process_id>;
+```
+
+## Advanced Configuration
+
+### Connection Timeout
+
+```bash
+# Set connection timeout (milliseconds)
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?connect_timeout=10000"
+```
+
+### Statement Timeout
+
+MySQL does not support a connection-string statement timeout directly. Use `max_execution_time` for SELECT queries at the session or query level:
+
+```sql
+SET SESSION MAX_EXECUTION_TIME = 30000;
+```
+
+### Application Name
+
+```bash
+# Set application name for monitoring
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?application_name=tabula_lens"
+```
+
+## Best Practices
+
+1. **Use environment variables** for connection strings
+2. **Use read-only users** when possible
+3. **Implement proper indexing** for frequently queried columns
+4. **Use SSL connections** in production
+5. **Use `utf8mb4`** character set and collation for full Unicode support
+6. **Monitor query performance** regularly
+7. **Implement backup strategies** for data protection
+8. **Use connection pooling** for optimal performance
+9. **Rotate database credentials** regularly
+10. **Implement firewall rules** for database access
+11. **Use strong passwords** for database users
+12. **Avoid using the root account** for application connections
+13. **Use `utf8mb4_unicode_ci`** for case-insensitive `LIKE` filtering
+
+MySQL provides a robust, widely-deployed database platform for Tabula Lens. Follow these best practices to ensure optimal performance, security, and reliability.

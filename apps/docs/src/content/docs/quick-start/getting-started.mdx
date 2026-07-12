@@ -14,7 +14,7 @@ This guide will help you integrate Tabula Lens into your existing full-stack app
 Before you begin, ensure you have:
 
 - An existing **full-stack application** with:
-  - A **PostgreSQL** database
+  - A **PostgreSQL, MySQL, SQLite, or SQL Server** database
   - A backend server (Express, Fastify, Koa, Hono, etc.)
   - A React frontend application
 - **Node.js 18+** installed
@@ -33,6 +33,24 @@ Install the Tabula Lens backend package in your backend project:
 ```bash
 npm install @tabula-lens/node
 ```
+
+Also install the database driver for your database:
+
+```bash
+# PostgreSQL
+npm install pg
+
+# MySQL/MariaDB
+npm install mysql2
+
+# SQLite
+npm install better-sqlite3
+
+# SQL Server
+npm install tedious
+```
+
+> **Note:** Tabula Lens auto-detects your database type from the connection string, so you only need to install the driver for your specific database.
 
 ## Step 2: Add Backend API Endpoint
 

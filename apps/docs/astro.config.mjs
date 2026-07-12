@@ -19,7 +19,7 @@ export default defineConfig({
 		sitemap(),
 		starlight({
 			title: 'Tabula Lens',
-			description: 'Full-stack database viewer library for React and Node with PostgreSQL support',
+			description: 'Full-stack database viewer library for React and Node with PostgreSQL, MySQL, SQLite, and SQL Server support',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/Atsytec/tabula-lens' }],
 			customCss: ['./src/styles/tlens-theme.css'],
 			// Versioning infrastructure for future major versions
@@ -97,7 +97,15 @@ export default defineConfig({
 							items: [
 								{ label: 'Overview', slug: 'user-guides/backend' },
 								{ label: 'Backend Implementation', slug: 'user-guides/backend/backend-implementation' },
-								{ label: 'Database Integration', slug: 'user-guides/backend/database-integration' },
+								{
+									label: 'Database Integration',
+									items: [
+										{ label: 'Overview', slug: 'user-guides/backend/database-integration' },
+										{ label: 'MySQL', slug: 'user-guides/backend/mysql-support' },
+										{ label: 'SQLite', slug: 'user-guides/backend/sqlite-support' },
+										{ label: 'SQL Server', slug: 'user-guides/backend/mssql-support' },
+									],
+								},
 								{ label: 'Logging System', slug: 'user-guides/backend/logging-system' },
 							],
 						},

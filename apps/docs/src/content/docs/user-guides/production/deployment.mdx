@@ -11,17 +11,19 @@ This guide covers deployment strategies for Tabula Lens applications, including 
 
 A typical Tabula Lens deployment consists of three components:
 
-1. **Database** - PostgreSQL database
+1. **Database** - PostgreSQL, MySQL, SQLite, or SQL Server database
 2. **Backend API** - Node.js server with @tabula-lens/node
 3. **Frontend Application** - React application with @tabula-lens/react
 
 ## Database Deployment
 
-### PostgreSQL Setup
+### Supported Databases
 
-#### Option 1: Managed PostgreSQL Service
+Tabula Lens auto-detects the database type from the connection string and supports **PostgreSQL**, **MySQL/MariaDB**, **SQLite**, and **SQL Server**. For each engine you can choose a managed service (recommended for production) or a self-hosted deployment.
 
-**Recommended for production**
+#### PostgreSQL
+
+**Managed services**
 
 - **AWS RDS**: Fully managed PostgreSQL service
 - **Google Cloud SQL**: Managed PostgreSQL with automatic backups
@@ -30,34 +32,16 @@ A typical Tabula Lens deployment consists of three components:
 - **Neon**: Serverless PostgreSQL with auto-scaling
 - **Supabase**: PostgreSQL with real-time capabilities
 
-**Example: AWS RDS Setup**
-
-```bash
-# Using AWS CLI
-aws rds create-db-instance \
-  --db-instance-identifier tabula-lens-db \
-  --db-instance-class db.t3.micro \
-  --engine postgres \
-  --master-username admin \
-  --master-user-password your-secure-password \
-  --allocated-storage 20 \
-  --vpc-security-group-ids sg-12345678
-```
-
-#### Option 2: Self-Hosted PostgreSQL
-
-**For cost optimization or specific requirements**
+**Self-hosted**
 
 ```bash
 # Ubuntu/Debian
 sudo apt update
 sudo apt install postgresql postgresql-contrib
 
-# Start PostgreSQL
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 
-# Secure PostgreSQL
 sudo -u postgres psql
 ```
 
@@ -68,18 +52,96 @@ CREATE USER tabula_lens_user WITH PASSWORD 'secure_password';
 GRANT ALL PRIVILEGES ON DATABASE tabula_lens TO tabula_lens_user;
 ```
 
+#### MySQL / MariaDB
+
+**Managed services**
+
+- **AWS RDS**: Managed MySQL and MariaDB
+- **Google Cloud SQL**: Managed MySQL
+- **Azure Database for MySQL**: Flexible Server
+- **PlanetScale**: Serverless MySQL platform
+- **DigitalOcean Managed MySQL**: Managed MySQL clusters
+
+**Self-hosted**
+
+```bash
+# Ubuntu/Debian (MySQL)
+sudo apt update
+sudo apt install mysql-server
+
+# Or MariaDB
+sudo apt install mariadb-server
+
+sudo systemctl start mysql
+sudo systemctl enable mysql
+```
+
+```sql
+-- Create database and user
+CREATE DATABASE tabula_lens CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'tabula_lens_user'@'%' IDENTIFIED BY 'secure_password';
+GRANT ALL PRIVILEGES ON tabula_lens.* TO 'tabula_lens_user'@'%';
+FLUSH PRIVILEGES;
+```
+
+#### SQLite
+
+SQLite is file-based and does not require a separate server process. It is ideal for development, small deployments, and embedded use cases.
+
+- Use an absolute file path or the special `:memory:` URL for in-memory databases.
+- Managed platforms that require a custom driver (for example, Turso/LibSQL) are not supported out of the box.
+
+```bash
+# Example: create or use an existing file
+sqlite3 /data/tabula_lens.db "VACUUM;"
+```
+
+#### SQL Server
+
+**Managed services**
+
+- **Azure SQL Database**: Fully managed SQL Server
+- **AWS RDS**: Managed SQL Server
+- **Google Cloud SQL for SQL Server**: Managed SQL Server
+
+**Self-hosted**
+
+```bash
+# Install SQL Server on Ubuntu
+wget -qO- https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+sudo add-apt-repository "$(wget -qO- https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/mssql-server-2022.list)"
+sudo apt update
+sudo apt install mssql-server
+sudo /opt/mssql/bin/mssql-conf setup
+```
+
+```sql
+-- Create database and login
+CREATE DATABASE tabula_lens;
+CREATE LOGIN tabula_lens_user WITH PASSWORD = 'secure_password';
+USE tabula_lens;
+CREATE USER tabula_lens_user FOR LOGIN tabula_lens_user;
+ALTER ROLE db_owner ADD MEMBER tabula_lens_user;
+```
+
 ### Database Security
 
 **SSL/TLS Configuration**
 
-SSL is configured via the PostgreSQL connection string, not through TabulaLens constructor options:
+SSL/TLS is configured via the database connection string, not through TabulaLens constructor options:
 
 ```bash
-# Require SSL via connection string
+# PostgreSQL — require SSL
 DATABASE_URL="postgresql://user:password@host:5432/mydb?sslmode=require"
 
-# Require SSL with certificate verification
+# PostgreSQL — require SSL with certificate verification
 DATABASE_URL="postgresql://user:password@host:5432/mydb?sslmode=verify-full"
+
+# MySQL — require SSL
+DATABASE_URL="mysql://user:password@host:3306/mydb?ssl=true"
+
+# SQL Server — encrypt connection
+DATABASE_URL="mssql://user:password@host:1433/mydb?encrypt=true"
 ```
 
 ```javascript
@@ -121,8 +183,12 @@ find $BACKUP_DIR -name "backup_*.sql" -mtime +7 -delete
 Create a `.env` file for production:
 
 ```bash
-# Database
+# Database — Tabula Lens auto-detects the dialect from the URL scheme
 DATABASE_URL=postgresql://user:password@host:5432/database
+# DATABASE_URL=mysql://user:password@host:3306/database
+# DATABASE_URL=sqlite:///absolute/path/to/database.db
+# DATABASE_URL=mssql://user:password@host:1433/database
+
 DATABASE_POOL_SIZE=20
 
 # Server
@@ -142,6 +208,8 @@ LOG_FORMAT=json
 # CORS
 CORS_ORIGIN=https://your-frontend.com
 ```
+
+> **Database driver peer dependency:** `@tabula-lens/node` ships with Knex but does not bundle the underlying database driver. Install the peer dependency that matches your `DATABASE_URL` dialect (`pg`, `mysql2`, `better-sqlite3`, or `tedious`) before deploying.
 
 ### Option 1: Vercel Deployment
 
@@ -275,6 +343,7 @@ services:
       - db
     restart: unless-stopped
 
+  # Main example: PostgreSQL
   db:
     image: postgres:15-alpine
     environment:
@@ -284,6 +353,39 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+
+  # Optional alternative: MySQL
+  # db:
+  #   image: mysql:8
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=rootpassword
+  #     - MYSQL_DATABASE=tabula_lens
+  #     - MYSQL_USER=user
+  #     - MYSQL_PASSWORD=password
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #   restart: unless-stopped
+
+  # Optional alternative: SQLite
+  # SQLite has no server process. Add a volume to the `api` service and point
+  # DATABASE_URL to the file, for example:
+  #   api:
+  #     volumes:
+  #       - sqlite_data:/data
+  #
+  # volumes:
+  #   sqlite_data:
+
+  # Optional alternative: SQL Server
+  # db:
+  #   image: mcr.microsoft.com/mssql/server:2022-latest
+  #   environment:
+  #     - ACCEPT_EULA=Y
+  #     - MSSQL_SA_PASSWORD=YourStrong@Passw0rd
+  #     - MSSQL_PID=Express
+  #   volumes:
+  #     - mssql_data:/var/opt/mssql
+  #   restart: unless-stopped
 
 volumes:
   postgres_data:
@@ -296,6 +398,22 @@ docker-compose up -d
 # View logs
 docker-compose logs -f api
 ```
+
+> **Database driver note:** The underlying database drivers (`pg`, `mysql2`, `better-sqlite3`, and `tedious`) are peer dependencies and are not installed by default. When deploying to production, install the driver that matches your chosen database:
+>
+> ```bash
+> # For PostgreSQL
+> npm install pg
+>
+> # For MySQL/MariaDB
+> npm install mysql2
+>
+> # For SQLite
+> npm install better-sqlite3
+>
+> # For SQL Server
+> npm install tedious
+> ```
 
 ### Option 5: Kubernetes Deployment
 

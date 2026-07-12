@@ -56,7 +56,7 @@ Implement an HTTP API as the universal interface between frontend and backend. T
 
 ### Status
 
-Accepted
+Superseded by ADR-013: Multi-Database Support
 
 ### Context
 
@@ -65,6 +65,10 @@ Tabula Lens needed a database that could handle structured data, support complex
 ### Decision
 
 Use PostgreSQL as the primary and supported database for Tabula Lens.
+
+### Evolution
+
+This decision was later superseded by ADR-013: Multi-Database Support, which extended Tabula Lens to support MySQL, SQLite, and SQL Server in addition to PostgreSQL. PostgreSQL remains the recommended database for new projects due to its advanced features, but Tabula Lens now provides first-class support for multiple database engines through a unified query layer.
 
 ### Consequences
 
@@ -266,7 +270,184 @@ Implement a framework adapter pattern that provides:
 
 ---
 
-## ADR-007: Manual API Documentation Over TypeDoc
+## ADR-007: Multi-Database Support Decision
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens started with PostgreSQL as the primary supported database. As adoption grew, users requested support for MySQL, SQLite, and Microsoft SQL Server because those engines were already in use in their existing environments. Supporting multiple relational databases would broaden adoption without changing the frontend or the public `TabulaLens` API.
+
+### Decision
+
+Support PostgreSQL, MySQL, SQLite, and Microsoft SQL Server through a unified query layer:
+
+- Use Knex.js as the shared query builder.
+- Auto-detect the database type from the connection URL via `detectDatabaseType`.
+- Allow explicit `type` override in the `TabulaLensConfig` object.
+- Map each `DatabaseType` to the correct Knex client and underlying driver:
+  - `pg` -> `pg`
+  - `mysql` -> `mysql2`
+  - `sqlite` -> `better-sqlite3`
+  - `mssql` -> `tedious`
+- Isolate engine-specific SQL and metadata behavior behind the `DialectStrategy` interface.
+
+### Consequences
+
+**Positive:**
+- Broader Adoption: Works with the four most common relational databases
+- Unified API: Frontend and backend consumers use the same interface regardless of engine
+- Extensibility: New relational engines can be added by implementing a dialect
+- Ecosystem: Knex provides mature, well-tested multi-database support
+
+**Negative:**
+- Maintenance Overhead: Four drivers and dialects to test and maintain
+- Driver Quirks: Each engine has subtle differences in metadata, types, and operators
+- Test Matrix: Unit and integration tests must cover all supported engines
+- Dependency Management: Users must install the correct peer driver for their database
+
+### Alternatives Considered
+
+1. **PostgreSQL Only**: Rejected because it would limit adoption in MySQL/SQL Server/SQLite environments
+2. **Separate Packages Per Database**: Rejected due to fragmentation and duplicated code
+3. **Community Adapters**: Rejected because inconsistent adapter quality would harm the unified API
+4. **Raw Driver Abstraction Without Knex**: Rejected due to the amount of duplicated SQL and connection logic required
+
+---
+
+## ADR-008: Knex.js over Drizzle
+
+### Status
+
+Accepted
+
+### Context
+
+To support multiple databases, Tabula Lens needed a query builder or ORM that could run against PostgreSQL, MySQL, SQLite, and SQL Server. Modern TypeScript ORMs such as Drizzle and Prisma are attractive because they offer type safety, but they typically require a predefined schema and generated client code. Tabula Lens introspects arbitrary tables at runtime and must work with any existing schema without code generation.
+
+### Decision
+
+Use Knex.js as the query builder.
+
+- Knex is schema-agnostic: it does not require a generated schema or client.
+- It supports all four target databases through the same API.
+- It allows raw SQL fallbacks when engine-specific syntax is required.
+- It handles connection pooling and driver loading transparently.
+
+### Consequences
+
+**Positive:**
+- Runtime Introspection: Works with any existing database schema without code generation
+- Broad Database Support: PostgreSQL, MySQL, SQLite, and SQL Server are first-class clients
+- Flexibility: Raw queries are available when dialect differences cannot be abstracted
+- Maturity: Knex has a large ecosystem and stable API
+
+**Negative:**
+- No Schema-Derived Type Safety: Query results are not statically typed from a schema
+- Manual Query Construction: Complex queries still require careful construction
+- Dialect Differences: Some behaviors (e.g., `ILIKE` vs `LIKE`, `information_schema` vs `PRAGMA`) must be handled explicitly
+
+### Alternatives Considered
+
+1. **Drizzle ORM**: Rejected because it requires a schema-first approach and generated code
+2. **Prisma**: Rejected because it requires a schema file and client generation, which conflicts with runtime introspection
+3. **TypeORM**: Considered but rejected due to configuration complexity and inconsistent cross-database behavior
+4. **Raw Database Drivers Only**: Rejected because it would duplicate connection pooling, query building, and dialect handling
+
+---
+
+## ADR-009: Dialect Strategy Pattern
+
+### Status
+
+Accepted
+
+### Context
+
+Each supported database has different metadata catalogs, case-sensitivity rules, and text-search operators. PostgreSQL uses `ILIKE` and `information_schema` in the `public` schema. MySQL also uses `information_schema` but scopes it to `DATABASE()`. SQLite has no `information_schema` and instead uses `PRAGMA table_info(...)` and `sqlite_master`. SQL Server uses `information_schema` but has its own type names and collations. Embedding these differences directly into `TabulaLens` would create brittle, hard-to-test conditional logic.
+
+### Decision
+
+Encapsulate all engine-specific behavior behind a `DialectStrategy` interface and a `createDialect` factory.
+
+The interface defines four responsibilities:
+
+- `getTables(db)` — list all user tables
+- `getColumns(db, table)` — list column names and types for a table
+- `getFilterableTypes()` — return the type names considered text-searchable
+- `getLikeOperator()` — return `LIKE` or `ILIKE` for case-insensitive filtering
+
+Implementations are provided for PostgreSQL, MySQL, SQLite, and SQL Server. `TabulaLens` instantiates the correct dialect once at startup and delegates metadata and operator decisions to it.
+
+### Consequences
+
+**Positive:**
+- Isolation: Engine-specific SQL is centralized in one place per database
+- Testability: Each dialect can be unit tested independently
+- Extensibility: Adding a new database only requires a new dialect implementation
+- Simplicity: `TabulaLens` query logic stays generic and readable
+
+**Negative:**
+- Additional Abstraction: Developers must understand the strategy pattern to add a new engine
+- Duplicated Metadata Concepts: Similar `information_schema` queries exist in multiple dialects with small variations
+- Naming Collisions: Type names differ between engines and must be normalized carefully
+
+### Alternatives Considered
+
+1. **Inline Conditionals in `TabulaLens`**: Rejected because it would scatter database-specific logic throughout the query builder
+2. **Single Dialect with Raw Overrides**: Rejected because it would still require engine checks and would not scale
+3. **ORM Metadata API**: Rejected because ORMs abstract metadata in ways that do not always map to the raw catalogs we need
+4. **Knex-Specific Plugins**: Considered but rejected because a custom interface gives us precise control over behavior
+
+---
+
+## ADR-010: Peer Dependency Approach for Database Drivers
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens supports four database engines, each requiring a native or database-specific driver (`pg`, `mysql2`, `better-sqlite3`, `tedious`). Bundling all four drivers as required dependencies would force every user to install packages they do not need, including native build toolchains for SQLite (`better-sqlite3`) even if they only use PostgreSQL.
+
+### Decision
+
+Declare database drivers as optional peer dependencies.
+
+- `pg: ^8.0.0`
+- `mysql2: ^3.0.0`
+- `better-sqlite3: ^12.0.0`
+- `tedious: ^20.0.0`
+
+Knex loads whichever driver corresponds to the configured client at runtime. Users install only the driver(s) for the database(s) they connect to. Missing drivers produce a runtime error from the underlying Knex client when a connection is first attempted.
+
+### Consequences
+
+**Positive:**
+- Smaller Installs: Users are not forced to download drivers for engines they do not use
+- No Unnecessary Native Builds: SQLite native compilation is only required for SQLite users
+- Flexibility: The same package supports local SQLite development, managed PostgreSQL/MySQL production, and SQL Server deployments
+- Clear Ownership: Users explicitly choose and install the driver they need
+
+**Negative:**
+- Manual Installation Step: Users must install a driver in addition to `@tabula-lens/node`
+- Runtime Errors: A missing driver is only detected when a query runs, not at install time
+- Peer Dependency Warnings: Package managers may warn about unmet peer dependencies for unused engines
+- Documentation Overhead: Installation instructions must list each driver separately
+
+### Alternatives Considered
+
+1. **Bundle All Drivers as Required Dependencies**: Rejected because it would bloat installs and require native build tools for every user
+2. **One Package Per Database Engine**: Rejected because it would fragment the codebase and complicate the public API
+3. **Optional Dependencies**: Considered but rejected because optional dependencies still attempt installation and may fail on unsupported platforms
+4. **Runtime Dynamic Imports**: Rejected because it would complicate bundling and type checking without solving the peer-dependency problem
+
+---
+
+## ADR-011: Manual API Documentation Over TypeDoc
 
 ### Status
 
@@ -308,7 +489,7 @@ Use comprehensive manual documentation instead of TypeDoc auto-generation. Manua
 
 ---
 
-## ADR-008: Vitest as Testing Framework
+## ADR-012: Vitest as Testing Framework
 
 ### Status
 
@@ -354,7 +535,7 @@ Use Vitest as the testing framework for both Node and React packages, with:
 
 ---
 
-## ADR-009: Astro with Starlight for Documentation
+## ADR-013: Astro with Starlight for Documentation
 
 ### Status
 
@@ -404,7 +585,50 @@ Use Astro with Starlight theme for the documentation site, providing:
 
 ---
 
-## ADR-010: Security-First Architecture
+## ADR-014: Multi-Database Support
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens initially supported only PostgreSQL (ADR-002). As adoption grew, users requested support for MySQL, SQLite, and SQL Server because those engines were already in use in their existing environments. Supporting multiple relational databases would broaden adoption without changing the frontend or the public `TabulaLens` API.
+
+### Decision
+
+Support PostgreSQL, MySQL, SQLite, and Microsoft SQL Server through a unified query layer:
+- Auto-detect database type from connection string
+- Use Knex.js as the query abstraction layer
+- Implement database dialect strategies for engine-specific behavior
+- Require database drivers as peer dependencies
+
+### Consequences
+
+**Positive:**
+- Broader Adoption: Users can use Tabula Lens with their existing databases
+- Unified API: Same `TabulaLens` API works across all supported engines
+- Flexibility: Local SQLite development, managed PostgreSQL/MySQL production, SQL Server enterprise deployments
+- No Breaking Changes: Existing PostgreSQL users are unaffected
+- Clear Separation: Database-specific logic isolated in dialect strategies
+
+**Negative:**
+- Complexity: Additional dialect implementations to maintain
+- Testing Overhead: Must test against multiple database engines
+- Documentation: Need to document database-specific behaviors
+- Driver Installation: Users must install database-specific drivers
+- Edge Cases: Database-specific quirks and limitations
+
+### Alternatives Considered
+
+1. **PostgreSQL Only**: Rejected because it would limit adoption in MySQL/SQL Server/SQLite environments
+2. **Separate Packages**: Rejected because it would fragment the codebase and complicate the public API
+3. **ORM Abstraction**: Rejected because most ORMs require code generation and predefined schemas
+4. **Database-Specific Builds**: Rejected because it would complicate packaging and distribution
+
+---
+
+## ADR-014: Security-First Architecture
 
 ### Status
 
@@ -447,7 +671,7 @@ Implement security-first architecture with:
 
 ---
 
-## ADR-011: Design System Source of Truth
+## ADR-015: Design System Source of Truth
 
 ### Status
 
@@ -489,7 +713,7 @@ Use the React package CSS files as the source of truth for the design system. Th
 
 ---
 
-## ADR-012: Error Handling with TabulaLensError
+## ADR-016: Error Handling with TabulaLensError
 
 ### Status
 
@@ -539,11 +763,11 @@ Implement a custom TabulaLensError class with:
 
 The following architectural decisions may need to be made in the future:
 
-- **ADR-014**: Real-Time Data Streaming (WebSocket, Server-Sent Events)
-- **ADR-015**: GraphQL API Support
-- **ADR-016**: Edge Computing Support (Cloudflare Workers, Vercel Edge)
-- **ADR-017**: Advanced Caching Strategies (CDN, Edge Caching)
-- **ADR-018**: AI/ML Integration Features
+- **ADR-017**: Real-Time Data Streaming (WebSocket, Server-Sent Events)
+- **ADR-018**: GraphQL API Support
+- **ADR-019**: Edge Computing Support (Cloudflare Workers, Vercel Edge)
+- **ADR-020**: Advanced Caching Strategies (CDN, Edge Caching)
+- **ADR-021**: AI/ML Integration Features
 
 ## ADR Template
 
