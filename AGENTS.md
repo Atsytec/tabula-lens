@@ -1267,3 +1267,45 @@ All Phase 3 changes maintain 100% backward compatibility:
 - No changes to package code
 - No breaking changes to existing functionality
 - All existing documentation preserved and enhanced
+
+## Multi-Database Support (feature/multi-database-support branch)
+
+### Phase 1 � Foundation: Completed
+
+Implemented in commit 2131e62:
+
+- New types and helpers in packages/node/src/database.ts:
+  - DatabaseType = 'pg' | 'mysql' | 'sqlite' | 'mssql'
+  - TabulaLensConfig interface
+  - detectDatabaseType(url) � pure function with comprehensive URL/pattern detection
+  - alidateDatabaseType(type) � runtime type validation
+- TabulaLens constructor now accepts string | TabulaLensConfig via TypeScript overloads
+- Knex client mapping: pg -> pg, mysql -> mysql2, sqlite -> better-sqlite3, mssql -> tedious
+- New exports from packages/node/src/index.ts
+- 87 passing tests across database.test.ts, TabulaLens.constructor.test.ts, and TabulaLens.test.ts
+
+### URL/Pattern Detection
+
+detectDatabaseType recognizes standard connection strings and hosted service URLs:
+
+**PostgreSQL (pg)** � postgresql://, postgres://, pgsql://
+Covers Neon, Supabase, AWS RDS, Heroku Postgres, Railway, TimescaleDB, Azure Database for PostgreSQL, DigitalOcean Managed PostgreSQL, CockroachDB, Google Cloud SQL.
+
+**MySQL/MariaDB (mysql)** � mysql://, mysql2://, mysqlx://, mariadb://
+Covers PlanetScale, AWS RDS MySQL/MariaDB, Azure Database for MySQL, DigitalOcean Managed MySQL, Google Cloud SQL MySQL, Upstash.
+
+**SQLite (sqlite)** � sqlite://, sqlite3://, ile:, :memory:, paths ending .db/.sqlite/.sqlite3/.db3.
+Note: Managed platforms like Turso/LibSQL are out of scope for v1 because they require a non-standard driver.
+
+**SQL Server (mssql)** � mssql://, sqlserver://, mssql+tcp://, mssql+udp://
+Covers Azure SQL Database and AWS RDS SQL Server.
+
+### Testing Notes
+
+- Dialect-specific drivers are not installed in the repo yet; they will become peer dependencies in Phase 4.
+- Constructor tests for non-PostgreSQL types test detection logic only (no actual Knex instantiation) because mysql2, etter-sqlite3, and edious are not present.
+- All @tabula-lens/node tests, type checks, and linting pass.
+
+### Next Phase
+
+Phase 2 � Dialect Strategy Layer is the next available phase in MULTI_DATABASE_PLAN.md.

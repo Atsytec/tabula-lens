@@ -56,7 +56,7 @@ describe('TabulaLens Constructor', () => {
     it('should throw TabulaLensError with correct error message for undetectable type', () => {
       try {
         new TabulaLens('oracle://localhost/mydb');
-        fail('Should have thrown TabulaLensError');
+        expect.fail('Should have thrown TabulaLensError');
       } catch (error) {
         expect(error).toBeInstanceOf(TabulaLensError);
         expect((error as TabulaLensError).code).toBe('AUTO_DETECTION_FAILED');

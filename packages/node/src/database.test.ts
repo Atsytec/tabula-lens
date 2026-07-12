@@ -259,7 +259,7 @@ describe('detectDatabaseType', () => {
     it('should throw TabulaLensError with correct error message for unknown schemes', () => {
       try {
         detectDatabaseType('oracle://localhost/mydb');
-        fail('Should have thrown TabulaLensError');
+        expect.fail('Should have thrown TabulaLensError');
       } catch (error) {
         expect(error).toBeInstanceOf(TabulaLensError);
         expect((error as TabulaLensError).message).toContain(
@@ -327,7 +327,7 @@ describe('validateDatabaseType', () => {
     it('should throw TabulaLensError with correct error message', () => {
       try {
         validateDatabaseType('oracle');
-        fail('Should have thrown TabulaLensError');
+        expect.fail('Should have thrown TabulaLensError');
       } catch (error) {
         expect(error).toBeInstanceOf(TabulaLensError);
         expect((error as TabulaLensError).message).toContain('Invalid database type');
