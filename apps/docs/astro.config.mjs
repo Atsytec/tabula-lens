@@ -19,7 +19,7 @@ export default defineConfig({
 		sitemap(),
 		starlight({
 			title: 'Tabula Lens',
-			description: 'Full-stack database viewer library for React and Node with PostgreSQL support',
+			description: 'Full-stack database viewer library for React and Node with PostgreSQL, MySQL, SQLite, and SQL Server support',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/Atsytec/tabula-lens' }],
 			customCss: ['./src/styles/tlens-theme.css'],
 			// Versioning infrastructure for future major versions

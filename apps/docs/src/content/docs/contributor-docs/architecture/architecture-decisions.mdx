@@ -56,7 +56,7 @@ Implement an HTTP API as the universal interface between frontend and backend. T
 
 ### Status
 
-Accepted
+Superseded by ADR-013: Multi-Database Support
 
 ### Context
 
@@ -65,6 +65,10 @@ Tabula Lens needed a database that could handle structured data, support complex
 ### Decision
 
 Use PostgreSQL as the primary and supported database for Tabula Lens.
+
+### Evolution
+
+This decision was later superseded by ADR-013: Multi-Database Support, which extended Tabula Lens to support MySQL, SQLite, and SQL Server in addition to PostgreSQL. PostgreSQL remains the recommended database for new projects due to its advanced features, but Tabula Lens now provides first-class support for multiple database engines through a unified query layer.
 
 ### Consequences
 
@@ -578,6 +582,49 @@ Use Astro with Starlight theme for the documentation site, providing:
 1. **Docusaurus**: Considered but Astro chosen for performance
 2. **VitePress**: Rejected due to less mature theme
 3. **Custom Next.js**: Rejected as overkill for documentation
+
+---
+
+## ADR-014: Multi-Database Support
+
+### Status
+
+Accepted
+
+### Context
+
+Tabula Lens initially supported only PostgreSQL (ADR-002). As adoption grew, users requested support for MySQL, SQLite, and SQL Server because those engines were already in use in their existing environments. Supporting multiple relational databases would broaden adoption without changing the frontend or the public `TabulaLens` API.
+
+### Decision
+
+Support PostgreSQL, MySQL, SQLite, and Microsoft SQL Server through a unified query layer:
+- Auto-detect database type from connection string
+- Use Knex.js as the query abstraction layer
+- Implement database dialect strategies for engine-specific behavior
+- Require database drivers as peer dependencies
+
+### Consequences
+
+**Positive:**
+- Broader Adoption: Users can use Tabula Lens with their existing databases
+- Unified API: Same `TabulaLens` API works across all supported engines
+- Flexibility: Local SQLite development, managed PostgreSQL/MySQL production, SQL Server enterprise deployments
+- No Breaking Changes: Existing PostgreSQL users are unaffected
+- Clear Separation: Database-specific logic isolated in dialect strategies
+
+**Negative:**
+- Complexity: Additional dialect implementations to maintain
+- Testing Overhead: Must test against multiple database engines
+- Documentation: Need to document database-specific behaviors
+- Driver Installation: Users must install database-specific drivers
+- Edge Cases: Database-specific quirks and limitations
+
+### Alternatives Considered
+
+1. **PostgreSQL Only**: Rejected because it would limit adoption in MySQL/SQL Server/SQLite environments
+2. **Separate Packages**: Rejected because it would fragment the codebase and complicate the public API
+3. **ORM Abstraction**: Rejected because most ORMs require code generation and predefined schemas
+4. **Database-Specific Builds**: Rejected because it would complicate packaging and distribution
 
 ---
 
