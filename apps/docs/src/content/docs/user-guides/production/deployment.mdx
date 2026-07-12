@@ -147,7 +147,10 @@ DATABASE_URL="mssql://user:password@host:1433/mydb?encrypt=true"
 ```
 
 ```javascript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 ```
 
 **Connection Pooling**
@@ -160,7 +163,10 @@ DATABASE_URL="postgresql://user:password@host:5432/mydb?pool_min=2&pool_max=20"
 ```
 
 ```javascript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 ```
 
 **Database Backups**

@@ -41,15 +41,7 @@ Database drivers are peer dependencies. Only the driver for your chosen database
 
 Tabula Lens accepts either a database URL string or a config object. The database type is automatically detected from the URL, or you can specify it explicitly with the `type` field.
 
-### String Form (Existing Behavior)
-
-```typescript
-import { TabulaLens } from '@tabula-lens/node';
-
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
-```
-
-### Config Object Form
+### Config Object Form (Recommended)
 
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
@@ -82,7 +74,8 @@ Unable to detect database type from URL. Please specify the 'type' field in the 
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
   logLevel: 'error',
   logFormat: 'json',
   sensitiveDataMasking: true,
@@ -105,7 +98,8 @@ const logger = winston.createLogger({
   ],
 });
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
   logger: {
     debug: (msg) => logger.debug(msg),
     info: (msg) => logger.info(msg),
@@ -124,7 +118,10 @@ DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
 ```
 
 ```typescript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 ```
 
 ### MySQL
@@ -134,7 +131,10 @@ DATABASE_URL="mysql://user:password@localhost:3306/mydb"
 ```
 
 ```typescript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 ```
 
 ### SQLite
@@ -148,7 +148,10 @@ DATABASE_URL=":memory:"
 ```
 
 ```typescript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 ```
 
 ### SQL Server
@@ -158,7 +161,10 @@ DATABASE_URL="mssql://user:password@localhost:1433/mydb"
 ```
 
 ```typescript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 ```
 
 ## PostgreSQL Subsection
@@ -245,7 +251,10 @@ DATABASE_URL=postgresql://user:password@localhost:5432/mydb
 import dotenv from 'dotenv';
 dotenv.config();
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 ```
 
 ### SSL Connections

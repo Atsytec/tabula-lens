@@ -60,7 +60,10 @@ import TabulaLens, { expressAdapter } from '@tabula-lens/node';
 const app = express();
 
 // Initialize Tabula Lens with your database connection
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 // Add the Tabula Lens middleware
 app.use('/api/tabula-lens', expressAdapter(tabulaLens));
@@ -75,7 +78,10 @@ import TabulaLens, { fastifyAdapter } from '@tabula-lens/node';
 const fastify = Fastify();
 
 // Initialize Tabula Lens
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 // Add the Tabula Lens route
 fastify.route({
@@ -94,7 +100,10 @@ import TabulaLens, { koaAdapter } from '@tabula-lens/node';
 const app = new Koa();
 
 // Initialize Tabula Lens
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 // Add the Tabula Lens middleware
 app.use(koaAdapter(tabulaLens));

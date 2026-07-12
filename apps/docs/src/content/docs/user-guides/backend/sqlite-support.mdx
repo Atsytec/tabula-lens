@@ -91,7 +91,10 @@ DATABASE_URL="./database.sqlite?journal_mode=WAL"
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
+});
 
 // Test connection
 const tables = await tabulaLens.getTables();
@@ -103,7 +106,9 @@ console.log('Available tables:', tables);
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
   logLevel: 'error',
   logFormat: 'json',
   sensitiveDataMasking: true,
@@ -111,7 +116,7 @@ const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
 });
 ```
 
-### With Config Object
+### With Custom Logger
 
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
@@ -141,7 +146,9 @@ const logger = winston.createLogger({
   ],
 });
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
   logger: {
     debug: (msg) => logger.debug(msg),
     info: (msg) => logger.info(msg),
@@ -158,7 +165,10 @@ SQLite with `better-sqlite3` uses a single database connection per Knex instance
 ### Concurrency Best Practices
 
 ```typescript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
+});
 ```
 
 For read-heavy workloads, enable WAL mode through the connection string:
@@ -283,14 +293,19 @@ DATABASE_URL=./database.sqlite
 import dotenv from 'dotenv';
 dotenv.config();
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
+});
 ```
 
 ### Connection Security
 
 ```typescript
 // Production configuration with security
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
   logLevel: 'error',
   logFormat: 'json',
   sensitiveDataMasking: true,
@@ -440,7 +455,9 @@ Tabula Lens reads JSON values as text but does not automatically search inside J
 Enable query logging for monitoring:
 
 ```typescript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
   logLevel: 'debug',
   enableQueryLogging: true,
   logFormat: 'json',

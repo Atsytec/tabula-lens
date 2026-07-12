@@ -25,6 +25,7 @@
   --sl-color-gray-4: hsl(220, 8%, 35%);
   --sl-color-gray-5: hsl(220, 10%, 22%);
   --sl-color-gray-6: hsl(220, 12%, 15%);
+  --sl-color-gray-7: hsl(220, 12%, 12%);
   --sl-color-black:  hsl(220, 10%, 10%);
 
   /* Preview browser colors (dark mode) */
@@ -36,6 +37,7 @@
   --tl-preview-toolbar-bg: hsl(220, 12%, 15%);
   --tl-preview-toolbar-border: hsl(220, 8%, 20%);
   --tl-preview-tab-text: hsl(220, 8%, 52%);
+  --tl-preview-tab-hover-bg: hsl(220, 12%, 18%);
   --tl-preview-tab-active-bg: hsl(207, 72%, 50%);
   --tl-preview-tab-active-text: hsl(0, 0%, 100%);
   --tl-preview-filter-bg: hsl(220, 12%, 18%);
@@ -106,6 +108,7 @@
   --tl-preview-toolbar-bg: hsl(220, 16%, 96%);
   --tl-preview-toolbar-border: hsl(220, 10%, 86%);
   --tl-preview-tab-text: hsl(220, 8%, 42%);
+  --tl-preview-tab-hover-bg: hsl(220, 14%, 94%);
   --tl-preview-tab-active-bg: hsl(207, 72%, 50%);
   --tl-preview-tab-active-text: hsl(0, 0%, 100%);
   --tl-preview-filter-bg: hsl(220, 14%, 96%);

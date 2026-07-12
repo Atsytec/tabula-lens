@@ -80,7 +80,10 @@ DATABASE_URL="mysql://user:password@localhost:3306/mydb?multipleStatements=false
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql',
+});
 
 // Test connection
 const tables = await tabulaLens.getTables();
@@ -92,7 +95,9 @@ console.log('Available tables:', tables);
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql',
   logLevel: 'error',
   logFormat: 'json',
   sensitiveDataMasking: true,
@@ -100,7 +105,7 @@ const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
 });
 ```
 
-### With Config Object
+### With Custom Logger
 
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
@@ -130,7 +135,9 @@ const logger = winston.createLogger({
   ],
 });
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql',
   logger: {
     debug: (msg) => logger.debug(msg),
     info: (msg) => logger.info(msg),
@@ -157,7 +164,9 @@ Tabula Lens automatically manages connection pooling through Knex.js for optimal
 ### Custom Pool Configuration
 
 ```typescript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql',
   // Connection pool settings in connection string
   // DATABASE_URL="mysql://user:password@localhost:3306/mydb?pool_min=5&pool_max=20"
 });
@@ -297,7 +306,10 @@ DATABASE_URL=mysql://user:password@localhost:3306/mydb
 import dotenv from 'dotenv';
 dotenv.config();
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql',
+});
 ```
 
 ### SSL Connections
@@ -463,7 +475,9 @@ MySQL metadata is read from `information_schema.tables` and `information_schema.
 Enable query logging for monitoring:
 
 ```typescript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mysql',
   logLevel: 'debug',
   enableQueryLogging: true,
   logFormat: 'json',

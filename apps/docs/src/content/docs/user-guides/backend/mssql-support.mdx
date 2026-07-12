@@ -95,7 +95,10 @@ DATABASE_URL="mssql://user:password@localhost:1433/mydb?pool_min=2&pool_max=10"
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mssql',
+});
 
 // Test connection
 const tables = await tabulaLens.getTables();
@@ -107,7 +110,9 @@ console.log('Available tables:', tables);
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mssql',
   logLevel: 'error',
   logFormat: 'json',
   sensitiveDataMasking: true,
@@ -115,7 +120,7 @@ const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
 });
 ```
 
-### With Config Object
+### With Custom Logger
 
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
@@ -145,7 +150,9 @@ const logger = winston.createLogger({
   ],
 });
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mssql',
   logger: {
     debug: (msg) => logger.debug(msg),
     info: (msg) => logger.info(msg),
@@ -172,7 +179,9 @@ Tabula Lens automatically manages connection pooling through Knex.js for optimal
 ### Custom Pool Configuration
 
 ```typescript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mssql',
   // Connection pool settings in connection string
   // DATABASE_URL="mssql://user:password@localhost:1433/mydb?pool_min=5&pool_max=20"
 });
@@ -324,7 +333,10 @@ DATABASE_URL=mssql://user:password@localhost:1433/mydb
 import dotenv from 'dotenv';
 dotenv.config();
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mssql',
+});
 ```
 
 ### SSL/TLS Connections
@@ -497,7 +509,9 @@ SQL Server metadata is read from `information_schema.tables` and `information_sc
 Enable query logging for monitoring:
 
 ```typescript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'mssql',
   logLevel: 'debug',
   enableQueryLogging: true,
   logFormat: 'json',

@@ -273,7 +273,10 @@ You can implement the backend in any language/framework:
 ```javascript
 // Node.js/Express (using the expressAdapter)
 import { TabulaLens, expressAdapter } from '@tabula-lens/node';
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 app.use('/api/tabula-lens', expressAdapter(tabulaLens));
 
 // Python/FastAPI (hypothetical)

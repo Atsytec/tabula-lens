@@ -155,7 +155,10 @@ Test for SQL injection vulnerabilities:
 ```typescript
 describe('SQL Injection Tests', () => {
   it('should sanitize filter input', async () => {
-    const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+    const tabulaLens = new TabulaLens({
+      url: process.env.DATABASE_URL,
+      // type is auto-detected from the connection string
+    });
 
     const maliciousInput = "'; DROP TABLE users; --";
 
@@ -171,7 +174,10 @@ describe('SQL Injection Tests', () => {
   });
 
   it('should handle special characters in table names', async () => {
-    const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+    const tabulaLens = new TabulaLens({
+      url: process.env.DATABASE_URL,
+      // type is auto-detected from the connection string
+    });
 
     await expect(
       tabulaLens.query({

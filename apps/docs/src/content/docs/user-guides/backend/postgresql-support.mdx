@@ -113,7 +113,10 @@ For production deployments, use `sslmode=verify-full` to ensure secure connectio
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'pg',
+});
 
 // Test connection
 const tables = await tabulaLens.getTables();
@@ -125,7 +128,9 @@ console.log('Available tables:', tables);
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'pg',
   logLevel: 'error',
   logFormat: 'json',
   sensitiveDataMasking: true,
@@ -133,7 +138,7 @@ const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
 });
 ```
 
-### With Config Object
+### With Custom Logger
 
 ```typescript
 import { TabulaLens } from '@tabula-lens/node';

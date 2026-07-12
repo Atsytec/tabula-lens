@@ -91,7 +91,10 @@ DATABASE_URL="postgresql://user:password@localhost:5432/mydb?pool_min=2&pool_max
 ```
 
 ```typescript
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 ```
 
 **Benefits:**

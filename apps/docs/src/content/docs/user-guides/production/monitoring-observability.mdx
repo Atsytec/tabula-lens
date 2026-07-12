@@ -519,7 +519,10 @@ import express from 'express';
 import { TabulaLens } from '@tabula-lens/node';
 
 const app = express();
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 app.get('/health', async (req, res) => {
   try {
