@@ -3,6 +3,8 @@ title: Lucia Auth Integration
 description: Integrate Lucia Auth with Tabula Lens to secure your database endpoints.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # Lucia Auth Integration
 
 :::caution[Deprecated]
@@ -17,9 +19,7 @@ The examples below are provided for teams who need to maintain an existing Lucia
 
 Lucia does not have a single install target — the core package works alongside a database adapter of your choice:
 
-```bash
-npm install lucia
-```
+<PackageManagers pkg="lucia" />
 
 You'll also need a database adapter that matches your storage backend (e.g. `@lucia-auth/adapter-drizzle`, `@lucia-auth/adapter-prisma`). Refer to the [Lucia adapter documentation](https://lucia-auth.com/database) for the full list.
 

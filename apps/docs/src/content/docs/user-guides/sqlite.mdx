@@ -1,0 +1,380 @@
+---
+title: SQLite
+description: Connect Tabula Lens to SQLite databases for local development and embedded applications.
+---
+
+import { PackageManagers } from 'starlight-package-managers'
+
+# SQLite
+
+This guide covers how to connect Tabula Lens to SQLite databases. SQLite is a serverless, self-contained database engine ideal for local development, embedded applications, and small to medium workloads.
+
+## Installation
+
+Install `@tabula-lens/node` and the SQLite driver:
+
+<PackageManagers pkg="@tabula-lens/node better-sqlite3" />
+
+On some platforms, `better-sqlite3` requires a C++ compiler and Python to build native bindings. See the [better-sqlite3 documentation](https://github.com/WiseLibs/better-sqlite3/blob/master/docs/troubleshooting.md) for platform-specific build instructions.
+
+## Database Connection
+
+### Connection String Format
+
+Set your database connection string as an environment variable:
+
+```bash
+# File-based database
+DATABASE_URL="./database.sqlite"
+
+# In-memory database (useful for tests)
+DATABASE_URL=":memory:"
+
+# Explicit sqlite protocol
+DATABASE_URL="sqlite:./database.sqlite"
+```
+
+### Connection String Components
+
+SQLite connection strings are simpler than network databases. Tabula Lens accepts:
+
+```
+./path/to/database.sqlite
+sqlite:./path/to/database.sqlite
+:memory:
+```
+
+**Components:**
+
+- File path - Relative or absolute path to the SQLite database file
+- `:memory:` - In-memory database (data is lost when the process exits)
+- `sqlite:` protocol - Optional protocol prefix
+
+### Connection Parameters
+
+Common connection parameters:
+
+```bash
+# Enable foreign key constraints
+DATABASE_URL="./database.sqlite?foreign_keys=true"
+
+# Set busy timeout (milliseconds)
+DATABASE_URL="./database.sqlite?busyTimeout=5000"
+
+# Journal mode for concurrency
+DATABASE_URL="./database.sqlite?journal_mode=WAL"
+
+# Synchronous mode
+DATABASE_URL="./database.sqlite?synchronous=NORMAL"
+```
+
+For better concurrency, use Write-Ahead Logging (WAL) mode:
+
+```bash
+DATABASE_URL="./database.sqlite?journal_mode=WAL"
+```
+
+## Connection Patterns
+
+### Local Development
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
+});
+
+// Test connection
+const tables = await tabulaLens.getTables();
+console.log('Available tables:', tables);
+```
+
+### Production
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### With Custom Logger
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+import winston from 'winston';
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'database.log' }),
+  ],
+});
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
+  logger: {
+    debug: (msg) => logger.debug(msg),
+    info: (msg) => logger.info(msg),
+    warn: (msg) => logger.warn(msg),
+    error: (msg) => logger.error(msg),
+  },
+});
+```
+
+## Connection Pooling
+
+SQLite with `better-sqlite3` uses a single database connection per Knex instance. Unlike client-server databases, SQLite does not use a network connection pool. Concurrency is handled through SQLite's file locking and WAL mode.
+
+### Concurrency Best Practices
+
+```typescript
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
+});
+```
+
+For read-heavy workloads, enable WAL mode through the connection string:
+
+```bash
+DATABASE_URL="./database.sqlite?journal_mode=WAL"
+```
+
+### Busy Timeout
+
+Set a busy timeout to avoid `SQLITE_BUSY` errors under concurrent access:
+
+```bash
+DATABASE_URL="./database.sqlite?busyTimeout=5000"
+```
+
+## Database Setup
+
+### Creating a Database
+
+SQLite databases are created automatically when the file is first accessed. You can create tables directly after connecting.
+
+```bash
+# Ensure the directory exists
+mkdir -p ./data
+```
+
+### Creating Tables
+
+```sql
+-- Create users table
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create products table
+CREATE TABLE products (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  price REAL NOT NULL,
+  description TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create orders table
+CREATE TABLE orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  total REAL NOT NULL,
+  status TEXT DEFAULT 'pending',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+```
+
+### Adding Sample Data
+
+```sql
+-- Insert sample users
+INSERT INTO users (name, email) VALUES
+  ('John Doe', 'john@example.com'),
+  ('Jane Smith', 'jane@example.com'),
+  ('Bob Johnson', 'bob@example.com');
+
+-- Insert sample products
+INSERT INTO products (name, price, description) VALUES
+  ('Product A', 29.99, 'Description for Product A'),
+  ('Product B', 49.99, 'Description for Product B'),
+  ('Product C', 19.99, 'Description for Product C');
+
+-- Insert sample orders
+INSERT INTO orders (user_id, total, status) VALUES
+  (1, 29.99, 'completed'),
+  (2, 49.99, 'pending'),
+  (1, 19.99, 'shipped');
+```
+
+## User Permissions
+
+SQLite does not have a user permission system like client-server databases. Access control is handled at the file-system level.
+
+### File Permissions
+
+Restrict access to the database file:
+
+```bash
+# Set restrictive permissions on Linux/macOS
+chmod 600 ./database.sqlite
+
+# Ensure the parent directory is writable by the application
+chmod 700 ./data
+```
+
+On Windows, use NTFS permissions to restrict access to the database file and directory.
+
+### Application-Level Security
+
+Since SQLite relies on file-system security:
+
+- Run the application process under a dedicated user account
+- Restrict database file access to that user account
+- Store backups in a location with restricted access
+- Avoid placing the database file inside publicly accessible directories
+
+## Security Best Practices
+
+### Environment Variables
+
+Use environment variables for connection strings:
+
+```bash
+# .env file
+DATABASE_URL=./database.sqlite
+```
+
+```typescript
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config();
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
+});
+```
+
+### Connection Security
+
+```typescript
+// Production configuration with security
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'sqlite',
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### File Security
+
+- **Restrict file permissions**: Set appropriate file system permissions
+- **Use dedicated directories**: Store databases in dedicated, secure directories
+- **Regular backups**: Implement regular backup strategies
+- **Encrypt sensitive data**: Consider encryption for sensitive data at rest
+- **Monitor file access**: Monitor and log file access patterns
+
+### Concurrency Considerations
+
+- **Use WAL mode**: Enable Write-Ahead Logging for better concurrency
+- **Set busy timeout**: Configure appropriate busy timeout values
+- **Handle conflicts**: Implement proper error handling for `SQLITE_BUSY` errors
+- **Limit concurrent writes**: Minimize concurrent write operations
+- **Consider connection limits**: For high-concurrency scenarios, consider client-server databases
+
+## Performance Optimization
+
+### WAL Mode
+
+Enable Write-Ahead Logging for better concurrency:
+
+```bash
+DATABASE_URL="./database.sqlite?journal_mode=WAL"
+```
+
+WAL mode allows multiple readers and a single writer to operate concurrently.
+
+### Synchronous Mode
+
+Adjust synchronous mode for performance vs. durability trade-offs:
+
+```bash
+# Full durability (default)
+DATABASE_URL="./database.sqlite?synchronous=FULL"
+
+# Normal mode (better performance, still safe)
+DATABASE_URL="./database.sqlite?synchronous=NORMAL"
+
+# Off mode (maximum performance, risk of data loss on crash)
+DATABASE_URL="./database.sqlite?synchronous=OFF"
+```
+
+### Query Optimization
+
+- **Create indexes**: Add indexes on frequently queried columns
+- **Use transactions**: Group related operations in transactions
+- **Avoid SELECT ***: Select only needed columns
+- **Use appropriate data types**: Choose the right data type for each column
+- **Analyze query plans**: Use `EXPLAIN QUERY PLAN` to analyze queries
+
+## Troubleshooting
+
+### Connection Issues
+
+**`SQLITE_CANTOPEN`**
+
+Ensure the database file path is correct and the parent directory exists and is writable.
+
+**`SQLITE_BUSY`**
+
+This occurs when the database is locked by another process. Increase the busy timeout or enable WAL mode for better concurrency.
+
+### Performance Issues
+
+**Slow queries**
+
+- Check for missing indexes
+- Use `EXPLAIN QUERY PLAN` to analyze query execution
+- Consider enabling WAL mode for better concurrency
+- Optimize your database schema and queries
+
+### Build Issues
+
+**Native module compilation errors**
+
+On some platforms, `better-sqlite3` requires build tools:
+
+- **Windows**: Install Windows Build Tools
+- **macOS**: Install Xcode Command Line Tools
+- **Linux**: Install build-essential and python3
+
+See the [better-sqlite3 documentation](https://github.com/WiseLibs/better-sqlite3/blob/master/docs/troubleshooting.md) for platform-specific instructions.
+
+## Additional Resources
+
+- [SQLite Documentation](https://www.sqlite.org/docs.html)
+- [better-sqlite3 documentation](https://github.com/WiseLibs/better-sqlite3)
+- [Knex.js SQLite dialect](https://knexjs.org/guide/query-builder.html#sqlite3)
+- [SQLite Optimization FAQ](https://www.sqlite.org/faq.html#q19)

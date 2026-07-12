@@ -3,6 +3,8 @@ title: Firebase Auth Integration
 description: Integrate Firebase Authentication with Tabula Lens to secure your database endpoints.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # Firebase Auth Integration
 
 [Firebase Authentication](https://firebase.google.com/docs/auth) provides backend services and SDKs for authenticating users with passwords, phone numbers, and popular federated providers. This guide shows how to verify Firebase ID tokens on your backend and pass them to the `DatabaseViewer` component via `getAuthHeaders`.
@@ -11,13 +13,8 @@ description: Integrate Firebase Authentication with Tabula Lens to secure your d
 
 Install the Firebase Admin SDK on your backend and the Firebase client SDK on your frontend:
 
-```bash
-# Backend
-npm install firebase-admin
-
-# Frontend
-npm install firebase
-```
+<PackageManagers pkg="firebase-admin" comment="# Backend" />
+<PackageManagers pkg="firebase" comment="# Frontend" />
 
 You'll also need a Firebase project with Authentication enabled. Download the service account JSON from **Project Settings → Service Accounts → Generate new private key** and store the values as environment variables.
 

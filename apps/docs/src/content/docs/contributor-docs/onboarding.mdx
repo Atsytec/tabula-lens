@@ -1,0 +1,329 @@
+---
+title: Contributor Onboarding
+description: Get started contributing to Tabula Lens with this comprehensive onboarding guide for new contributors.
+---
+
+# Contributor Onboarding
+
+Welcome to the Tabula Lens project! This guide will help you get started as a contributor and provide you with the information you need to make your first contribution.
+
+## Getting Started
+
+### Prerequisites
+
+Before you start contributing, ensure you have the following installed:
+
+- **Node.js** 18 or higher
+- **pnpm** 9.x or higher (we use pnpm as our package manager)
+- **Git** for version control
+- **Code editor** (VS Code recommended)
+
+### Fork and Clone
+
+1. **Fork the repository** on GitHub
+2. **Clone your fork:**
+
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/tabula-lens.git
+   cd tabula-lens
+   ```
+
+3. **Add the upstream remote:**
+
+   ```bash
+   git remote add upstream https://github.com/Atsytec/tabula-lens.git
+   ```
+
+### Install Dependencies
+
+Install dependencies for the entire monorepo:
+
+```bash
+pnpm install
+```
+
+This will install dependencies for all packages and the documentation site.
+
+## Project Structure
+
+Tabula Lens is a monorepo with the following structure:
+
+```
+tabula-lens/
+├── packages/
+│   ├── node/          # Node.js backend package
+│   └── react/         # React frontend package
+├── apps/
+│   └── docs/          # Documentation site (Astro + Starlight)
+├── example-vite/      # Example application
+└── package.json       # Root package.json
+```
+
+### Packages
+
+#### @tabula-lens/node
+
+The Node.js backend package that provides database connectivity and HTTP API.
+
+**Location:** `packages/node/`
+
+**Key files:**
+- `src/TabulaLens.ts` - Main TabulaLens class
+- `src/adapters/` - Framework adapters (Express, Fastify, etc.)
+- `src/logger.ts` - Logging system
+- `src/dialects/` - Database dialect strategies
+
+#### @tabula-lens/react
+
+The React frontend package that provides the DatabaseViewer component.
+
+**Location:** `packages/react/`
+
+**Key files:**
+- `src/DatabaseViewer.tsx` - Main DatabaseViewer component
+- `src/components/DatabaseViewer/` - Sub-components
+- `src/hooks/` - Custom React hooks
+- `src/utils/` - Utility functions
+
+#### @tabula-lens/docs
+
+The documentation site built with Astro and Starlight.
+
+**Location:** `apps/docs/`
+
+**Key files:**
+- `src/content/docs/` - Documentation content
+- `astro.config.mjs` - Astro configuration
+- `src/styles/` - Custom styles
+
+## Development Workflow
+
+### Running the Documentation Site
+
+Start the documentation site locally:
+
+```bash
+cd apps/docs
+pnpm dev
+```
+
+The documentation site will be available at `http://localhost:4321`
+
+### Running the Example App
+
+Start the example application:
+
+```bash
+cd example-vite
+pnpm dev
+```
+
+The example app will be available at `http://localhost:5173`
+
+### Running Tests
+
+Run tests for all packages:
+
+```bash
+# Node package tests
+cd packages/node
+pnpm test
+
+# React package tests
+cd packages/react
+pnpm test
+```
+
+### Type Checking
+
+Run type checking:
+
+```bash
+# Node package
+cd packages/node
+pnpm run check-types
+
+# React package
+cd packages/react
+pnpm run check-types
+```
+
+### Linting
+
+Run linting:
+
+```bash
+# Node package
+cd packages/node
+pnpm run lint
+
+# React package
+cd packages/react
+pnpm run lint
+```
+
+## Making Your First Contribution
+
+### 1. Choose an Issue
+
+Look for issues labeled `good first issue` or `help wanted` in the [GitHub repository](https://github.com/Atsytec/tabula-lens/issues).
+
+### 2. Create a Branch
+
+Create a new branch for your contribution:
+
+```bash
+git checkout -b feature/your-feature-name
+# or
+git checkout -b fix/your-bug-fix
+```
+
+### 3. Make Your Changes
+
+Make your changes following the project's coding standards:
+
+- **TypeScript**: Use strict TypeScript typing
+- **Testing**: Write tests for your changes
+- **Documentation**: Update documentation as needed
+- **Style**: Follow existing code style
+
+### 4. Test Your Changes
+
+Run tests and type checking:
+
+```bash
+# Run tests
+pnpm test
+
+# Type check
+pnpm run check-types
+
+# Lint
+pnpm run lint
+```
+
+### 5. Commit Your Changes
+
+Commit your changes with a clear commit message:
+
+```bash
+git add .
+git commit -m "feat: add new feature"
+# or
+git commit -m "fix: resolve bug description"
+```
+
+### 6. Push and Create PR
+
+Push your changes and create a pull request:
+
+```bash
+git push origin feature/your-feature-name
+```
+
+Then create a pull request on GitHub with a clear description of your changes.
+
+## Coding Standards
+
+### TypeScript
+
+- Use strict TypeScript typing
+- Avoid `any` types
+- Use interfaces for object shapes
+- Use type aliases for union types
+- Add JSDoc comments for complex functions
+
+### Testing
+
+- Write tests for all new features
+- Maintain test coverage above 80%
+- Use descriptive test names
+- Test edge cases and error conditions
+- Mock external dependencies
+
+### Documentation
+
+- Update documentation for all public API changes
+- Add examples for new features
+- Update the changelog for breaking changes
+- Follow the Diataxis framework for documentation
+
+### Code Style
+
+- Follow existing code style
+- Use meaningful variable and function names
+- Keep functions small and focused
+- Add comments for complex logic
+- Remove commented-out code
+
+## Architecture Overview
+
+### HTTP API as Universal Interface
+
+Tabula Lens uses an HTTP API as the universal interface between frontend and backend. This allows for:
+
+- Framework-agnostic backend implementation
+- Easy integration with any frontend framework
+- Clear separation of concerns
+- Simple testing and debugging
+
+### Modular Component Architecture
+
+The React package uses a modular component architecture:
+
+- Main `DatabaseViewer` component orchestrates sub-components
+- Sub-components are reusable and independently testable
+- Custom hooks encapsulate business logic
+- Utility functions are shared across components
+
+### Database Dialect Strategy
+
+The Node package uses a dialect strategy pattern to support multiple databases:
+
+- Each database has its own dialect strategy
+- Auto-detection from connection string
+- Consistent API across all databases
+- Easy to add new database support
+
+## Resources
+
+### Documentation
+
+- [Contributing to Documentation](/contributing) - How to contribute to documentation
+- [Architecture](/contributor-docs/architecture/architecture) - System architecture and design
+- [API Reference](/api/react) - React API documentation
+- [Node API](/api/node) - Node API documentation
+
+### External Resources
+
+- [Vitest Documentation](https://vitest.dev/) - Testing framework
+- [TypeScript Documentation](https://www.typescriptlang.org/docs/) - TypeScript guide
+- [React Documentation](https://react.dev/) - React guide
+- [Astro Documentation](https://docs.astro.build/) - Astro framework
+
+## Getting Help
+
+If you need help:
+
+1. **Check the documentation** - Look for relevant documentation first
+2. **Search existing issues** - Your question may have been answered
+3. **Ask in a discussion** - Start a GitHub discussion for questions
+4. **Join the community** - Engage with other contributors
+
+## Next Steps
+
+After completing your first contribution:
+
+1. **Review the architecture docs** - Understand the system better
+2. **Explore the codebase** - Look at existing implementations
+3. **Contribute to documentation** - Help improve documentation
+4. **Help with issues** - Pick up more complex issues
+5. **Review PRs** - Help review other contributors' PRs
+
+## Recognition
+
+Contributors are recognized in the project's contributors list. Thank you for your contributions!
+
+:::tip[Thank You]
+Thank you for contributing to Tabula Lens! Your contributions help make this project better for everyone.
+:::

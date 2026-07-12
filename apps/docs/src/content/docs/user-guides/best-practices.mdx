@@ -1,0 +1,548 @@
+---
+title: Best Practices
+description: Security, performance, and error handling best practices for Tabula Lens applications.
+---
+
+# Best Practices
+
+This guide covers essential best practices for building secure, performant, and reliable Tabula Lens applications.
+
+## Security Best Practices
+
+### Authentication and Authorization
+
+#### Always Protect Your API Endpoint
+
+Never expose your Tabula Lens HTTP endpoint without authentication. Use middleware to protect the endpoint:
+
+```typescript
+import express from 'express';
+import { TabulaLens } from '@tabula-lens/node';
+
+const app = express();
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Authentication middleware
+app.use('/api/tabula-lens', (req, res, next) => {
+  const token = req.headers.authorization;
+  
+  if (!token || !isValidToken(token)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  next();
+});
+
+app.get('/api/tabula-lens', async (req, res) => {
+  const result = await tabulaLens.query(req.query);
+  res.json(result);
+});
+```
+
+#### Use Least Privilege Database Users
+
+Create database users with minimal required permissions:
+
+```sql
+-- PostgreSQL
+CREATE USER tabula_lens_readonly WITH PASSWORD 'secure_password';
+GRANT CONNECT ON DATABASE mydb TO tabula_lens_readonly;
+GRANT USAGE ON SCHEMA public TO tabula_lens_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO tabula_lens_readonly;
+
+-- MySQL
+CREATE USER 'tabula_lens_readonly'@'%' IDENTIFIED BY 'secure_password';
+GRANT SELECT ON mydb.* TO 'tabula_lens_readonly'@'%';
+
+-- SQL Server
+CREATE LOGIN tabula_lens_readonly WITH PASSWORD = 'secure_password';
+USE mydb;
+CREATE USER tabula_lens_readonly FOR LOGIN tabula_lens_readonly;
+ALTER ROLE db_datareader ADD MEMBER tabula_lens_readonly;
+```
+
+### Data Security
+
+#### Enable Sensitive Data Masking
+
+Always enable sensitive data masking in production:
+
+```typescript
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,  // Mask passwords, API keys, tokens
+});
+```
+
+#### Use Environment Variables
+
+Never hardcode credentials in your code:
+
+```bash
+# .env file
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
+API_SECRET="your-secret-key"
+```
+
+```typescript
+import dotenv from 'dotenv';
+dotenv.config();
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+});
+```
+
+#### Use SSL for Database Connections
+
+Always use SSL in production for database connections:
+
+```bash
+# PostgreSQL
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?sslmode=verify-full"
+
+# MySQL
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?ssl=true"
+
+# SQL Server
+DATABASE_URL="mssql://user:password@localhost:1433/mydb?encrypt=true"
+```
+
+### Network Security
+
+#### Restrict Database Access
+
+- Use firewall rules to restrict database access
+- Use VPC peering or private endpoints for cloud databases
+- Implement IP whitelisting for database connections
+- Use VPNs for remote database access
+
+#### Validate and Sanitize Input
+
+Always validate and sanitize user input:
+
+```typescript
+app.get('/api/tabula-lens', async (req, res) => {
+  // Validate pagination parameters
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+  
+  // Validate table name to prevent SQL injection
+  const allowedTables = ['users', 'products', 'orders'];
+  const table = allowedTables.includes(req.query.table) ? req.query.table : 'users';
+  
+  const result = await tabulaLens.query({
+    table,
+    page,
+    limit
+  });
+  
+  res.json(result);
+});
+```
+
+## Performance Best Practices
+
+### Database Performance
+
+#### Use Appropriate Pagination
+
+Use reasonable page sizes to avoid performance issues:
+
+```typescript
+// ✅ Good: Reasonable page size
+const result = await tabulaLens.query({
+  table: 'users',
+  page: 1,
+  limit: 50  // Optimal for most use cases
+});
+
+// ❌ Avoid: Too large
+const result = await tabulaLens.query({
+  table: 'users',
+  page: 1,
+  limit: 10000  // Will cause performance issues
+});
+```
+
+#### Implement Database Indexing
+
+Create indexes on frequently filtered columns:
+
+```sql
+-- PostgreSQL
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_created_at ON users(created_at);
+CREATE INDEX idx_users_status ON users(status);
+
+-- MySQL
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_created_at ON users(created_at);
+
+-- SQL Server
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_created_at ON users(created_at);
+```
+
+#### Use Selective Column Queries
+
+Select only needed columns to reduce data transfer:
+
+```typescript
+// ✅ Good: Select only needed columns
+const result = await tabulaLens.query({
+  table: 'users',
+  columns: ['id', 'name', 'email'],  // Only select needed columns
+  limit: 50
+});
+
+// ❌ Avoid: SELECT *
+const result = await tabulaLens.query({
+  table: 'users',
+  limit: 50  // Returns all columns
+});
+```
+
+### Backend Performance
+
+#### Configure Connection Pooling
+
+Use appropriate connection pool settings:
+
+```typescript
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // Connection pool settings
+  // DATABASE_URL="postgresql://user:password@localhost:5432/mydb?connectionLimit=20"
+});
+```
+
+#### Implement Caching
+
+Use caching to reduce database load:
+
+```typescript
+const NodeCache = require('node-cache');
+const cache = new NodeCache({ 
+  stdTTL: 300,  // 5 minutes
+  checkperiod: 60  // Check for expired keys every 60s
+});
+
+app.get('/api/tabula-lens', async (req, res) => {
+  const cacheKey = `tabula:${JSON.stringify(req.query)}`;
+  const cached = cache.get(cacheKey);
+  
+  if (cached) {
+    return res.json(cached);
+  }
+  
+  const result = await tabulaLens.query(req.query);
+  cache.set(cacheKey, result);
+  res.json(result);
+});
+```
+
+#### Use Response Compression
+
+Enable compression for API responses:
+
+```typescript
+const compression = require('compression');
+
+app.use(compression({
+  threshold: 1024  // Only compress responses > 1KB
+}));
+```
+
+### Frontend Performance
+
+#### Use TanStack Query for Caching
+
+Implement client-side caching with TanStack Query:
+
+```jsx
+import { useQuery } from '@tanstack/react-query';
+
+function useDatabaseData(query) {
+  return useQuery({
+    queryKey: ['database', query],
+    queryFn: async () => {
+      const response = await fetch('/api/tabula-lens?' + new URLSearchParams(query));
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000,  // 5 minutes
+    gcTime: 10 * 60 * 1000,  // 10 minutes
+  });
+}
+```
+
+#### Implement Debounced Filtering
+
+Use debounced filtering to reduce API calls:
+
+```jsx
+<DatabaseViewer
+  path="/api/tabula-lens"
+  filterDebounceMs={300}  // 300ms debounce
+/>
+```
+
+#### Use React.memo
+
+Memoize components to prevent unnecessary re-renders:
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+const MyComponent = React.memo(({ data }) => {
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+    />
+  );
+});
+```
+
+## Error Handling Best Practices
+
+### Backend Error Handling
+
+#### Implement Comprehensive Error Handling
+
+Handle errors gracefully and provide meaningful error messages:
+
+```typescript
+app.get('/api/tabula-lens', async (req, res) => {
+  try {
+    const result = await tabulaLens.query(req.query);
+    res.json(result);
+  } catch (error) {
+    console.error('Tabula Lens error:', error);
+    
+    if (error.code === 'TABLE_NOT_FOUND') {
+      return res.status(404).json({ error: 'Table not found' });
+    }
+    
+    if (error.code === 'INVALID_QUERY') {
+      return res.status(400).json({ error: 'Invalid query parameters' });
+    }
+    
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+#### Use Logging for Debugging
+
+Implement logging for debugging and monitoring:
+
+```typescript
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  logLevel: process.env.NODE_ENV === 'production' ? 'error' : 'debug',
+  logFormat: process.env.NODE_ENV === 'production' ? 'json' : 'pretty',
+  enableRequestLogging: true,
+  enableQueryLogging: process.env.NODE_ENV === 'development',
+});
+```
+
+### Frontend Error Handling
+
+#### Handle Loading and Error States
+
+Provide good UX with loading and error states:
+
+```jsx
+import { DatabaseViewer } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewer
+      path="/api/tabula-lens"
+      onError={(error) => {
+        console.error('Database viewer error:', error);
+        // Show error notification to user
+      }}
+    />
+  );
+}
+```
+
+#### Implement Retry Logic
+
+Implement retry logic for failed requests:
+
+```jsx
+import { useQuery } from '@tanstack/react-query';
+
+function useDatabaseData(query) {
+  return useQuery({
+    queryKey: ['database', query],
+    queryFn: async () => {
+      const response = await fetch('/api/tabula-lens?' + new URLSearchParams(query));
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.json();
+    },
+    retry: 3,  // Retry failed requests 3 times
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),  // Exponential backoff
+  });
+}
+```
+
+## Common Pitfalls to Avoid
+
+### Security Pitfalls
+
+#### ❌ Don't Expose Database Credentials
+
+Never commit database credentials to version control:
+
+```typescript
+// ❌ Bad: Hardcoded credentials
+const tabulaLens = new TabulaLens({
+  url: 'postgresql://user:password@localhost:5432/mydb'
+});
+
+// ✅ Good: Use environment variables
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL
+});
+```
+
+#### ❌ Don't Skip Authentication
+
+Never expose your API endpoint without authentication:
+
+```typescript
+// ❌ Bad: Unprotected endpoint
+app.get('/api/tabula-lens', async (req, res) => {
+  const result = await tabulaLens.query(req.query);
+  res.json(result);
+});
+
+// ✅ Good: Protected endpoint
+app.use('/api/tabula-lens', authenticateMiddleware);
+app.get('/api/tabula-lens', async (req, res) => {
+  const result = await tabulaLens.query(req.query);
+  res.json(result);
+});
+```
+
+### Performance Pitfalls
+
+#### ❌ Don't Use Large Page Sizes
+
+Avoid fetching too much data at once:
+
+```typescript
+// ❌ Bad: Too large page size
+const result = await tabulaLens.query({
+  table: 'users',
+  limit: 10000
+});
+
+// ✅ Good: Reasonable page size
+const result = await tabulaLens.query({
+  table: 'users',
+  limit: 50
+});
+```
+
+#### ❌ Don't Ignore Indexing
+
+Don't forget to create indexes on frequently queried columns:
+
+```sql
+-- ❌ Bad: No indexes
+-- Queries on email column will be slow
+
+-- ✅ Good: Create index
+CREATE INDEX idx_users_email ON users(email);
+```
+
+### Error Handling Pitfalls
+
+#### ❌ Don't Ignore Errors
+
+Don't ignore errors or fail silently:
+
+```typescript
+// ❌ Bad: Ignoring errors
+app.get('/api/tabula-lens', async (req, res) => {
+  const result = await tabulaLens.query(req.query);
+  res.json(result);  // No error handling
+});
+
+// ✅ Good: Proper error handling
+app.get('/api/tabula-lens', async (req, res) => {
+  try {
+    const result = await tabulaLens.query(req.query);
+    res.json(result);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+```
+
+#### ❌ Don't Expose Sensitive Information in Errors
+
+Don't expose sensitive information in error messages:
+
+```typescript
+// ❌ Bad: Exposing sensitive information
+catch (error) {
+  res.status(500).json({ 
+    error: error.message,
+    stack: error.stack,  // Exposes internal implementation
+    database: process.env.DATABASE_URL  // Exposes credentials
+  });
+}
+
+// ✅ Good: Generic error messages
+catch (error) {
+  console.error('Error:', error);  // Log detailed error server-side
+  res.status(500).json({ 
+    error: 'Internal server error'  // Generic message to client
+  });
+}
+```
+
+## Environment-Specific Best Practices
+
+### Development
+
+- Use debug log level for detailed troubleshooting
+- Enable query logging for performance analysis
+- Use pretty log format for human-readable logs
+- Disable sensitive data masking for easier debugging
+- Use local database instances
+
+### Staging
+
+- Use info log level for monitoring normal operations
+- Enable request logging for tracking usage
+- Use text or JSON log format for parsing
+- Enable sensitive data masking
+- Use staging database with production-like data
+
+### Production
+
+- Use error log level for critical issues only
+- Disable query logging to reduce overhead
+- Use JSON log format for log aggregation
+- Always enable sensitive data masking
+- Use managed database services with backups
+- Implement monitoring and alerting
+- Use SSL for all connections
+- Implement rate limiting
+- Use CDN for static assets
+
+## Additional Resources
+
+- [Security Model](/contributor-docs/security/security) - Comprehensive security architecture
+- [Performance Characteristics](/contributor-docs/performance-scaling/performance-characteristics) - Performance metrics and optimization
+- [Error Handling Patterns](/contributor-docs/internal-systems/error-handling) - Error handling strategies
+- [Authentication Guide](/user-guides/authentication) - Authentication implementation patterns

@@ -6,6 +6,8 @@
 [![npm version](https://badge.fury.io/js/%40tabula-lens%2Fnode.svg)](https://www.npmjs.com/package/@tabula-lens/node)
 [![Code of Conduct](https://img.shields.io/badge/Code%20of%20Conduct-2.0.0-4BAAAA.svg)](CODE_OF_CONDUCT.md)
 
+> 📚 **[Full Documentation](https://docs.tabula-lens.dev)** - Comprehensive guides, API reference, and examples
+
 A component library for viewing database data with secure, backend-agnostic architecture.
 
 ## 🎯 Project Goal
@@ -22,6 +24,8 @@ Create a lightweight, open-source React component that allows developers to easi
 - **Zero Config**: Minimal setup required for users
 - **15+ Framework Adapters**: Pre-built adapters for popular Node.js frameworks
 
+For detailed feature documentation and advanced usage, visit our [documentation website](https://docs.tabula-lens.dev).
+
 ## 📦 Packages
 
 This monorepo contains the following packages:
@@ -30,6 +34,8 @@ This monorepo contains the following packages:
 - **@tabula-lens/node**: Node.js backend SDK for database queries with framework adapters
 
 ## 🚀 Quick Start
+
+> 💡 **New to Tabula Lens?** Check out our [full documentation](https://docs.tabula-lens.dev) for comprehensive guides and examples.
 
 ### Backend Setup
 
@@ -62,26 +68,14 @@ function App() {
 
 ## 📖 Documentation
 
-For detailed documentation, see the package-specific READMEs:
+> 📚 **[Full Documentation](https://docs.tabula-lens.dev)** - Comprehensive guides, API reference, and examples
 
-- **[@tabula-lens/node README](packages/node/README.md)** - Backend SDK documentation with framework adapters, API reference, and security considerations
-- **[@tabula-lens/react README](packages/react/README.md)** - React component documentation with props reference, advanced usage, and performance optimization
+For detailed documentation, guides, and examples, visit our [documentation website](https://docs.tabula-lens.dev).
 
-### Key Features
+### Package Documentation
 
-**@tabula-lens/node**:
-
-- 15+ framework adapters (Express, Fastify, Next.js, etc.)
-- Built-in logging system with configurable levels
-- Comprehensive error handling
-- Security-first design with credential protection
-
-**@tabula-lens/react**:
-
-- Built-in pagination, sorting, and filtering
-- Customizable styling and components
-- Performance optimized with React.memo
-- TanStack Query integration for efficient data fetching
+- **[@tabula-lens/node](packages/node/README.md)** - Backend SDK with installation and basic usage
+- **[@tabula-lens/react](packages/react/README.md)** - React component with installation and basic usage
 
 ## 🛠️ Tech Stack
 

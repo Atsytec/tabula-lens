@@ -3,6 +3,8 @@ title: Clerk Integration
 description: Integrate Clerk authentication with Tabula Lens to secure your database endpoints.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # Clerk Integration
 
 [Clerk](https://clerk.com) is a complete authentication and user management platform. This guide shows how to protect your Tabula Lens endpoints using Clerk middleware and pass session tokens to the `DatabaseViewer` component.
@@ -11,13 +13,8 @@ description: Integrate Clerk authentication with Tabula Lens to secure your data
 
 Install the appropriate Clerk package for your framework:
 
-```bash
-# Next.js
-npm install @clerk/nextjs
-
-# Express
-npm install @clerk/express
-```
+<PackageManagers pkg="@clerk/nextjs" comment="# Next.js" />
+<PackageManagers pkg="@clerk/express" comment="# Express" />
 
 You'll also need a Clerk account with `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` set in your environment.
 

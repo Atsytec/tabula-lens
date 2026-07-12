@@ -3,17 +3,27 @@ title: React API
 description: Complete API reference for the @tabula-lens/react package.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # React API Reference
 
 Complete API reference for the `@tabula-lens/react` package.
 
+:::tip[Related Documentation]
+- [HTTP API](/api/http) - Backend API that this component consumes
+- [Frontend Implementation](/user-guides/frontend/frontend-implementation) - Advanced usage patterns
+- [Styling Customization](/user-guides/frontend/styling-customization) - How to customize the component's appearance
+- [TanStack Query Integration](/user-guides/frontend/tanstack-query-integration) - Using with TanStack Query
+- [TanStack Table Integration](/user-guides/frontend/tanstack-table-integration) - Using with TanStack Table
+:::
+
 ## Installation
 
-```bash
-npm install @tabula-lens/react
-```
+<PackageManagers pkg="@tabula-lens/react" />
 
-> 💡 **Quick Reference**: For a quick start guide and basic usage examples, check out the [@tabula-lens/react README](https://github.com/Atsytec/tabula-lens/blob/main/packages/react/README.md).
+:::tip[Quick Reference]
+For a quick start guide and basic usage examples, check out the [@tabula-lens/react README](https://github.com/Atsytec/tabula-lens/blob/main/packages/react/README.md).
+:::
 
 ## DatabaseViewer Component
 
@@ -98,7 +108,7 @@ The main component for displaying database data in your React application. It pr
 |------|------|---------|-------------|
 | `refetchInterval` | `number` | - | Interval in milliseconds to refetch data |
 | `onError` | `(error: Error) => void` | - | Error callback function |
-| `queryOptions` | `object` | - | Additional TanStack Query options (`staleTime`, `cacheTime`, `retry`, `retryDelay`, `refetchOnWindowFocus`, `refetchOnReconnect`, `refetchOnMount`) |
+| `queryOptions` | `object` | - | Additional TanStack Query options (`staleTime`, `gcTime`, `retry`, `retryDelay`, `refetchOnWindowFocus`, `refetchOnReconnect`, `refetchOnMount`) |
 
 #### Optional Props - Logging
 
@@ -179,6 +189,67 @@ function App() {
   );
 }
 ```
+
+### DatabaseViewerWithProvider
+
+A convenience wrapper that provides a `QueryClient` to `DatabaseViewer`. This is useful for SSR contexts (Next.js, Remix, etc.) where you need to prevent request data leakage between server-side renders.
+
+#### Props
+
+Accepts all `DatabaseViewer` props plus:
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `queryClient` | `QueryClient` | - | Optional custom QueryClient instance. If not provided, a new one is created with default options. |
+
+#### Example
+
+```jsx
+import { DatabaseViewerWithProvider } from '@tabula-lens/react';
+
+function App() {
+  return (
+    <DatabaseViewerWithProvider
+      path="/api/tabula-lens"
+      initialTable="users"
+    />
+  );
+}
+```
+
+#### Example with Custom QueryClient
+
+```jsx
+import { DatabaseViewerWithProvider } from '@tabula-lens/react';
+import { QueryClient } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+    },
+  },
+});
+
+function App() {
+  return (
+    <DatabaseViewerWithProvider
+      queryClient={queryClient}
+      path="/api/tabula-lens"
+      initialTable="users"
+    />
+  );
+}
+```
+
+#### Usage Notes
+
+- If you don't provide a `queryClient`, a new one is created with these defaults:
+  - `refetchOnWindowFocus: false`
+  - `retry: 1`
+- This component is particularly useful in Next.js App Router or other SSR frameworks
+- For client-side only applications, you can use `DatabaseViewer` directly with your own `QueryClientProvider`
 
 ## Sub-Components
 
@@ -314,6 +385,46 @@ import { FilterInput } from '@tabula-lens/react';
   placeholder="Search..."
 />
 ```
+
+### FilterColumnSelector
+
+Component for selecting which columns to include in filtering. This allows users to customize which columns are searched when using the filter input.
+
+#### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `availableColumns` | `string[]` | - | All available column names |
+| `selectedColumns` | `string[]` | - | Currently selected column names for filtering |
+| `defaultColumns` | `string[]` | - | Default column names for filtering |
+| `onSelectionChange` | `(columns: string[]) => void` | - | Callback when column selection changes |
+| `onResetToDefault` | `() => void` | - | Callback to reset to default columns |
+| `className` | `string` | - | Additional CSS class name |
+| `classNames` | `ClassNames` | - | Custom class names for specific elements |
+| `styles` | `Styles` | - | Custom styles for specific elements |
+
+#### Example
+
+```jsx
+import { FilterColumnSelector } from '@tabula-lens/react';
+
+<FilterColumnSelector
+  availableColumns={['id', 'name', 'email', 'created_at']}
+  selectedColumns={['name', 'email']}
+  defaultColumns={['name', 'email']}
+  onSelectionChange={(columns) => console.log('Selected columns:', columns)}
+  onResetToDefault={() => console.log('Reset to default')}
+/>
+```
+
+#### Usage Notes
+
+- The component uses a popover/dropdown interface for column selection
+- Columns marked as "default" are indicated with a badge
+- Supports "Select All", "Deselect All", and "Reset to Default" actions
+- Changes are applied when the user clicks "Apply"
+- Cancel button discards unsaved changes
+- This component is used internally by `DatabaseViewer` when `showFilterColumnSelector` is enabled
 
 ### Pagination
 

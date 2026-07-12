@@ -498,8 +498,10 @@ const OptimizedComponent = React.memo(({ data }) => {
 **2. Data Fetching Optimization**
 
 ```jsx
-// Implement debouncing
-const debouncedFilter = useDebouncedValue(filter, 300);
+// Use built-in debounced filtering from useTableState
+const { filter, setFilter, debouncedFilter } = useTableState({
+  filterDebounceMs: 300
+});
 
 // Use pagination
 const [page, setPage] = useState(1);
@@ -558,5 +560,4 @@ import { DatabaseViewer } from '@tabula-lens/react';
 - Monitor your application's performance metrics
 - Implement performance optimizations based on your specific use case
 - Set up performance monitoring and alerting
-- Review [Performance Optimization Guide](/user-guides/production/performance-optimization) for detailed optimization strategies
 - Check [Caching Strategies](/contributor-docs/performance-scaling/caching-strategies) for advanced caching patterns

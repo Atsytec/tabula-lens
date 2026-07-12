@@ -3,6 +3,8 @@ title: Auth.js (NextAuth v5) Integration
 description: Integrate Auth.js (NextAuth v5) with Tabula Lens to secure your database endpoints.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # Auth.js (NextAuth v5) Integration
 
 [Auth.js](https://authjs.dev) (NextAuth v5) is a flexible authentication library for Next.js and Node.js. This guide shows how to protect your Tabula Lens endpoints using Auth.js sessions and pass credentials to the `DatabaseViewer` component.
@@ -11,19 +13,12 @@ description: Integrate Auth.js (NextAuth v5) with Tabula Lens to secure your dat
 
 Install the appropriate Auth.js package for your framework:
 
-```bash
-# Next.js
-npm install next-auth@beta
-
-# Express
-npm install @auth/express
-```
+<PackageManagers pkg="next-auth@beta" comment="# Next.js" />
+<PackageManagers pkg="@auth/express" comment="# Express" />
 
 Generate an `AUTH_SECRET` for production:
 
-```bash
-npx auth secret
-```
+<PackageManagers type="exec" pkg="auth" args="secret" />
 
 Add the generated value as `AUTH_SECRET` in your environment variables.
 

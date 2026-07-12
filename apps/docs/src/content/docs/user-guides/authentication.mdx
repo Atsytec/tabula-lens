@@ -28,7 +28,10 @@ The most common pattern for Tabula Lens authentication is JSON Web Tokens (JWT).
 import { TabulaLens, expressAdapter } from '@tabula-lens/node';
 import jwt from 'jsonwebtoken';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // Verify JWT middleware
@@ -92,7 +95,10 @@ import session from 'express-session';
 import { TabulaLens, expressAdapter } from '@tabula-lens/node';
 
 const app = express();
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 // Session middleware
 app.use(session({
@@ -150,7 +156,10 @@ For applications using OAuth 2.0 providers (Google, GitHub, Auth0, etc.).
 import { TabulaLens } from '@tabula-lens/node';
 import { OAuth2Client } from 'google-auth-library';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 const oauth2Client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 async function verifyGoogleToken(token) {

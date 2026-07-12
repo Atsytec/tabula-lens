@@ -56,7 +56,7 @@ Implement an HTTP API as the universal interface between frontend and backend. T
 
 ### Status
 
-Superseded by ADR-013: Multi-Database Support
+Superseded by ADR-007: Multi-Database Support Decision
 
 ### Context
 
@@ -68,7 +68,7 @@ Use PostgreSQL as the primary and supported database for Tabula Lens.
 
 ### Evolution
 
-This decision was later superseded by ADR-013: Multi-Database Support, which extended Tabula Lens to support MySQL, SQLite, and SQL Server in addition to PostgreSQL. PostgreSQL remains the recommended database for new projects due to its advanced features, but Tabula Lens now provides first-class support for multiple database engines through a unified query layer.
+This decision was later superseded by ADR-007: Multi-Database Support Decision, which extended Tabula Lens to support MySQL, SQLite, and SQL Server in addition to PostgreSQL. PostgreSQL remains the recommended database for new projects due to its advanced features, but Tabula Lens now provides first-class support for multiple database engines through a unified query layer.
 
 ### Consequences
 
@@ -585,50 +585,7 @@ Use Astro with Starlight theme for the documentation site, providing:
 
 ---
 
-## ADR-014: Multi-Database Support
-
-### Status
-
-Accepted
-
-### Context
-
-Tabula Lens initially supported only PostgreSQL (ADR-002). As adoption grew, users requested support for MySQL, SQLite, and SQL Server because those engines were already in use in their existing environments. Supporting multiple relational databases would broaden adoption without changing the frontend or the public `TabulaLens` API.
-
-### Decision
-
-Support PostgreSQL, MySQL, SQLite, and Microsoft SQL Server through a unified query layer:
-- Auto-detect database type from connection string
-- Use Knex.js as the query abstraction layer
-- Implement database dialect strategies for engine-specific behavior
-- Require database drivers as peer dependencies
-
-### Consequences
-
-**Positive:**
-- Broader Adoption: Users can use Tabula Lens with their existing databases
-- Unified API: Same `TabulaLens` API works across all supported engines
-- Flexibility: Local SQLite development, managed PostgreSQL/MySQL production, SQL Server enterprise deployments
-- No Breaking Changes: Existing PostgreSQL users are unaffected
-- Clear Separation: Database-specific logic isolated in dialect strategies
-
-**Negative:**
-- Complexity: Additional dialect implementations to maintain
-- Testing Overhead: Must test against multiple database engines
-- Documentation: Need to document database-specific behaviors
-- Driver Installation: Users must install database-specific drivers
-- Edge Cases: Database-specific quirks and limitations
-
-### Alternatives Considered
-
-1. **PostgreSQL Only**: Rejected because it would limit adoption in MySQL/SQL Server/SQLite environments
-2. **Separate Packages**: Rejected because it would fragment the codebase and complicate the public API
-3. **ORM Abstraction**: Rejected because most ORMs require code generation and predefined schemas
-4. **Database-Specific Builds**: Rejected because it would complicate packaging and distribution
-
----
-
-## ADR-014: Security-First Architecture
+## ADR-016: Security-First Architecture
 
 ### Status
 
@@ -671,7 +628,7 @@ Implement security-first architecture with:
 
 ---
 
-## ADR-015: Design System Source of Truth
+## ADR-017: Design System Source of Truth
 
 ### Status
 
@@ -713,7 +670,7 @@ Use the React package CSS files as the source of truth for the design system. Th
 
 ---
 
-## ADR-016: Error Handling with TabulaLensError
+## ADR-018: Error Handling with TabulaLensError
 
 ### Status
 
@@ -758,16 +715,6 @@ Implement a custom TabulaLensError class with:
 3. **No Structured Errors**: Rejected as it would make handling difficult
 
 ---
-
-## Future ADRs
-
-The following architectural decisions may need to be made in the future:
-
-- **ADR-017**: Real-Time Data Streaming (WebSocket, Server-Sent Events)
-- **ADR-018**: GraphQL API Support
-- **ADR-019**: Edge Computing Support (Cloudflare Workers, Vercel Edge)
-- **ADR-020**: Advanced Caching Strategies (CDN, Edge Caching)
-- **ADR-021**: AI/ML Integration Features
 
 ## ADR Template
 

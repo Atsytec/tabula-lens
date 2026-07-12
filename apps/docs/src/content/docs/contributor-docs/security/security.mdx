@@ -88,7 +88,10 @@ Authorization is enforced on the backend before database queries are executed.
    DATABASE_URL="postgresql://user:password@host:5432/mydb?sslmode=require"
    ```
    ```javascript
-   const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
+   const tabulaLens = new TabulaLens({
+     url: process.env.DATABASE_URL,
+     // type is auto-detected from the connection string
+   })
    ```
 
 ### Frontend Security
@@ -121,15 +124,20 @@ Authorization is enforced on the backend before database queries are executed.
 
 ```javascript
 // NEVER do this
-const tabulaLens = new TabulaLens('postgresql://user:password@host/db')
-// This exposes credentials in frontend code
+const tabulaLens = new TabulaLens({
+  url: 'postgresql://user:password@host/db',
+  // This exposes credentials in frontend code
+})
 ```
 
 ### ✅ Do: Use Backend Proxy
 
 ```javascript
 // Backend: Secure credential storage
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL)
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+})
 
 // Frontend: Query through API
 <DatabaseViewer path="/api/tabula-lens" />
@@ -515,5 +523,4 @@ npx snyk test
 - Implement the security features relevant to your use case
 - Set up security monitoring and alerting
 - Conduct regular security audits
-- Review [Authentication Guide](/user-guides/integrations/authentication) for authentication implementation
-- Check [Deployment Guide](/user-guides/production/deployment) for security deployment practices
+- Review [Authentication Guide](/user-guides/authentication) for authentication implementation

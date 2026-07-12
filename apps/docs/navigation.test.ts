@@ -14,9 +14,8 @@ describe('Navigation Structure', () => {
   it('should have User Guides section with nested structure', () => {
     expect(configContent).toContain("label: 'User Guides'");
     expect(configContent).toContain("label: 'Frontend'");
-    expect(configContent).toContain("label: 'Backend'");
-    expect(configContent).toContain("label: 'Integrations'");
-    expect(configContent).toContain("label: 'Production'");
+    expect(configContent).toContain("label: 'Authentication'");
+    expect(configContent).toContain("label: 'Database Providers'");
   });
 
   it('should have API Reference section', () => {
@@ -63,18 +62,25 @@ describe('File Structure', () => {
     expect(files.length).toBeGreaterThan(0);
   });
 
+  it('should not have user-guides/integrations directory', async () => {
+    const exists = await glob('**/*', { cwd: resolve(docsRoot, 'user-guides/integrations') }).catch(
+      () => []
+    );
+    expect(exists.length).toBe(0);
+  });
+
   it('should have user-guides/backend directory', async () => {
     const files = await glob('**/*', { cwd: resolve(docsRoot, 'user-guides/backend') });
     expect(files.length).toBeGreaterThan(0);
   });
 
-  it('should have user-guides/integrations directory', async () => {
-    const files = await glob('**/*', { cwd: resolve(docsRoot, 'user-guides/integrations') });
+  it('should have user-guides/authentication directory', async () => {
+    const files = await glob('**/*', { cwd: resolve(docsRoot, 'user-guides/authentication') });
     expect(files.length).toBeGreaterThan(0);
   });
 
-  it('should have user-guides/production directory', async () => {
-    const files = await glob('**/*', { cwd: resolve(docsRoot, 'user-guides/production') });
+  it('should have about directory', async () => {
+    const files = await glob('**/*', { cwd: resolve(docsRoot, 'about') });
     expect(files.length).toBeGreaterThan(0);
   });
 
@@ -124,39 +130,40 @@ describe('Referenced Files Exist', () => {
   const docsRoot = resolve(__dirname, 'src/content/docs');
 
   const expectedFiles = [
-    'user-guides/index.mdx',
-    'user-guides/frontend/index.mdx',
+    'index.mdx',
     'user-guides/frontend/frontend-implementation.mdx',
-    'user-guides/frontend/tanstack-query-integration.mdx',
-    'user-guides/frontend/tanstack-table-integration.mdx',
     'user-guides/frontend/styling-customization.mdx',
-    'user-guides/backend/index.mdx',
     'user-guides/backend/backend-implementation.mdx',
-    'user-guides/backend/database-integration.mdx',
-    'user-guides/backend/logging-system.mdx',
-    'user-guides/integrations/index.mdx',
-    'user-guides/integrations/authentication.mdx',
-    'user-guides/production/index.mdx',
-    'user-guides/production/deployment.mdx',
-    'user-guides/production/performance-optimization.mdx',
-    'user-guides/production/testing.mdx',
-    'contributor-docs/index.mdx',
-    'contributor-docs/architecture/index.mdx',
+    'user-guides/authentication.mdx',
+    'user-guides/authentication/authjs.mdx',
+    'user-guides/authentication/auth0.mdx',
+    'user-guides/authentication/better-auth.mdx',
+    'user-guides/authentication/clerk.mdx',
+    'user-guides/authentication/firebase-auth.mdx',
+    'user-guides/authentication/kinde.mdx',
+    'user-guides/authentication/lucia.mdx',
+    'user-guides/authentication/supabase-auth.mdx',
+    'user-guides/postgresql.mdx',
+    'user-guides/mysql.mdx',
+    'user-guides/sqlite.mdx',
+    'user-guides/mssql.mdx',
+    'user-guides/best-practices.mdx',
     'contributor-docs/architecture/architecture.mdx',
     'contributor-docs/architecture/backend-architecture.mdx',
+    'contributor-docs/architecture/backend-implementation.mdx',
     'contributor-docs/architecture/database-architecture.mdx',
     'contributor-docs/architecture/architecture-decisions.mdx',
-    'contributor-docs/component-architecture/index.mdx',
     'contributor-docs/component-architecture/react-component-architecture.mdx',
-    'contributor-docs/internal-systems/index.mdx',
     'contributor-docs/internal-systems/design-system.mdx',
     'contributor-docs/internal-systems/error-handling.mdx',
-    'contributor-docs/performance-scaling/index.mdx',
+    'contributor-docs/internal-systems/logging-system.mdx',
     'contributor-docs/performance-scaling/performance-characteristics.mdx',
     'contributor-docs/performance-scaling/caching-strategies.mdx',
     'contributor-docs/performance-scaling/scalability.mdx',
-    'contributor-docs/security/index.mdx',
     'contributor-docs/security/security.mdx',
+    'contributor-docs/testing.mdx',
+    'contributor-docs/testing-advanced.mdx',
+    'about/accessibility.mdx',
   ];
 
   expectedFiles.forEach((file) => {
@@ -192,6 +199,58 @@ describe('Internal Links Updated', () => {
     for (const file of files) {
       const content = readFileSync(resolve(docsRoot, file), 'utf-8');
       if (content.includes('](/concepts/') && !content.includes('contributor-docs')) {
+        hasOldLinks = true;
+        break;
+      }
+    }
+
+    expect(hasOldLinks).toBe(false);
+  });
+
+  it('should not have old /user-guides/integrations/authentication links', async () => {
+    const files = await glob('**/*.mdx', { cwd: docsRoot });
+    let hasOldLinks = false;
+
+    for (const file of files) {
+      const content = readFileSync(resolve(docsRoot, file), 'utf-8');
+      if (content.includes('/user-guides/integrations/authentication')) {
+        hasOldLinks = true;
+        break;
+      }
+    }
+
+    expect(hasOldLinks).toBe(false);
+  });
+
+  it('should not have old /user-guides/backend/ links', async () => {
+    const files = await glob('**/*.mdx', { cwd: docsRoot });
+    let hasOldLinks = false;
+
+    for (const file of files) {
+      const content = readFileSync(resolve(docsRoot, file), 'utf-8');
+      if (
+        content.includes('/user-guides/backend/postgresql-support') ||
+        content.includes('/user-guides/backend/mysql-support') ||
+        content.includes('/user-guides/backend/sqlite-support') ||
+        content.includes('/user-guides/backend/mssql-support') ||
+        content.includes('/user-guides/backend/database-integration') ||
+        content.includes('/user-guides/backend/logging-system')
+      ) {
+        hasOldLinks = true;
+        break;
+      }
+    }
+
+    expect(hasOldLinks).toBe(false);
+  });
+
+  it('should not have old /user-guides/production/ links', async () => {
+    const files = await glob('**/*.mdx', { cwd: docsRoot });
+    let hasOldLinks = false;
+
+    for (const file of files) {
+      const content = readFileSync(resolve(docsRoot, file), 'utf-8');
+      if (content.includes('/user-guides/production/')) {
         hasOldLinks = true;
         break;
       }

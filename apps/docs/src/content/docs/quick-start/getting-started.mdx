@@ -3,11 +3,15 @@ title: Getting Started
 description: Integrate Tabula Lens into your existing full-stack application in minutes.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 This guide will help you integrate Tabula Lens into your existing full-stack application. Tabula Lens provides a secure, interactive database viewer that works with your current database, backend framework, and React frontend.
 
-> 💡 **Quick Reference**: For installation and basic usage examples, check out the package READMEs:
-> - [@tabula-lens/node README](https://github.com/Atsytec/tabula-lens/blob/main/packages/node/README.md)
-> - [@tabula-lens/react README](https://github.com/Atsytec/tabula-lens/blob/main/packages/react/README.md)
+:::tip[Quick Reference]
+For installation and basic usage examples, check out the package READMEs:
+- [@tabula-lens/node README](https://github.com/Atsytec/tabula-lens/blob/main/packages/node/README.md)
+- [@tabula-lens/react README](https://github.com/Atsytec/tabula-lens/blob/main/packages/react/README.md)
+:::
 
 ## Prerequisites
 
@@ -30,27 +34,18 @@ You'll add:
 
 Install the Tabula Lens backend package in your backend project:
 
-```bash
-npm install @tabula-lens/node
-```
+<PackageManagers pkg="@tabula-lens/node" />
 
 Also install the database driver for your database:
 
-```bash
-# PostgreSQL
-npm install pg
+<PackageManagers pkg="pg" comment="# PostgreSQL" />
+<PackageManagers pkg="mysql2" comment="# MySQL/MariaDB" />
+<PackageManagers pkg="better-sqlite3" comment="# SQLite" />
+<PackageManagers pkg="tedious" comment="# SQL Server" />
 
-# MySQL/MariaDB
-npm install mysql2
-
-# SQLite
-npm install better-sqlite3
-
-# SQL Server
-npm install tedious
-```
-
-> **Note:** Tabula Lens auto-detects your database type from the connection string, so you only need to install the driver for your specific database.
+:::note[Auto-Detection]
+Tabula Lens auto-detects your database type from the connection string, so you only need to install the driver for your specific database.
+:::
 
 ## Step 2: Add Backend API Endpoint
 
@@ -65,7 +60,10 @@ import TabulaLens, { expressAdapter } from '@tabula-lens/node';
 const app = express();
 
 // Initialize Tabula Lens with your database connection
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 // Add the Tabula Lens middleware
 app.use('/api/tabula-lens', expressAdapter(tabulaLens));
@@ -80,7 +78,10 @@ import TabulaLens, { fastifyAdapter } from '@tabula-lens/node';
 const fastify = Fastify();
 
 // Initialize Tabula Lens
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 // Add the Tabula Lens route
 fastify.route({
@@ -99,21 +100,24 @@ import TabulaLens, { koaAdapter } from '@tabula-lens/node';
 const app = new Koa();
 
 // Initialize Tabula Lens
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 // Add the Tabula Lens middleware
 app.use(koaAdapter(tabulaLens));
 ```
 
-> **Note:** Tabula Lens supports Express, Fastify, Koa, Hapi, Restify, Hono, Elysia, Next.js, Remix, SvelteKit, TanStack Start, and Fresh. See the [Backend Architecture](/contributor-docs/architecture/backend-architecture/) page for the full list.
+:::note[Framework Support]
+Tabula Lens supports Express, Fastify, Koa, Hapi, Restify, Hono, Elysia, Next.js, Remix, SvelteKit, TanStack Start, and Fresh. See the [Backend Architecture](/contributor-docs/architecture/backend-architecture/) page for the full list.
+:::
 
 ## Step 3: Install Frontend Package
 
 Install the Tabula Lens React package in your frontend project:
 
-```bash
-npm install @tabula-lens/react
-```
+<PackageManagers pkg="@tabula-lens/react" />
 
 ## Step 4: Add Database Viewer Component
 

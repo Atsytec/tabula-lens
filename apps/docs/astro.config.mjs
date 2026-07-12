@@ -79,79 +79,37 @@ export default defineConfig({
 					label: 'User Guides',
 					items: [
 						{
-							label: 'Overview',
-							slug: 'user-guides',
-						},
-						{
 							label: 'Frontend',
 							items: [
-								{ label: 'Overview', slug: 'user-guides/frontend' },
-								{ label: 'Frontend Implementation', slug: 'user-guides/frontend/frontend-implementation' },
-								{ label: 'TanStack Query Integration', slug: 'user-guides/frontend/tanstack-query-integration' },
-								{ label: 'TanStack Table Integration', slug: 'user-guides/frontend/tanstack-table-integration' },
+								{ label: 'Frontend Setup', slug: 'user-guides/frontend/frontend-implementation' },
 								{ label: 'Styling Customization', slug: 'user-guides/frontend/styling-customization' },
 							],
 						},
+						{ label: 'Backend Setup', slug: 'user-guides/backend/backend-implementation' },
 						{
-							label: 'Backend',
+							label: 'Database Providers',
 							items: [
-								{ label: 'Overview', slug: 'user-guides/backend' },
-								{ label: 'Backend Implementation', slug: 'user-guides/backend/backend-implementation' },
-								{
-									label: 'Database Integration',
-									items: [
-										{ label: 'Overview', slug: 'user-guides/backend/database-integration' },
-										{ label: 'MySQL', slug: 'user-guides/backend/mysql-support' },
-										{ label: 'SQLite', slug: 'user-guides/backend/sqlite-support' },
-										{ label: 'SQL Server', slug: 'user-guides/backend/mssql-support' },
-									],
-								},
-								{ label: 'Logging System', slug: 'user-guides/backend/logging-system' },
+								{ label: 'PostgreSQL', slug: 'user-guides/postgresql' },
+								{ label: 'MySQL', slug: 'user-guides/mysql' },
+								{ label: 'SQLite', slug: 'user-guides/sqlite' },
+								{ label: 'SQL Server', slug: 'user-guides/mssql' },
 							],
 						},
 						{
-							label: 'Integrations',
+							label: 'Authentication',
 							items: [
-								{ label: 'Overview', slug: 'user-guides/integrations' },
-								{
-									label: 'Authentication',
-									items: [
-										{ label: 'Overview', slug: 'user-guides/integrations/authentication' },
-										{ label: 'Auth.js', slug: 'user-guides/integrations/authjs' },
-										{ label: 'Auth0', slug: 'user-guides/integrations/auth0' },
-										{ label: 'Better Auth', slug: 'user-guides/integrations/better-auth' },
-										{ label: 'Clerk', slug: 'user-guides/integrations/clerk' },
-										{ label: 'Firebase Auth', slug: 'user-guides/integrations/firebase-auth' },
-										{ label: 'Kinde', slug: 'user-guides/integrations/kinde' },
-										{ label: 'Lucia Auth', slug: 'user-guides/integrations/lucia' },
-										{ label: 'Supabase Auth', slug: 'user-guides/integrations/supabase-auth' },
-									],
-								},
-								{
-									label: 'Databases',
-									items: [
-										{ label: 'Neon', slug: 'user-guides/integrations/neon' },
-										{ label: 'Supabase Database', slug: 'user-guides/integrations/supabase' },
-									],
-								},
-								{
-									label: 'Developer Tools',
-									items: [
-										{ label: 'ORM Coexistence', slug: 'user-guides/integrations/orm-coexistence' },
-										{ label: 'Sentry', slug: 'user-guides/integrations/sentry' },
-									],
-								},
+								{ label: 'Overview', slug: 'user-guides/authentication' },
+								{ label: 'Auth.js', slug: 'user-guides/authentication/authjs' },
+								{ label: 'Auth0', slug: 'user-guides/authentication/auth0' },
+								{ label: 'Better Auth', slug: 'user-guides/authentication/better-auth' },
+								{ label: 'Clerk', slug: 'user-guides/authentication/clerk' },
+								{ label: 'Firebase Auth', slug: 'user-guides/authentication/firebase-auth' },
+								{ label: 'Kinde', slug: 'user-guides/authentication/kinde' },
+								{ label: 'Lucia Auth', slug: 'user-guides/authentication/lucia' },
+								{ label: 'Supabase Auth', slug: 'user-guides/authentication/supabase-auth' },
 							],
 						},
-						{
-							label: 'Production',
-							items: [
-								{ label: 'Overview', slug: 'user-guides/production' },
-								{ label: 'Deployment', slug: 'user-guides/production/deployment' },
-								{ label: 'Performance Optimization', slug: 'user-guides/production/performance-optimization' },
-								{ label: 'Testing', slug: 'user-guides/production/testing' },
-							],
-						},
+						{ label: 'Best Practices', slug: 'user-guides/best-practices' },
 					],
 				},
 				{
@@ -165,64 +123,77 @@ export default defineConfig({
 				{
 					label: 'Contributor Docs',
 					items: [
-						{
-							label: 'Overview',
-							slug: 'contributor-docs',
-						},
+						{ label: 'Overview', slug: 'contributor-docs/onboarding' },
+						{ label: 'Contributing to Documentation', slug: 'contributing' },
 						{
 							label: 'Architecture',
 							items: [
-								{ label: 'Overview', slug: 'contributor-docs/architecture' },
 								{ label: 'Architecture Overview', slug: 'contributor-docs/architecture/architecture' },
-								{ label: 'Backend Architecture', slug: 'contributor-docs/architecture/backend-architecture' },
-								{ label: 'Database Architecture', slug: 'contributor-docs/architecture/database-architecture' },
-								{ label: 'Architecture Decision Records', slug: 'contributor-docs/architecture/architecture-decisions' },
+								{
+									label: 'Backend Architecture',
+									slug: 'contributor-docs/architecture/backend-architecture',
+								},
+								{
+									label: 'Backend Adapter Implementation',
+									slug: 'contributor-docs/architecture/backend-implementation',
+								},
+								{
+									label: 'Database Architecture',
+									slug: 'contributor-docs/architecture/database-architecture',
+								},
+								{
+									label: 'Architecture Decision Records',
+									slug: 'contributor-docs/architecture/architecture-decisions',
+								},
 							],
 						},
 						{
 							label: 'Component Architecture',
 							items: [
-								{ label: 'Overview', slug: 'contributor-docs/component-architecture' },
-								{ label: 'React Component Architecture', slug: 'contributor-docs/component-architecture/react-component-architecture' },
+								{
+									label: 'React Component Architecture',
+									slug: 'contributor-docs/component-architecture/react-component-architecture',
+								},
 							],
 						},
 						{
 							label: 'Internal Systems',
 							items: [
-								{ label: 'Overview', slug: 'contributor-docs/internal-systems' },
 								{ label: 'Design System', slug: 'contributor-docs/internal-systems/design-system' },
 								{ label: 'Error Handling', slug: 'contributor-docs/internal-systems/error-handling' },
+								{ label: 'Logging System', slug: 'contributor-docs/internal-systems/logging-system' },
 							],
 						},
 						{
 							label: 'Performance & Scaling',
 							items: [
-								{ label: 'Overview', slug: 'contributor-docs/performance-scaling' },
-								{ label: 'Performance Characteristics', slug: 'contributor-docs/performance-scaling/performance-characteristics' },
-								{ label: 'Caching Strategies', slug: 'contributor-docs/performance-scaling/caching-strategies' },
+								{
+									label: 'Performance Characteristics',
+									slug: 'contributor-docs/performance-scaling/performance-characteristics',
+								},
+								{
+									label: 'Caching Strategies',
+									slug: 'contributor-docs/performance-scaling/caching-strategies',
+								},
 								{ label: 'Scalability', slug: 'contributor-docs/performance-scaling/scalability' },
 							],
 						},
 						{
 							label: 'Security',
+							items: [{ label: 'Security Model', slug: 'contributor-docs/security/security' }],
+						},
+						{
+							label: 'Testing',
 							items: [
-								{ label: 'Overview', slug: 'contributor-docs/security' },
-								{ label: 'Security Model', slug: 'contributor-docs/security/security' },
+								{ label: 'Testing Guide', slug: 'contributor-docs/testing' },
+								{ label: 'Advanced Testing', slug: 'contributor-docs/testing-advanced' },
 							],
 						},
 					],
 				},
 				{
-					label: 'Contributing',
-					items: [
-						{ label: 'Contributing to Documentation', slug: 'contributing' },
-					],
-				},
-				{
 					label: 'About',
-					items: [
-						{ label: 'Accessibility', slug: 'accessibility' },
-					],
+					items: [{ label: 'Accessibility', slug: 'about/accessibility' }],
 				},
 			],
 		}),

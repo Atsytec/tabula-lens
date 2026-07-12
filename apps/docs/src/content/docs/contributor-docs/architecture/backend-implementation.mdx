@@ -1,0 +1,269 @@
+---
+title: Backend Adapter Implementation
+description: Guide for contributors on how to implement a new backend adapter for Tabula Lens.
+---
+
+# Backend Adapter Implementation
+
+This guide explains how to implement a new framework adapter for `@tabula-lens/node`. Adapters are thin wrappers that translate a framework's native request/response objects into the framework-agnostic `RequestContext` / `ResponseContext` contract used by the `TabulaLens` core.
+
+## Core Concepts
+
+### RequestContext and ResponseContext
+
+All adapters communicate with the `TabulaLens` core via two interfaces defined in `TabulaLens.ts`:
+
+```typescript
+export interface RequestContext {
+  method: string;                    // HTTP verb: 'GET', 'POST', etc.
+  path: string;                      // URL path (without base, e.g. '/tables')
+  query: Record<string, string>;     // Parsed query string parameters
+  body?: unknown;                    // Parsed request body (POST/PUT)
+}
+
+export interface ResponseContext {
+  status: number;                    // HTTP status code (200, 400, 404, etc.)
+  headers: Record<string, string>;   // Response headers to set
+  body: unknown;                     // JSON-serializable response body
+}
+```
+
+The adapter's job is to:
+
+1. Extract `RequestContext` fields from the framework's native request object
+2. Call `await tabulaLens.handle(requestContext)`
+3. Apply the `ResponseContext` fields to the framework's native response object
+
+### TabulaLens.handle()
+
+```typescript
+class TabulaLens {
+  async handle(requestContext: RequestContext): Promise<ResponseContext>
+}
+```
+
+This is the single entry point for all adapters. It handles routing, query execution, and error formatting. If an unhandled error propagates out of `handle()`, the adapter must catch it and return a `500` response.
+
+### Logger
+
+Each adapter should retrieve the logger from the `TabulaLens` instance to participate in the structured logging system:
+
+```typescript
+const logger = tabulaLens.getLogger();
+```
+
+Use `generateId()` from `../logger` to create a per-request correlation ID for tracing logs across the request lifecycle:
+
+```typescript
+import { generateId } from '../logger';
+const adapterRequestId = generateId();
+```
+
+## File Location
+
+New adapters live in `packages/node/src/adapters/`. The filename should match the framework name:
+
+```
+packages/node/src/adapters/
+├── express.ts
+├── express4.ts
+├── fastify.ts
+├── hono.ts
+├── next.ts
+├── your-framework.ts    ← new adapter
+└── index.ts
+```
+
+After creating the file, export the function from `packages/node/src/adapters/index.ts` and from the package's main `packages/node/src/index.ts`.
+
+## Anatomy of an Adapter
+
+Here is the Express 5 adapter as a reference implementation:
+
+```typescript
+import type { RequestHandler } from 'express';
+import { TabulaLens, RequestContext } from '../TabulaLens';
+import { generateId } from '../logger';
+
+export function expressAdapter(tabulaLens: TabulaLens): RequestHandler {
+  return async (req, res, next) => {
+    const adapterRequestId = generateId();
+    const logger = tabulaLens.getLogger();
+
+    // 1. Log the incoming request
+    logger.debug('Express adapter received request', {
+      adapterRequestId,
+      method: req.method,
+      path: req.path,
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+
+    try {
+      // 2. Build RequestContext from framework request
+      const requestContext: RequestContext = {
+        method: req.method,
+        path: req.path,
+        query: req.query as Record<string, string>,
+        body: req.body,
+      };
+
+      // 3. Delegate to TabulaLens core
+      const responseContext = await tabulaLens.handle(requestContext);
+
+      // 4. Log the outgoing response
+      logger.debug('Express adapter sending response', {
+        adapterRequestId,
+        status: responseContext.status,
+        contentType: responseContext.headers['Content-Type'],
+      });
+
+      // 5. Apply ResponseContext to framework response
+      res.status(responseContext.status);
+      Object.entries(responseContext.headers).forEach(([key, value]) => {
+        res.setHeader(key, value);
+      });
+      res.json(responseContext.body);
+
+    } catch (error) {
+      // 6. Handle unexpected errors
+      logger.error('Express adapter error', {
+        adapterRequestId,
+        method: req.method,
+        path: req.path,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      next(error);
+    }
+  };
+}
+```
+
+## Checklist for a New Adapter
+
+Follow this checklist when implementing a new adapter:
+
+### Required
+
+- [ ] Accept `tabulaLens: TabulaLens` as the first parameter
+- [ ] Extract `method`, `path`, `query`, and `body` into a `RequestContext`
+- [ ] Call `await tabulaLens.handle(requestContext)` and apply the returned `ResponseContext`
+- [ ] Set response `status`, all `headers`, and the `body`
+- [ ] Wrap everything in a `try/catch` and return a `500` on unexpected errors
+- [ ] Use `tabulaLens.getLogger()` for structured log output
+- [ ] Generate a per-request `adapterRequestId` with `generateId()`
+- [ ] Export the function from `adapters/index.ts` and the root `index.ts`
+
+### Recommended
+
+- [ ] Log `debug` at the start of the request with method, path, IP, and user agent
+- [ ] Log `debug` before sending the response with status and content type
+- [ ] Log `error` in the catch block with the error message and stack trace
+- [ ] Write a basic integration test in `packages/node/src/` (see existing `*.test.ts` files)
+
+## Path Extraction
+
+The `path` field in `RequestContext` must be the **relative path without the mount prefix**. For example, if the adapter is mounted at `/api/tabula-lens`, a request to `/api/tabula-lens/tables` should produce `path: '/tables'`.
+
+Most frameworks expose the matched sub-path directly (e.g. `req.path` in Express after `app.use('/prefix', adapter)`). For frameworks that expose the full URL, strip the prefix manually:
+
+```typescript
+// Example: strip a known prefix if required
+const path = req.url.replace(/^\/api\/tabula-lens/, '') || '/';
+```
+
+For frameworks that use URL routing with path parameters, use the URL API:
+
+```typescript
+const url = new URL(req.url || '/', `http://localhost`);
+const path = url.pathname;
+const query = Object.fromEntries(url.searchParams.entries());
+```
+
+See `packages/node/src/adapters/native.ts` for a complete example of this pattern.
+
+## Body Parsing
+
+Adapters should not parse the body themselves — instead rely on the framework's built-in body parsing middleware being registered before the adapter. If a framework does not provide automatic body parsing (e.g. the native HTTP adapter), accept a `parseBody` option:
+
+```typescript
+export interface YourAdapterOptions {
+  parseBody?: (req: NativeRequest) => Promise<unknown>;
+}
+
+export function yourAdapter(tabulaLens: TabulaLens, options?: YourAdapterOptions) {
+  return async (req, res) => {
+    const body = options?.parseBody ? await options.parseBody(req) : undefined;
+    const requestContext: RequestContext = { ..., body };
+    ...
+  };
+}
+```
+
+## Error Handling
+
+`TabulaLens.handle()` catches all `TabulaLensError` instances internally and returns appropriate `4xx` responses in the `ResponseContext`. Adapters only need to handle truly unexpected errors (bugs, network failures, etc.) in the catch block.
+
+For frameworks with their own error middleware (e.g. Express's `next(error)`), forward the error rather than swallowing it:
+
+```typescript
+} catch (error) {
+  next(error);  // Let Express error middleware handle it
+}
+```
+
+For frameworks without error middleware, construct a plain 500 response:
+
+```typescript
+} catch (error) {
+  res.statusCode = 500;
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify({ error: 'INTERNAL_SERVER_ERROR', message: 'An unexpected error occurred' }));
+}
+```
+
+## Testing the Adapter
+
+Add a test file alongside the adapter or in the existing test suite. At minimum, test that:
+
+1. A valid request reaches `tabulaLens.handle()` with the correct `RequestContext`
+2. The response status, headers, and body from `ResponseContext` are applied correctly
+3. Errors from `handle()` are forwarded to the framework's error handling mechanism
+
+Refer to the existing adapter tests and integration tests in `packages/node/src/` for examples.
+
+## Registering the Adapter
+
+Once implemented, register the adapter in the following locations:
+
+**`packages/node/src/adapters/index.ts`**
+
+```typescript
+export { yourFrameworkAdapter } from './your-framework';
+```
+
+**`packages/node/src/index.ts`**
+
+```typescript
+export { yourFrameworkAdapter } from './adapters/your-framework';
+```
+
+**`packages/node/package.json`** — ensure the peer dependency for the framework is listed under `peerDependencies` and `peerDependenciesMeta` (marked optional):
+
+```json
+{
+  "peerDependencies": {
+    "your-framework": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "your-framework": { "optional": true }
+  }
+}
+```
+
+## See Also
+
+- [Backend Architecture](/contributor-docs/architecture/backend-architecture) — high-level architecture and all supported adapters
+- [Architecture Overview](/contributor-docs/architecture/architecture) — overall system design
+- [Node API Reference](/api/node) — public API for `@tabula-lens/node`

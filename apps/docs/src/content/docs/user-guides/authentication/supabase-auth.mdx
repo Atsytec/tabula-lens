@@ -3,6 +3,8 @@ title: Supabase Auth Integration
 description: Integrate Supabase Auth with Tabula Lens to secure your database endpoints.
 ---
 
+import { PackageManagers } from 'starlight-package-managers'
+
 # Supabase Auth Integration
 
 [Supabase Auth](https://supabase.com/docs/guides/auth) is a full-featured authentication system built into Supabase. This guide shows how to protect your Tabula Lens endpoints using Supabase session validation and pass access tokens to the `DatabaseViewer` component.
@@ -11,13 +13,8 @@ description: Integrate Supabase Auth with Tabula Lens to secure your database en
 
 Install the appropriate Supabase package for your framework:
 
-```bash
-# Next.js (App Router — uses @supabase/ssr for server-side session handling)
-npm install @supabase/supabase-js @supabase/ssr
-
-# Express
-npm install @supabase/supabase-js
-```
+<PackageManagers pkg="@supabase/supabase-js @supabase/ssr" comment="# Next.js (App Router — uses @supabase/ssr for server-side session handling)" />
+<PackageManagers pkg="@supabase/supabase-js" comment="# Express" />
 
 You'll also need a Supabase project with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or their non-public equivalents) set in your environment.
 

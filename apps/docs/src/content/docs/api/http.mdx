@@ -7,6 +7,13 @@ description: Complete HTTP API reference for Tabula Lens.
 
 The HTTP API is the universal interface contract that connects Tabula Lens frontends and backends. This API follows RESTful conventions and provides a standardized way to query database tables with pagination, filtering, and sorting capabilities.
 
+:::tip[Related Documentation]
+- [React API](/api/react) - Frontend component that consumes this API
+- [Node API](/api/node) - Backend implementation that provides this API
+- [Authentication Guide](/user-guides/authentication) - How to secure this API
+- [Backend Implementation](/user-guides/backend/backend-implementation) - How to implement this API in your backend
+:::
+
 ## Available Endpoints
 
 When the adapter is mounted at `/api/tabula-lens` (the recommended base path), three sub-routes are exposed:
@@ -518,7 +525,7 @@ The HTTP API is designed to be implementation-agnostic:
 
 - **Frontend**: Any frontend can consume this API (React is currently supported, others can be implemented by consuming the HTTP API)
 - **Backend**: Any backend can implement this API (Node.js with Express, Fastify, Koa, Hono, and others are currently supported)
-- **Database**: Any database can be supported (PostgreSQL is the primary supported database)
+- **Database**: Any database can be supported (PostgreSQL, MySQL, SQLite, and SQL Server are currently supported)
 
 This allows you to mix and match implementations while maintaining a stable interface contract.
 

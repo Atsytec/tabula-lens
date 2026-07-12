@@ -80,7 +80,10 @@ import express from 'express';
 import { TabulaLens, expressAdapter } from '@tabula-lens/node';
 
 const app = express();
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 app.use('/api/tabula-lens', expressAdapter(tabulaLens));
 
@@ -96,7 +99,10 @@ import express from 'express';
 import { TabulaLens, express4Adapter } from '@tabula-lens/node';
 
 const app = express();
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 app.use('/api/tabula-lens', express4Adapter(tabulaLens));
 
@@ -112,7 +118,10 @@ import Fastify from 'fastify';
 import { TabulaLens, fastifyAdapter } from '@tabula-lens/node';
 
 const fastify = Fastify();
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 fastify.all('/api/tabula-lens/*', fastifyAdapter(tabulaLens));
 
@@ -128,7 +137,10 @@ import Koa from 'koa';
 import { TabulaLens, koaAdapter } from '@tabula-lens/node';
 
 const app = new Koa();
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 app.use(koaAdapter(tabulaLens));
 
@@ -144,7 +156,10 @@ import Hapi from '@hapi/hapi';
 import { TabulaLens, hapiAdapter } from '@tabula-lens/node';
 
 const server = Hapi.server({ port: 3002 });
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 server.route({
   method: 'GET',
@@ -164,7 +179,10 @@ import restify from 'restify';
 import { TabulaLens, restifyAdapter } from '@tabula-lens/node';
 
 const server = restify.createServer();
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 server.get('/api/tabula-lens/*', restifyAdapter(tabulaLens));
 
@@ -183,7 +201,10 @@ These frameworks provide integrated full-stack solutions:
 // app/api/tabula-lens/[...path]/route.ts  (App Router)
 import { TabulaLens, createNextRouteHandler } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 const handler = createNextRouteHandler(tabulaLens);
 
 export { handler as GET };
@@ -196,7 +217,10 @@ export { handler as GET };
 ```typescript
 import { TabulaLens, createTanStackStartHandler } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 const handler = createTanStackStartHandler(tabulaLens);
 
 export const APIRoute = createAPIFileRoute('/api/tabula-lens/$')({
@@ -212,7 +236,10 @@ export const APIRoute = createAPIFileRoute('/api/tabula-lens/$')({
 // app/routes/api.tabula-lens.$.ts
 import { TabulaLens, createRemixHandler } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 const handler = createRemixHandler(tabulaLens);
 
 export const loader = ({ request }: { request: Request }) => handler(request);
@@ -226,7 +253,10 @@ export const loader = ({ request }: { request: Request }) => handler(request);
 // src/routes/api/tabula-lens/[...path]/+server.ts
 import { TabulaLens, createSvelteKitHandler } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 const handler = createSvelteKitHandler(tabulaLens);
 
 export const GET = (event: { request: Request; url: URL }) => handler(event);
@@ -245,7 +275,10 @@ import { Hono } from 'hono';
 import { TabulaLens, createHonoMiddleware } from '@tabula-lens/node';
 
 const app = new Hono();
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 app.all('/api/tabula-lens/*', createHonoMiddleware(tabulaLens));
 
@@ -261,7 +294,10 @@ import Elysia from 'elysia';
 import { TabulaLens, createElysiaHandler } from '@tabula-lens/node';
 
 const app = new Elysia();
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 app.all('/api/tabula-lens/*', createElysiaHandler(tabulaLens));
 
@@ -276,7 +312,10 @@ app.listen(3002);
 // routes/api/tabula-lens/[...path].ts
 import { TabulaLens, createFreshHandler } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 const handler = createFreshHandler(tabulaLens);
 
 export const handler = { GET: (req: Request) => handler(req) };
@@ -292,7 +331,10 @@ For custom implementations or unsupported frameworks:
 import http from 'http';
 import { TabulaLens, nativeAdapter } from '@tabula-lens/node';
 
-const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  // type is auto-detected from the connection string
+});
 
 // Use the native adapter for custom HTTP server implementations
 const handler = nativeAdapter(tabulaLens);
@@ -306,14 +348,27 @@ The core `TabulaLens` class provides the main functionality:
 ### Constructor
 
 ```typescript
-constructor(databaseUrl: string, options?: TabulaLensOptions)
+constructor(config: string | TabulaLensConfig, options?: TabulaLensOptions)
 ```
 
 **Parameters:**
-- `databaseUrl`: PostgreSQL connection string
-- `options`: Optional configuration object
+- `config`: Database connection string or config object
+- `options`: Optional configuration object (only used when config is a string)
 
-**Options:**
+**Config Object:**
+```typescript
+interface TabulaLensConfig {
+  url: string;
+  type?: 'pg' | 'mysql' | 'sqlite' | 'mssql';
+  logger?: Logger;
+  logLevel?: 'debug' | 'info' | 'warn' | 'error' | 'silent';
+  logFormat?: 'json' | 'text' | 'pretty';
+  maxConnections?: number;
+  connectionTimeout?: number;
+}
+```
+
+**Options (deprecated, use config object instead):**
 ```typescript
 interface TabulaLensOptions {
   logger?: Logger;
