@@ -7,6 +7,12 @@ description: Complete API reference for the @tabula-lens/node package.
 
 Complete API reference for the `@tabula-lens/node` package.
 
+> 📚 **Related Documentation**
+> - [HTTP API](/api/http) - API contract that this implementation provides
+> - [Backend Implementation](/user-guides/backend/backend-implementation) - How to set up Tabula Lens in your backend
+> - [Database Integration](/user-guides/backend/database-integration) - Database connection configuration
+> - [Logging System](/user-guides/backend/logging-system) - How to configure logging
+
 ## Installation
 
 ```bash
@@ -756,6 +762,118 @@ export type {
   ColumnInfo
 };
 ```
+
+## Dialect Strategy API
+
+The dialect strategy system provides database-specific operations for each supported database engine. This is used internally by `TabulaLens` but can also be used directly for advanced use cases.
+
+### DialectStrategy Interface
+
+```typescript
+interface DialectStrategy {
+  getTables(db: Knex): Promise<string[]>;
+  getColumns(db: Knex, table: string): Promise<ColumnInfo[]>;
+  getFilterableTypes(): string[];
+  getLikeOperator(): 'LIKE' | 'ILIKE';
+}
+```
+
+#### Methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getTables(db)` | `Promise<string[]>` | Get all table names in the database |
+| `getColumns(db, table)` | `Promise<ColumnInfo[]>` | Get column metadata for a specific table |
+| `getFilterableTypes()` | `string[]` | Get data type names that support text filtering |
+| `getLikeOperator()` | `'LIKE' \| 'ILIKE'` | Get the LIKE operator for case-insensitive matching |
+
+### ColumnInfo Interface
+
+```typescript
+interface ColumnInfo {
+  name: string;
+  type: string;
+}
+```
+
+Represents column metadata returned by dialect implementations.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `string` | Column name |
+| `type` | `string` | Data type (e.g., `'integer'`, `'character varying'`, `'text'`) |
+
+### createDialect Function
+
+```typescript
+function createDialect(type: DatabaseType): DialectStrategy
+```
+
+Factory function to create a dialect strategy instance based on database type.
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `type` | `DatabaseType` | Yes | Database type (`'pg'`, `'mysql'`, `'sqlite'`, `'mssql'`) |
+
+#### Returns
+
+A `DialectStrategy` instance for the specified database type.
+
+#### Example
+
+```typescript
+import { createDialect } from '@tabula-lens/node';
+import { DatabaseType } from '@tabula-lens/node';
+
+// Create a PostgreSQL dialect
+const postgresDialect = createDialect('pg');
+
+// Create a MySQL dialect
+const mysqlDialect = createDialect('mysql');
+
+// Use the dialect
+const tables = await postgresDialect.getTables(knexInstance);
+const columns = await postgresDialect.getColumns(knexInstance, 'users');
+const filterableTypes = postgresDialect.getFilterableTypes();
+const likeOperator = postgresDialect.getLikeOperator(); // 'ILIKE' for PostgreSQL
+```
+
+### Direct Dialect Usage
+
+You can also use the dialect classes directly if needed:
+
+```typescript
+import { PostgresDialect, MySQLDialect, SQLiteDialect, MSSQLDialect } from '@tabula-lens/node';
+
+// Use PostgreSQL dialect directly
+const postgresDialect = new PostgresDialect();
+const tables = await postgresDialect.getTables(knexInstance);
+```
+
+### Dialect-Specific Behavior
+
+Each dialect implements the `DialectStrategy` interface with database-specific behavior:
+
+| Database | LIKE Operator | Filterable Types Example |
+|----------|---------------|-------------------------|
+| PostgreSQL | `ILIKE` (case-insensitive) | `['character varying', 'text', 'varchar', 'char', 'character', 'uuid']` |
+| MySQL | `LIKE` (case-insensitive by default) | `['varchar', 'text', 'tinytext', 'mediumtext', 'longtext', 'char']` |
+| SQLite | `LIKE` (case-insensitive by default) | `['TEXT', 'text']` |
+| SQL Server | `LIKE` (case-insensitive by default) | `['varchar', 'nvarchar', 'text', 'char', 'nchar']` |
+
+### Advanced Use Cases
+
+The dialect strategy system is useful for:
+
+- Building custom database introspection tools
+- Implementing custom query builders
+- Creating database-specific migrations
+- Building admin panels with dynamic column filtering
+- Implementing type-safe database operations
+
+For most use cases, you don't need to interact with dialects directly — `TabulaLens` handles this internally. The dialect API is primarily for advanced scenarios requiring direct database introspection.
 
 ## Complete Example
 

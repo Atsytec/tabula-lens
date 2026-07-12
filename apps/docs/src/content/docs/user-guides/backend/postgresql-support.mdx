@@ -1,0 +1,469 @@
+---
+title: PostgreSQL Support
+description: Learn how to connect Tabula Lens to your PostgreSQL database with comprehensive configuration and optimization guides.
+---
+
+# PostgreSQL Support
+
+This guide covers how to connect Tabula Lens to your PostgreSQL database with comprehensive configuration, optimization, and troubleshooting information.
+
+## Supported Databases
+
+Tabula Lens supports PostgreSQL databases through Knex.js using the `pg` driver. This includes:
+- PostgreSQL (all supported versions)
+- CockroachDB (PostgreSQL-compatible)
+- Amazon RDS for PostgreSQL
+- Google Cloud SQL for PostgreSQL
+- Azure Database for PostgreSQL
+- Supabase PostgreSQL
+- Neon PostgreSQL
+
+## Installation
+
+Install the Tabula Lens Node package and the PostgreSQL driver:
+
+```bash
+npm install @tabula-lens/node pg
+```
+
+## Database Connection
+
+### Connection String Format
+
+Set your database connection string as an environment variable:
+
+```bash
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
+```
+
+You can also use the shorter `postgres://` scheme:
+
+```bash
+DATABASE_URL="postgres://user:password@localhost:5432/mydb"
+```
+
+### Connection String Components
+
+A PostgreSQL connection string has the following format:
+
+```
+postgresql://[user[:password]@][host][:port][/database][?parameters]
+```
+
+**Components:**
+
+- `user` - Database username
+- `password` - Database password (optional)
+- `host` - Database host (default: localhost)
+- `port` - Database port (default: 5432)
+- `database` - Database name
+- `parameters` - Additional connection parameters
+
+### Connection Parameters
+
+Common connection parameters:
+
+```bash
+# SSL mode
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?sslmode=require"
+
+# Connection pool settings
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?connectionLimit=10"
+
+# Connection timeout
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?connectionTimeoutMillis=10000"
+
+# Statement timeout
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?statement_timeout=30000"
+
+# Application name (useful for monitoring)
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?application_name=tabula-lens"
+```
+
+### SSL Configuration
+
+PostgreSQL supports multiple SSL modes:
+
+```bash
+# Disable SSL (not recommended for production)
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?sslmode=disable"
+
+# Allow SSL (non-encrypted connection allowed)
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?sslmode=allow"
+
+# Prefer SSL (try SSL, fall back to non-SSL)
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?sslmode=prefer"
+
+# Require SSL (SSL required, but certificate not verified)
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?sslmode=require"
+
+# Verify CA (SSL required with CA verification)
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?sslmode=verify-ca"
+
+# Verify Full (SSL required with CA and hostname verification)
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?sslmode=verify-full"
+```
+
+For production deployments, use `sslmode=verify-full` to ensure secure connections.
+
+## Connection Patterns
+
+### Local Development
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL);
+
+// Test connection
+const tables = await tabulaLens.getTables();
+console.log('Available tables:', tables);
+```
+
+### Production
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens(process.env.DATABASE_URL, {
+  logLevel: 'error',
+  logFormat: 'json',
+  sensitiveDataMasking: true,
+  enableRequestLogging: true,
+});
+```
+
+### With Config Object
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens({
+  url: process.env.DATABASE_URL,
+  type: 'pg',
+  logLevel: 'info',
+  enableQueryLogging: true,
+});
+```
+
+### With SSL
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens({
+  url: 'postgresql://user:password@localhost:5432/mydb?sslmode=verify-full',
+  type: 'pg',
+  logLevel: 'error',
+});
+```
+
+## Managed PostgreSQL Services
+
+### Supabase
+
+```bash
+# Supabase connection string format
+DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"
+```
+
+> ⚠️ **Important**: When using Supabase, ensure you have enabled Row Level Security (RLS) policies or use a service role key with appropriate permissions. See the [Supabase integration guide](/user-guides/integrations/supabase) for more details.
+
+### Neon
+
+```bash
+# Neon connection string format
+DATABASE_URL="postgresql://[user]:[password]@[neon-host]/[database]?sslmode=require"
+```
+
+Neon requires SSL connections. Always include `sslmode=require` in your connection string.
+
+### Amazon RDS
+
+```bash
+# Amazon RDS PostgreSQL connection string
+DATABASE_URL="postgresql://user:password@your-instance.rds.amazonaws.com:5432/mydb?sslmode=require"
+```
+
+For RDS, use the endpoint provided in the RDS console and ensure your security group allows connections from your application server.
+
+### Google Cloud SQL
+
+```bash
+# Google Cloud SQL PostgreSQL connection string
+DATABASE_URL="postgresql://user:password@your-instance:5432/mydb?sslmode=require"
+```
+
+For Cloud SQL, use the Cloud SQL proxy or direct connection with appropriate SSL configuration.
+
+## Security Best Practices
+
+### Database User Permissions
+
+Create a dedicated user with minimal required permissions:
+
+```sql
+-- Create a dedicated user for Tabula Lens
+CREATE USER tabula_lens WITH PASSWORD 'secure_password';
+
+-- Grant connect permission
+GRANT CONNECT ON DATABASE mydb TO tabula_lens;
+
+-- Grant usage on schema
+GRANT USAGE ON SCHEMA public TO tabula_lens;
+
+-- Grant select on specific tables
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO tabula_lens;
+
+-- Grant select on future tables
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO tabula_lens;
+```
+
+### Connection Security
+
+- **Always use SSL in production**: Set `sslmode=require` or `sslmode=verify-full`
+- **Use strong passwords**: Use environment variables or secret management
+- **Limit network access**: Use firewall rules, VPCs, or private networks
+- **Rotate credentials regularly**: Change database passwords periodically
+- **Use connection pooling**: Configure appropriate pool sizes
+- **Monitor connections**: Track connection usage and patterns
+
+### Network Security
+
+- Use firewall rules to restrict database access
+- Use VPC peering or private endpoints for cloud databases
+- Implement IP whitelisting for database connections
+- Use VPNs for remote database access
+- Disable remote access to the postgres user
+- Run PostgreSQL on a non-default port only if your network policy requires it
+
+## Query Optimization
+
+### Indexing
+
+Create indexes for frequently queried columns:
+
+```sql
+-- Create index on email column
+CREATE INDEX idx_users_email ON users(email);
+
+-- Create index on created_at column
+CREATE INDEX idx_users_created_at ON users(created_at);
+
+-- Create composite index
+CREATE INDEX idx_orders_user_status ON orders(user_id, status);
+
+-- Create GIN index for JSONB columns
+CREATE INDEX idx_users_metadata ON users USING GIN (metadata);
+
+-- Create partial index
+CREATE INDEX idx_active_users ON users(email) WHERE active = true;
+```
+
+### Query Performance
+
+- **Use EXPLAIN ANALYZE**: Analyze query execution plans
+- **Avoid SELECT ***: Select only needed columns
+- **Use appropriate data types**: Choose the right data type for each column
+- **Consider partitioning**: For very large tables
+- **Use connection pooling**: Reduce connection overhead
+- **Monitor slow queries**: Use pg_stat_statements
+
+### Connection Pooling
+
+PostgreSQL has excellent connection pooling support. Configure appropriate pool sizes based on your application's needs:
+
+```bash
+# Connection pool configuration
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?connectionLimit=10"
+```
+
+For high-traffic applications, consider using PgBouncer for connection pooling.
+
+## Troubleshooting
+
+### Connection Issues
+
+**Problem**: `Connection refused` or `database does not exist`
+
+**Solutions**:
+- Verify PostgreSQL is running: `pg_isready`
+- Check the connection string format
+- Ensure the database exists: `\l` in psql
+- Verify network connectivity
+- Check firewall rules
+- Verify the database user has CONNECT permission
+
+**Problem**: `password authentication failed`
+
+**Solutions**:
+- Verify the username and password
+- Check if password authentication is enabled in pg_hba.conf
+- Ensure the user exists: `\du` in psql
+- Check for typos in connection string
+
+**Problem**: `SSL connection required`
+
+**Solutions**:
+- Add `sslmode=require` to your connection string
+- Ensure SSL is enabled in PostgreSQL configuration
+- Verify SSL certificates are valid
+- Check if the database requires SSL connections
+
+### Query Issues
+
+**Problem**: Queries are slow
+
+**Solutions**:
+- Run `EXPLAIN ANALYZE` on slow queries
+- Check for missing indexes
+- Analyze query execution plans
+- Consider query optimization
+- Check for table bloat: `VACUUM ANALYZE`
+- Update statistics: `ANALYZE`
+
+**Problem**: No data returned
+
+**Solutions**:
+- Verify the table name matches your database
+- Check if the table has data
+- Verify the database user has SELECT permission
+- Check for schema-related issues
+- Verify the table is in the public schema or specify the schema
+
+### Performance Issues
+
+**Problem**: High memory usage
+
+**Solutions**:
+- Reduce connection pool size
+- Optimize query result sizes
+- Use pagination to limit result sets
+- Check for memory leaks in your application
+- Monitor PostgreSQL memory settings
+
+**Problem**: Connection pool exhaustion
+
+**Solutions**:
+- Increase connection pool size
+- Implement connection timeout
+- Use connection pooling middleware (PgBouncer)
+- Check for connection leaks in your application
+- Monitor connection usage patterns
+
+## PostgreSQL-Specific Features
+
+### Case-Insensitive Search
+
+PostgreSQL supports case-insensitive search using the `ILIKE` operator:
+
+```sql
+-- Case-insensitive search
+SELECT * FROM users WHERE email ILIKE '%example.com';
+```
+
+Tabula Lens automatically uses `ILIKE` for PostgreSQL when performing text filtering.
+
+### JSONB Support
+
+PostgreSQL's JSONB data type is fully supported:
+
+```sql
+-- Query JSONB columns
+SELECT * FROM users WHERE metadata->>'role' = 'admin';
+
+-- Create GIN index for JSONB
+CREATE INDEX idx_users_metadata ON users USING GIN (metadata);
+```
+
+### Array Support
+
+PostgreSQL arrays are supported and can be queried:
+
+```sql
+-- Query array columns
+SELECT * FROM users WHERE 'admin' = ANY(roles);
+
+-- Create index on array
+CREATE INDEX idx_users_roles ON users USING GIN (roles);
+```
+
+### Full-Text Search
+
+PostgreSQL's full-text search capabilities can be used:
+
+```sql
+-- Create full-text search index
+CREATE INDEX idx_users_search ON users USING GIN (to_tsvector('english', name || ' ' || email));
+
+-- Full-text search query
+SELECT * FROM users WHERE to_tsvector('english', name || ' ' || email) @@ to_tsquery('english', 'john');
+```
+
+## Advanced Configuration
+
+### Custom Schema Support
+
+If your tables are in a custom schema:
+
+```typescript
+import { TabulaLens } from '@tabula-lens/node';
+
+const tabulaLens = new TabulaLens({
+  url: 'postgresql://user:password@localhost:5432/mydb',
+  type: 'pg',
+});
+
+// Tables in custom schemas are automatically discovered
+// Ensure your database user has USAGE permission on the schema
+```
+
+### Read Replicas
+
+For read replicas, configure the connection string to point to the replica:
+
+```bash
+# Read replica connection
+DATABASE_URL="postgresql://user:password@replica-host:5432/mydb"
+```
+
+### Connection Timeout
+
+Configure connection timeout to prevent hanging:
+
+```bash
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?connectionTimeoutMillis=10000"
+```
+
+### Statement Timeout
+
+Set a statement timeout to prevent long-running queries:
+
+```bash
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?statement_timeout=30000"
+```
+
+## Migration from Other Databases
+
+If you're migrating from MySQL to PostgreSQL:
+
+1. **Export data from MySQL**: Use `mysqldump` or a migration tool
+2. **Convert data types**: Map MySQL types to PostgreSQL equivalents
+3. **Update connection string**: Change from `mysql://` to `postgresql://`
+4. **Update queries**: Adjust for PostgreSQL-specific syntax
+5. **Test thoroughly**: Verify all functionality works correctly
+
+Common type mappings:
+- `VARCHAR` → `VARCHAR` or `TEXT`
+- `TEXT` → `TEXT`
+- `INT` → `INTEGER`
+- `BIGINT` → `BIGINT`
+- `DATETIME` → `TIMESTAMP`
+- `JSON` → `JSONB`
+
+## Additional Resources
+
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [pg driver documentation](https://node-postgres.com/)
+- [Knex.js PostgreSQL dialect](https://knexjs.org/guide/query-builder.html#postgresql)
+- [PostgreSQL Performance Tips](https://wiki.postgresql.org/wiki/Performance_Optimization)

@@ -101,6 +101,7 @@ export default defineConfig({
 									label: 'Database Integration',
 									items: [
 										{ label: 'Overview', slug: 'user-guides/backend/database-integration' },
+										{ label: 'PostgreSQL', slug: 'user-guides/backend/postgresql-support' },
 										{ label: 'MySQL', slug: 'user-guides/backend/mysql-support' },
 										{ label: 'SQLite', slug: 'user-guides/backend/sqlite-support' },
 										{ label: 'SQL Server', slug: 'user-guides/backend/mssql-support' },

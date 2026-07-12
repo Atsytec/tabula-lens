@@ -304,9 +304,12 @@ DATABASE_URL="mysql://user:password@localhost:3306/mydb?ssl=true"
 
 # Provide CA certificate
 DATABASE_URL="mysql://user:password@localhost:3306/mydb?ssl=./ca.pem"
+
+# Full SSL configuration with connection string parameters
+DATABASE_URL="mysql://user:password@localhost:3306/mydb?ssl=true&ca=/path/to/ca.pem&cert=/path/to/client-cert.pem&key=/path/to/client-key.pem"
 ```
 
-For production deployments, use Knex configuration with explicit SSL options rather than passing complex objects through the URL.
+For production deployments, use connection string parameters to configure SSL options. The MySQL driver (mysql2) supports SSL configuration through the connection URL.
 
 ### Connection Security
 
