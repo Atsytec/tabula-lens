@@ -1,5 +1,11 @@
 # @tabula-lens/node
 
+## 0.4.0
+
+### Minor Changes
+
+- 36309a1: Multi-Database support
+
 ## 0.3.2
 
 ### Patch Changes
