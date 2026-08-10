@@ -72,10 +72,10 @@
   },
   "devDependencies": {
     "@hapi/hapi": "^21.4.9",
-    "@types/better-sqlite3": "^7.6.0",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/express": "^5.0.0",
     "@types/koa": "^3.0.3",
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.1.2",
     "@types/restify": "^8.5.0",
     "elysia": "^1.0.0",
     "fastify": "^5.10.0",
@@ -83,7 +83,7 @@
     "koa": "^3.2.1",
     "restify": "^11.1.0",
     "tsup": "^8.0.0",
-    "typescript": "5.9.2",
+    "typescript": "7.0.2",
     "vitest": "^4.1.10"
   },
   "peerDependencies": {
